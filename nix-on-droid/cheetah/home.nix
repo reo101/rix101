@@ -1,4 +1,4 @@
-{ lib, config, pkgs, ... }:
+{ inputs, lib, config, pkgs, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -49,31 +49,19 @@
     # Dhall
     dhall
     dhall-lsp-server
-  ];
 
-  # nixpkgs = {
-  #   overlays = [
-  #     inputs.neovim-nightly-overlay.overlay
-  #     inputs.zig-overlay.overlay
-  #   ];
-  #
-  #   config.allowUnfree = true;
-  # };
+    # Zig
+    zigpkgs.master
+  ];
 
   nixpkgs = {
     overlays = [
-      (import (builtins.fetchTarball {
-        url = https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz;
-      }))
+      inputs.neovim-nightly-overlay.overlay
+      inputs.zig-overlay.overlays.default
     ];
 
     config.allowUnfree = true;
   };
-
-  # programs.zig = {
-  #   enable = true;
-  #   package = pkgs.zig;
-  # };
 
   programs.neovim = {
     enable = true;

@@ -26,6 +26,6 @@
     backupFileExtension = "hm-bak";
     # useGlobalPkgs = true;
 
-    # extraOptions = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs; };
   };
 }
