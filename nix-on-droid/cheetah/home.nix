@@ -52,12 +52,14 @@
 
     # Zig
     zigpkgs.master
+    inputs.zls-overlay.packages.aarch64-linux.default
   ];
 
   nixpkgs = {
     overlays = [
       inputs.neovim-nightly-overlay.overlay
       inputs.zig-overlay.overlays.default
+      # inputs.zls-overlay.???
     ];
 
     config.allowUnfree = true;

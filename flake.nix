@@ -39,6 +39,11 @@
       url = "github:mitchellh/zig-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    zls-overlay = {
+      url = "github:zigtools/zls";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self
@@ -49,6 +54,7 @@
             # , nix-colors
             , neovim-nightly-overlay
             , zig-overlay
+            , zls-overlay
             , ...
             } @ inputs:
     let
