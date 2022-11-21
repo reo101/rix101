@@ -24,7 +24,7 @@
   home-manager = {
     config = ./home.nix;
     backupFileExtension = "hm-bak";
-    useGlobalPkgs = true;
+    # useGlobalPkgs = true;
 
     # extraOptions = { inherit inputs; };
   };

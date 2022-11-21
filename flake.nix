@@ -52,7 +52,6 @@
             , ...
             } @ inputs:
     let
-      # inherit (self) outputs;
       # forAllSystems = nixpkgs.lib.genAttrs [
       #   "aarch64-linux"
       #   "i686-linux"
@@ -60,6 +59,7 @@
       #   "aarch64-darwin"
       #   "x86_64-darwin"
       # ];
+      inherit (self) outputs;
     in
     rec {
       # packages = forAllSystems (system:
@@ -89,7 +89,6 @@
 
       nixOnDroidConfigurations =
         let mkHost = system: hostname: nix-on-droid.lib.nixOnDroidConfiguration {
-          # pkgs = legacyPackages.${system};
           pkgs = import nixpkgs {
             inherit system;
 
@@ -104,9 +103,7 @@
           ] ++ (builtins.attrValues nixOnDroidModules);
 
           extraSpecialArgs = {
-            inherit inputs;
-            # inherit outputs;
-            # inherit inputs outputs;
+            inherit inputs outputs;
             # rootPath = ./.;
           };
 

@@ -1,4 +1,4 @@
-{ inputs ? {}, outputs ? {}, lib, config, pkgs, ... }:
+{ lib, config, pkgs, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -60,6 +60,16 @@
   #   config.allowUnfree = true;
   # };
 
+  nixpkgs = {
+    overlays = [
+      (import (builtins.fetchTarball {
+        url = https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz;
+      }))
+    ];
+
+    config.allowUnfree = true;
+  };
+
   # programs.zig = {
   #   enable = true;
   #   package = pkgs.zig;
@@ -67,8 +77,7 @@
 
   programs.neovim = {
     enable = true;
-    # package = neovim-nightly-overlay.neovim-nightly;
-    # package = pkgs.neovim-nightly;
+    package = pkgs.neovim-nightly;
     # defaultEditor = true;
 
     viAlias = true;
