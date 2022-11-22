@@ -16,6 +16,12 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    # Nix Darwin
+    nix-darwin = {
+      url = "github:lnl7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Home Manager
     home-manager = {
       url = "github:nix-community/home-manager/release-22.05";
@@ -49,6 +55,7 @@
   outputs = { self
             , nixpkgs
             , nix-on-droid
+            , nix-darwin
             , home-manager
             # , hardware
             # , nix-colors
@@ -119,6 +126,18 @@
         cheetah = mkHost "aarch64-linux" "cheetah";
 
         default = cheetah;
+      };
+
+      darwinConfigurations =
+        let mkHost = system: hostname: nix-darwin.lib.darwinSystem {
+          inherit system;
+          modules = [
+            ./nix-darwin/${hostname}/configuration.nix
+          ] ++ (builtins.attrValues nixDarwinModules);
+          inputs = { inherit inputs outputs darwin nixpkgs; };
+        };
+      in rec {
+        apavel-a01 = mkHost "x86_64-darwin" "apavel-a01";
       };
 
       homeConfigurations = {
