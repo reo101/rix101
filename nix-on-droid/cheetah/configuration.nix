@@ -12,6 +12,8 @@
   # # Set $EDITOR
   # environment.variables.EDITOR = "nvim";
 
+  user.shell = "${pkgs.zsh}/bin/zsh";
+
   # Read the changelog before changing this value
   system.stateVersion = "22.05";
 
