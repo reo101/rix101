@@ -134,7 +134,7 @@
           modules = [
             ./nix-darwin/${hostname}/configuration.nix
           ] ++ (builtins.attrValues nixDarwinModules);
-          inputs = { inherit inputs outputs darwin nixpkgs; };
+          inputs = { inherit inputs outputs nix-darwin nixpkgs; };
         };
       in rec {
         apavel-a01 = mkHost "x86_64-darwin" "apavel-a01";
