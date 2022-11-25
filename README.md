@@ -39,4 +39,8 @@
      \__\/           \__\/       |__|/     
 ``` -->
 
+<div align="center">
+    Based on <a href="https://github.com/Misterio77/nix-starter-configs">nix-starter-configs</a>
+</div>
+
 ---
