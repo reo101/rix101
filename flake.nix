@@ -52,18 +52,19 @@
     };
   };
 
-  outputs = { self
-            , nixpkgs
-            , nix-on-droid
-            , nix-darwin
-            , home-manager
-            # , hardware
-            # , nix-colors
-            , neovim-nightly-overlay
-            , zig-overlay
-            , zls-overlay
-            , ...
-            } @ inputs:
+  outputs =
+    { self
+    , nixpkgs
+    , nix-on-droid
+    , nix-darwin
+    , home-manager
+    # , hardware
+    # , nix-colors
+    , neovim-nightly-overlay
+    , zig-overlay
+    , zls-overlay
+    , ...
+    } @ inputs:
     let
       inherit (self) outputs;
       forAllSystems = nixpkgs.lib.genAttrs [
@@ -122,11 +123,12 @@
 
           home-manager-path = home-manager.outPath;
         };
-      in rec {
-        cheetah = mkHost "aarch64-linux" "cheetah";
+        in
+        rec {
+          cheetah = mkHost "aarch64-linux" "cheetah";
 
-        default = cheetah;
-      };
+          default = cheetah;
+        };
 
       darwinConfigurations =
         let mkHost = system: hostname: users: nix-darwin.lib.darwinSystem {
