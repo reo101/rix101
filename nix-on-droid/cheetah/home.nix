@@ -108,7 +108,7 @@
       path = "${config.xdg.dataHome}/zsh/history";
     };
 
-	  initExtra = ''
+    initExtra = ''
       eval "$(direnv hook zsh)"
     '';
 
