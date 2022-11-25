@@ -129,16 +129,29 @@
       };
 
       darwinConfigurations =
-        let mkHost = system: hostname: nix-darwin.lib.darwinSystem {
+        let mkHost = system: hostname: users: nix-darwin.lib.darwinSystem {
           inherit system;
           modules = [
             ./nix-darwin/${hostname}/configuration.nix
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = false;
+                useUserPackages = true;
+                users = nixpkgs.lib.attrsets.genAttrs
+                  users
+                  (user: import ./nix-darwin/${hostname}/home/${user}.nix);
+
+                extraSpecialArgs = { inherit inputs; };
+              };
+            }
           ] ++ (builtins.attrValues nixDarwinModules);
           inputs = { inherit inputs outputs nix-darwin nixpkgs; };
         };
-      in rec {
-        apavel-a01 = mkHost "x86_64-darwin" "apavel-a01";
-      };
+        in
+        rec {
+          apavel-a01 = mkHost "x86_64-darwin" "apavel-a01" [ "apavel" ];
+        };
 
       homeConfigurations = {
         # "nix-on-droid@cheetah" = home-manager.lib.homeManagerConfiguration {
