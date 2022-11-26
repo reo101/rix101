@@ -23,6 +23,15 @@
 
   time.timeZone = "Europe/Sofia";
 
+  terminal.font =
+    let
+      firacode = pkgs.nerdfonts.override {
+        fonts = [ "FiraCode" ];
+      };
+      fontPath = "share/fonts/truetype/NerdFonts/Fira Code Regular Nerd Font Complete Mono.ttf";
+    in
+      "${firacode}/${fontPath}";
+
   home-manager = {
     config = ./home.nix;
     backupFileExtension = "hm-bak";
