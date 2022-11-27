@@ -67,6 +67,10 @@
     } @ inputs:
     let
       inherit (self) outputs;
+      inherit ((import ./lib/default.nix) { lib = nixpkgs.lib; })
+        recurseDir
+        hasFiles
+        hasDirectories;
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-linux"
         "i686-linux"
@@ -87,82 +91,152 @@
       );
 
       overlays = import ./overlays;
+
+      # Modules
       nixosModules = import ./modules/nixos;
       nixOnDroidModules = import ./modules/nix-on-droid;
       nixDarwinModules = import ./modules/nix-darwin;
       homeManagerModules = import ./modules/home-manager;
 
-      nixosConfigurations = {
-        # arthur = nixpkgs.lib.nixosSystem {
-        #   specialArgs = { inherit inputs outputs; };
-        #   modules = [
-        #     ./nixos/arthur/configuration.nix
-        #   ];
-        # };
+      # Machines
+      machines = recurseDir ./machines;
+      homeManagerMachines = machines.home-manager or {};
+      nixDarwinMachines = machines.nix-darwin or {};
+      nixOnDroidMachines = machines.nix-on-droid or {};
+      nixosMachines = machines.nixos or {};
+
+      # mkHost helpers
+      mkNixosHost = system: hostname: nixpkgs.lib.nixosSystem {
+        modules = [
+          ./machines/nixos/${system}/${hostname}/configuration.nix
+        ];
+
+        specialArgs = {
+          inherit inputs outputs;
+        };
       };
+
+      mkNixOnDroidHost = system: hostname: nix-on-droid.lib.nixOnDroidConfiguration {
+        pkgs = import nixpkgs {
+          inherit system;
+
+          overlays = [
+            nix-on-droid.overlays.default
+          ];
+        };
+
+        modules = [
+          ./machines/nix-on-droid/${system}/${hostname}/configuration.nix
+          { nix.registry.nixpkgs.flake = nixpkgs; }
+        ] ++ (builtins.attrValues nixOnDroidModules);
+
+        extraSpecialArgs = {
+          inherit inputs outputs;
+          # rootPath = ./.;
+        };
+
+        home-manager-path = home-manager.outPath;
+      };
+
+      mkNixDarwinHost = system: hostname: users: nix-darwin.lib.darwinSystem {
+        inherit system;
+        modules = [
+          ./machines/nix-darwin/${system}/${hostname}/configuration.nix
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = false;
+              useUserPackages = true;
+              users = nixpkgs.lib.attrsets.genAttrs
+                users
+                (user: import ./machines/nix-darwin/${system}/${hostname}/home/${user}.nix);
+
+              extraSpecialArgs = { inherit inputs; };
+            };
+          }
+        ] ++ (builtins.attrValues nixDarwinModules);
+        inputs = { inherit inputs outputs nix-darwin nixpkgs; };
+      };
+
+      mkHomeManagerHost = system: hostname: home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.${system};
+        modules = [
+          ./machines/home-manager/${system}/${hostname}/home.nix
+        ];
+        extraSpecialArgs = { inherit inputs outputs; };
+      };
+
+      # Final configurations
+
+      nixosConfigurations =
+        nixpkgs.lib.foldAttrs
+          (acc: x: acc)
+          []
+          (builtins.attrValues
+            (builtins.mapAttrs
+              (system: hosts:
+                nixpkgs.lib.attrsets.filterAttrs
+                  (host: config: config != null)
+                  (builtins.mapAttrs
+                    (host: config:
+                      if (hasFiles [ "configuration.nix" ] config)
+                        then mkNixosHost system host
+                        else null)
+                    hosts))
+              nixosMachines));
 
       nixOnDroidConfigurations =
-        let mkHost = system: hostname: nix-on-droid.lib.nixOnDroidConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-
-            overlays = [
-              nix-on-droid.overlays.default
-            ];
-          };
-
-          modules = [
-            ./nix-on-droid/${hostname}/configuration.nix
-            { nix.registry.nixpkgs.flake = nixpkgs; }
-          ] ++ (builtins.attrValues nixOnDroidModules);
-
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            # rootPath = ./.;
-          };
-
-          home-manager-path = home-manager.outPath;
-        };
-        in
-        rec {
-          cheetah = mkHost "aarch64-linux" "cheetah";
-
-          default = cheetah;
-        };
+        nixpkgs.lib.foldAttrs
+          (acc: x: acc)
+          []
+          (builtins.attrValues
+            (builtins.mapAttrs
+              (system: hosts:
+                nixpkgs.lib.attrsets.filterAttrs
+                  (host: config: config != null)
+                  (builtins.mapAttrs
+                    (host: config:
+                      if (hasFiles [ "configuration.nix" "home.nix" ] config)
+                        then mkNixOnDroidHost system host
+                        else null)
+                    hosts))
+              nixOnDroidMachines));
 
       darwinConfigurations =
-        let mkHost = system: hostname: users: nix-darwin.lib.darwinSystem {
-          inherit system;
-          modules = [
-            ./nix-darwin/${hostname}/configuration.nix
-            home-manager.darwinModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = false;
-                useUserPackages = true;
-                users = nixpkgs.lib.attrsets.genAttrs
-                  users
-                  (user: import ./nix-darwin/${hostname}/home/${user}.nix);
+        nixpkgs.lib.foldAttrs
+          (acc: x: acc)
+          []
+          (builtins.attrValues
+            (builtins.mapAttrs
+              (system: hosts:
+                nixpkgs.lib.attrsets.filterAttrs
+                  (host: config: config != null)
+                  (builtins.mapAttrs
+                    (host: config:
+                      if (hasFiles [ "configuration.nix" ] config)
+                        then mkNixDarwinHost system host
+                              (builtins.map
+                                (nixpkgs.lib.strings.removeSuffix ".nix")
+                                (builtins.attrNames (config."home" or {})))
+                        else null)
+                    hosts))
+              nixDarwinMachines));
 
-                extraSpecialArgs = { inherit inputs; };
-              };
-            }
-          ] ++ (builtins.attrValues nixDarwinModules);
-          inputs = { inherit inputs outputs nix-darwin nixpkgs; };
-        };
-        in
-        rec {
-          apavel-a01 = mkHost "x86_64-darwin" "apavel-a01" [ "apavel" ];
-        };
-
-      homeConfigurations = {
-        # "nix-on-droid@cheetah" = home-manager.lib.homeManagerConfiguration {
-        #   pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        #   extraSpecialArgs = { inherit inputs outputs; };
-        #   modules = [
-        #     ./home-manager/home.nix
-        #   ];
-        # };
-      };
+      homeConfigurations =
+        nixpkgs.lib.foldAttrs
+          (acc: x: acc)
+          []
+          (builtins.attrValues
+            (builtins.mapAttrs
+              (system: hosts:
+                nixpkgs.lib.attrsets.filterAttrs
+                  (host: config: config != null)
+                  (builtins.mapAttrs
+                    (host: config:
+                      if (hasFiles [ "home.nix" ] config)
+                        then mkNixOnDroidHost system host
+                        else null)
+                    hosts))
+              homeManagerMachines));
     };
 }
