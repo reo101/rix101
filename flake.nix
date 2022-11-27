@@ -109,7 +109,7 @@
       mkNixosHost = system: hostname: nixpkgs.lib.nixosSystem {
         modules = [
           ./machines/nixos/${system}/${hostname}/configuration.nix
-        ];
+        ] ++ (builtins.attrValues nixosModules);
 
         specialArgs = {
           inherit inputs outputs;
@@ -162,7 +162,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         modules = [
           ./machines/home-manager/${system}/${hostname}/home.nix
-        ];
+        ] ++ (builtins.attrValues homeManagerModules);
         extraSpecialArgs = { inherit inputs outputs; };
       };
 
