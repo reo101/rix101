@@ -166,77 +166,75 @@
         extraSpecialArgs = { inherit inputs outputs; };
       };
 
-      # Final configurations
 
+      createConfigurations =
+        pred: mkHost: machines:
+          nixpkgs.lib.foldAttrs
+            (acc: x: acc)
+            []
+            (builtins.attrValues
+              (builtins.mapAttrs
+                (system: hosts:
+                  nixpkgs.lib.attrsets.filterAttrs
+                    (host: config: config != null)
+                    (builtins.mapAttrs
+                      (host: config:
+                        if (pred system host config)
+                          then mkHost system host config
+                          else null)
+                      hosts))
+                machines));
+
+      # Final configurations
       nixosConfigurations =
-        nixpkgs.lib.foldAttrs
-          (acc: x: acc)
-          []
-          (builtins.attrValues
-            (builtins.mapAttrs
-              (system: hosts:
-                nixpkgs.lib.attrsets.filterAttrs
-                  (host: config: config != null)
-                  (builtins.mapAttrs
-                    (host: config:
-                      if (hasFiles [ "configuration.nix" ] config)
-                        then mkNixosHost system host
-                        else null)
-                    hosts))
-              nixosMachines));
+        createConfigurations
+          (system: host: config:
+            hasFiles
+              [ "configuration.nix" ]
+              config)
+          (system: host: config:
+            mkNixosHost
+              system
+              host)
+          nixosMachines;
 
       nixOnDroidConfigurations =
-        nixpkgs.lib.foldAttrs
-          (acc: x: acc)
-          []
-          (builtins.attrValues
-            (builtins.mapAttrs
-              (system: hosts:
-                nixpkgs.lib.attrsets.filterAttrs
-                  (host: config: config != null)
-                  (builtins.mapAttrs
-                    (host: config:
-                      if (hasFiles [ "configuration.nix" "home.nix" ] config)
-                        then mkNixOnDroidHost system host
-                        else null)
-                    hosts))
-              nixOnDroidMachines));
+        createConfigurations
+          (system: host: config:
+            hasFiles
+              [ "configuration.nix" "home.nix" ]
+              config)
+          (system: host: config:
+            mkNixOnDroidHost
+              system
+              host)
+          nixOnDroidMachines;
 
       darwinConfigurations =
-        nixpkgs.lib.foldAttrs
-          (acc: x: acc)
-          []
-          (builtins.attrValues
-            (builtins.mapAttrs
-              (system: hosts:
-                nixpkgs.lib.attrsets.filterAttrs
-                  (host: config: config != null)
-                  (builtins.mapAttrs
-                    (host: config:
-                      if (hasFiles [ "configuration.nix" ] config)
-                        then mkNixDarwinHost system host
-                              (builtins.map
-                                (nixpkgs.lib.strings.removeSuffix ".nix")
-                                (builtins.attrNames (config."home" or {})))
-                        else null)
-                    hosts))
-              nixDarwinMachines));
+        createConfigurations
+          (system: host: config:
+            hasFiles
+              [ "configuration.nix" ]
+              config)
+          (system: host: config:
+            mkNixDarwinHost
+              system
+              host
+              (builtins.map
+                (nixpkgs.lib.strings.removeSuffix ".nix")
+                (builtins.attrNames (config."home" or {}))))
+          nixDarwinMachines;
 
       homeConfigurations =
-        nixpkgs.lib.foldAttrs
-          (acc: x: acc)
-          []
-          (builtins.attrValues
-            (builtins.mapAttrs
-              (system: hosts:
-                nixpkgs.lib.attrsets.filterAttrs
-                  (host: config: config != null)
-                  (builtins.mapAttrs
-                    (host: config:
-                      if (hasFiles [ "home.nix" ] config)
-                        then mkNixOnDroidHost system host
-                        else null)
-                    hosts))
-              homeManagerMachines));
+        createConfigurations
+          (system: host: config:
+            hasFiles
+              [ "home.nix" ]
+              config)
+          (system: host: config:
+            mkHomeManagerHost
+              system
+              host)
+          homeManagerMachines;
     };
 }
