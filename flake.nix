@@ -67,10 +67,8 @@
     } @ inputs:
     let
       inherit (self) outputs;
-      inherit ((import ./lib/default.nix) { lib = nixpkgs.lib; })
-        recurseDir
-        hasFiles
-        hasDirectories;
+      helpers = (import ./lib/helpers.nix) { lib = nixpkgs.lib; };
+      inherit (helpers) recurseDir hasFiles hasDirectories;
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-linux"
         "i686-linux"
