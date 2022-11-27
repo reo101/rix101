@@ -1,5 +1,5 @@
 {
-  description = "reo101's NixOS, nix-on-droid and nix-on-darwin configs";
+  description = "reo101's NixOS, nix-on-droid and nix-darwin configs";
 
   inputs = {
     # Nixpkgs
