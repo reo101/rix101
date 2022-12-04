@@ -7,7 +7,7 @@
     username = "nix-on-droid";
     # username = "reo101";
     homeDirectory = "/data/data/com.termux.nix/files/home";
-    stateVersion = "22.05";
+    stateVersion = "22.11";
   };
 
   # Let Home Manager install and manage itself.
