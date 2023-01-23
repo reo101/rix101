@@ -30,6 +30,7 @@
     ];
 
     config.allowUnfree = true;
+    config.allowUnsupportedSystem = true;
   };
 
   programs.git = {
@@ -40,6 +41,21 @@
       signByDefault = true;
       key = "0x52F3E1D376F692C0";
     };
+  };
+
+  home.file = {
+    ".config/test.ttf" = {
+        recursive = false;
+        source =
+          let
+            firacode = pkgs.nerdfonts.override {
+              fonts = [ "FiraCode" ];
+            };
+            fontPath = "share/fonts/truetype/NerdFonts/Fira Code Regular Nerd Font Complete Mono.ttf";
+          in
+            "${firacode}/${fontPath}";
+            }
+    ;
   };
 
   # services.gpg-agent = {

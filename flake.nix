@@ -78,10 +78,10 @@
       ];
     in
     rec {
-      packages = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in import ./pkgs { inherit pkgs; }
-      );
+      # packages = forAllSystems (system:
+      #   let pkgs = nixpkgs.legacyPackages.${system};
+      #   in import ./pkgs { inherit pkgs; }
+      # );
 
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -164,11 +164,42 @@
         extraSpecialArgs = { inherit inputs outputs; };
       };
 
+      # proba = rec {
+      #   machines = recurseDir ./machines;
+      #   homeManagerMachines = machines.home-manager or {};
+      #   nixDarwinMachines = machines.nix-darwin or {};
+      #   nixOnDroidMachines = machines.nix-on-droid or {};
+      #   nixosMachines = machines.nixos or {};
+      #   nixDarwinConfigurations =
+      #     nixpkgs.lib.foldAttrs
+      #       (acc: x: acc)
+      #       []
+      #       (builtins.attrValues
+      #         (builtins.mapAttrs
+      #           (system: hosts:
+      #             nixpkgs.lib.attrsets.filterAttrs
+      #               (host: config: config != null)
+      #               (builtins.mapAttrs
+      #                 (host: config:
+      #                   if (hasFiles [ "configuration.nix" ] config)
+      #                     # then mkNixDarwinHost system host (builtins.attrNames (config."home" or {}))
+      #                     then {inherit system host; users =  (builtins.attrNames (config."home" or {})); }
+      #                     else null)
+      #                 hosts))
+      #           nixDarwinMachines));
+      #   # darwinconfigs =
+      #   #   builtins.mapAttrs
+      #   #     (arch: machines:
+      #   #       )
+      #   #     nixDarwinHosts;
+      #   # archesNames = builtins.attrNames arches;
+      #   # configs = map subdirs archesNames;
+      # };
 
       createConfigurations =
         pred: mkHost: machines:
           nixpkgs.lib.foldAttrs
-            (acc: x: acc)
+            nixpkgs.lib.trivial.const
             []
             (builtins.attrValues
               (builtins.mapAttrs
