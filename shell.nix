@@ -1,10 +1,17 @@
-# Shell for bootstrapping flake-enabled nix and home-manager
-# You can enter it through 'nix develop' or (legacy) 'nix-shell'
-
-{ pkgs ? (import ./nixpkgs.nix) { } }: {
+# Shell for bootstrapping flake-enabled nix and other tooling
+{ pkgs ?
+  # If pkgs is not defined, instanciate nixpkgs from locked commit
+  (import ./nixpkgs.nix) { }
+, ...
+}: {
   default = pkgs.mkShell {
-    # Enable experimental features without having to specify the argument
-    NIX_CONFIG = "experimental-features = nix-command flakes";
-    nativeBuildInputs = with pkgs; [ nix home-manager git ];
+    NIX_CONFIG = ''
+      extra-experimental-features = nix-command flakes repl-flake
+    '';
+    nativeBuildInputs = with pkgs; [
+      nix
+      home-manager
+      git
+    ];
   };
 }
