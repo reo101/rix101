@@ -109,6 +109,8 @@
     };
 
     initExtra = ''
+      export SHELL="${pkgs.zsh}/bin/zsh"
+
       eval "$(direnv hook zsh)"
     '';
 
