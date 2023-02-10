@@ -105,9 +105,28 @@
       nixosMachines = machines.nixos or {};
 
       # mkHost helpers
-      mkNixosHost = system: hostname: nixpkgs.lib.nixosSystem {
+      mkNixosHost = system: hostname: users: nixpkgs.lib.nixosSystem {
+        inherit system;
+
         modules = [
           ./machines/nixos/${system}/${hostname}/configuration.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = false;
+              useUserPackages = true;
+              users = nixpkgs.lib.attrsets.genAttrs
+                users
+                (user: import ./machines/nixos/${system}/${hostname}/home/${user}.nix);
+                # (user: args:
+                #   let home = import ./machines/nixos/${system}/${hostname}/home/${user}.nix args;
+                #    in home // { imports = (home.imports or []) ++ homeManagerModules; });
+
+              extraSpecialArgs = {
+                inherit inputs outputs;
+              };
+            };
+          }
         ] ++ (builtins.attrValues nixosModules);
 
         specialArgs = {
@@ -139,6 +158,7 @@
 
       mkNixDarwinHost = system: hostname: users: nix-darwin.lib.darwinSystem {
         inherit system;
+
         modules = [
           ./machines/nix-darwin/${system}/${hostname}/configuration.nix
           home-manager.darwinModules.home-manager
@@ -150,18 +170,21 @@
                 users
                 (user: import ./machines/nix-darwin/${system}/${hostname}/home/${user}.nix);
 
-              extraSpecialArgs = { inherit inputs; };
+              extraSpecialArgs = { inherit inputs outputs; };
             };
           }
         ] ++ (builtins.attrValues nixDarwinModules);
+
         inputs = { inherit inputs outputs nix-darwin nixpkgs; };
       };
 
       mkHomeManagerHost = system: hostname: home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.${system};
+
         modules = [
           ./machines/home-manager/${system}/${hostname}/home.nix
         ] ++ (builtins.attrValues homeManagerModules);
+
         extraSpecialArgs = { inherit inputs outputs; };
       };
 
@@ -194,7 +217,10 @@
           (system: host: config:
             mkNixosHost
               system
-              host)
+              host
+              (builtins.map
+                (nixpkgs.lib.strings.removeSuffix ".nix")
+                (builtins.attrNames (config."home" or {}))))
           nixosMachines;
 
       nixOnDroidConfigurations =
