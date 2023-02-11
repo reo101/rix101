@@ -51,6 +51,11 @@
       url = "github:zigtools/zls";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    wired = {
+      url = "github:Toqozz/wired-notify";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -64,32 +69,47 @@
     , neovim-nightly-overlay
     , zig-overlay
     , zls-overlay
+    , wired
     , ...
     } @ inputs:
     let
       inherit (self) outputs;
       helpers = (import ./lib/helpers.nix) { lib = nixpkgs.lib; };
       inherit (helpers) recurseDir hasFiles hasDirectories;
-      forAllSystems = nixpkgs.lib.genAttrs [
+      forEachSystem = nixpkgs.lib.genAttrs [
         "aarch64-linux"
         "i686-linux"
         "x86_64-linux"
         "aarch64-darwin"
         "x86_64-darwin"
       ];
+      forEachPkgs = f: forEachSystem (system': f nixpkgs.legacyPackages.${system'});
     in
     rec {
-      packages = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in import ./pkgs { inherit pkgs; }
+      # Packages (`nix build`)
+      packages = forEachPkgs (pkgs:
+        import ./pkgs { inherit pkgs; }
       );
 
-      devShells = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in import ./shell.nix { inherit pkgs; }
+      # Apps (`nix run`)
+      apps = {};
+      apps.default = null;
+
+      # Dev Shells (`nix develop`)
+      devShells = forEachPkgs (pkgs:
+        import ./shell.nix { inherit pkgs; }
       );
 
-      overlays = import ./overlays;
+      # Formatter
+      formatter = forEachPkgs (pkgs:
+        pkgs.nixpkgs-fmt
+      );
+
+      # Templates
+      templates = import ./templates;
+
+      # Overlays
+      overlays = import ./overlays { inherit inputs outputs; };
 
       # Modules
       nixosModules = import ./modules/nixos;
@@ -118,9 +138,6 @@
               users = nixpkgs.lib.attrsets.genAttrs
                 users
                 (user: import ./machines/nixos/${system}/${hostname}/home/${user}.nix);
-                # (user: args:
-                #   let home = import ./machines/nixos/${system}/${hostname}/home/${user}.nix args;
-                #    in home // { imports = (home.imports or []) ++ homeManagerModules; });
 
               extraSpecialArgs = {
                 inherit inputs outputs;

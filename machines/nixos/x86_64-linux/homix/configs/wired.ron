@@ -1,0 +1,239 @@
+(
+    shortcuts: (
+        notification_interact: 1,
+        notification_close: 2,
+        notification_closeall: 3,
+    ),
+
+    poll_interval: 16,
+    max_notifications: 8,
+    history_length: 100,
+    replacing_enabled: true,
+    replacing_resets_timeout: true,
+
+    timeout: 5000,       // 3 sec timeout
+    idle_threshold: 600, // 600 sec = 10 min
+    unpause_on_input: true,
+
+    // min_window_width: 0,
+    // min_window_height: 0,
+
+    debug: false,
+    debug_color: Color(r: 0.0, g: 1.0, b: 0.0, a: 1.0),
+    debug_color_alt: Color(r: 1.0, g: 0.0, b: 0.0, a: 1.0),
+
+    layout_blocks: [
+        (
+            name: "notif_root",
+            parent: "",
+            hook: (parent_anchor: TR, self_anchor: TR),
+            offset: (x: -10, y: 39),
+            params: NotificationBlock((
+                monitor: 0,
+                border_width: 2.0,
+                border_rounding: 0.0,
+                gap: (x: 0.0, y: 10.0),
+                background_color: (hex: "#0E1013"),
+                border_color: (hex: "#61AFEF"),
+                border_color_low: (hex: "#A0A8B7"),
+                border_color_critical: (hex: "#E55561"),
+                notification_hook: (parent_anchor: BL, self_anchor: TL),
+            )),
+        ),
+
+        (
+            name: "notif_summary",
+            parent: "notif_root",
+            offset: (x: 0, y: 0),
+            hook: (parent_anchor: TL, self_anchor: TR),
+            params: TextBlock((
+                text: "%s",
+                padding: (left: 12.0, right: 12.0, top: 12.0, bottom: 7.0),
+                font: "JetBrainsMono Nerd Font 11",
+                color: (hex: "#A0A8B7"),
+                dimensions: (
+                    width: (min: 300, max: 300),
+                    height: (min: 0, max: 0),
+                ),
+                dimensions_image_hint: (
+                    width: (min: 233, max: 238),
+                    height: (min: 0, max: 0)
+                ),
+                dimensions_image_app: (
+                    width: (min: 233, max: 238),
+                    height: (min: 0, max: 0)
+                ),
+            )),
+        ),
+
+        (
+            name: "notif_body",
+            parent: "notif_summary",
+            offset: (x: 0, y: 0),
+            hook: (parent_anchor: BL, self_anchor: TL),
+            render_criteria: [ Body ],
+            render_anti_criteria: [ AppName("progress") ],
+            params: TextBlock((
+                text: "%b",
+                padding: (left: 12.0, right: 5.0, top: 5.0, bottom: 12.0),
+                font: "JetBrainsMono Nerd Font 10",
+                color: (hex: "#A0A8B7"),
+                dimensions: (
+                    width: (min: 300, max: 300),
+                    height: (min: 0, max: 100),
+                ),
+                dimensions_image_hint: (
+                    width: (min: 240, max: 240),
+                    height: (min: 0, max: 100)
+                ),
+                dimensions_image_app: (
+                    width: (min: 240, max: 240),
+                    height: (min: 0, max: 100)
+                ),
+            )),
+        ),
+
+        (
+            name: "notif_image",
+            parent: "notif_summary",
+            hook: (parent_anchor: TL, self_anchor: TR),
+            offset: (x: 0, y: 0),
+            render_criteria: [ AppImage, HintImage ],
+            params: ImageBlock((
+                image_type: HintThenApp,
+                padding: (left: 12.0, right: 5.0, top: 12.0, bottom: 10.0),
+                rounding: 5.0,
+                scale_width: 50,
+                scale_height: 50,
+                filter_mode: Lanczos3,
+            )),
+        ),
+
+        (
+            name: "notif_progress",
+            parent: "notif_summary",
+            offset: (x: 0, y: 0),
+            hook: (parent_anchor: BL, self_anchor: TL),
+            render_criteria: [ Progress ],
+            render_anti_criteria: [ Body ],
+            params: ProgressBlock((
+                padding: (left: 12.0, right: 12.0, top: 8.5, bottom: 12.5),
+                border_width: 2.0,
+                border_rounding: 5.0,
+                fill_rounding: 5.0,
+                border_color: (hex: "#30363F"),
+                background_color: (hex: "#0E1013"),
+                fill_color: (hex: "#BF68D9"),
+                width: -1.0,
+                height: 14.0,
+            )),
+        ),
+
+        (
+            name: "notif_buttonbox",
+            parent: "notif_body",
+            offset: (x: 12, y: 0),
+            hook: (parent_anchor: BL, self_anchor: TL),
+            render_criteria: [ ActionOther(0) ],
+            params: TextBlock((
+                text: "",
+                padding: (left: 0.0, right: 0.0, top: 0.0, bottom: 0.0),
+                font: "JetBrainsMono Nerd Font 11",
+                color: (hex: "#A0A8B7"),
+                dimensions: (
+                    width: (min: 288, max: 288),
+                    height: (min: 38, max: 38),
+                ),
+                dimensions_image_hint: (
+                    width: (min: 221, max: 221),
+                    height: (min: 38, max: 38),
+                ),
+                dimensions_image_app: (
+                    width: (min: 221, max: 221),
+                    height: (min: 38, max: 38),
+                ),
+            )),
+        ),
+
+        (
+            name: "notif_button1",
+            parent: "notif_buttonbox",
+            offset: (x: 0, y: 0),
+            hook: (parent_anchor: TL, self_anchor: TL),
+            render_criteria: [ ActionOther(0) ],
+            params: ButtonBlock((
+                text: "%a",
+                font: "JetBrainsMono Nerd Font 10",
+                action: OtherAction(0),
+                padding: (left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                border_width: 2.0,
+                border_rounding: 0.0,
+                fill_rounding: 0.0,
+                text_color: (hex: "#A0A8B7"),
+                text_color_hovered: (hex: "#FFFFFF"),
+                border_color: (hex: "#30363F"),
+                border_color_hovered: (hex: "#585b70"),
+                background_color: (hex: "#282C34"),
+                fill_color: (hex: "#FFFFFF"),
+                dimensions: (
+                    width:  (min: -1, max: -1),
+                    height: (min: 0, max: 0)
+                ),
+            )),
+        ),
+
+        (
+            name: "notif_button2",
+            parent: "notif_button1",
+            offset: (x: 10, y: 0),
+            hook: (parent_anchor: TR, self_anchor: TL),
+            render_criteria: [ ActionOther(1) ],
+            params: ButtonBlock((
+                text: "%a",
+                font: "JetBrainsMono Nerd Font 10",
+                action: OtherAction(1),
+                padding: (left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                border_width: 2.0,
+                border_rounding: 0.0,
+                fill_rounding: 0.0,
+                text_color: (hex: "#A0A8B7"),
+                text_color_hovered: (hex: "#FFFFFF"),
+                border_color: (hex: "#30363F"),
+                border_color_hovered: (hex: "#585b70"),
+                background_color: (hex: "#282C34"),
+                fill_color: (hex: "#FFFFFF"),
+                dimensions: (
+                    width:  (min: -1, max: -1),
+                    height: (min: 0, max: 0)
+                ),
+            )),
+        ),
+
+        (
+            name: "notif_button3",
+            parent: "notif_button2",
+            offset: (x: 10, y: 0),
+            hook: (parent_anchor: TR, self_anchor: TL),
+            render_criteria: [ ActionOther(2) ],
+            params: ButtonBlock((
+                text: "%a",
+                font: "JetBrainsMono Nerd Font 10",
+                action: OtherAction(2),
+                padding: (left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                border_width: 2.0,
+                border_rounding: 0.0,
+                fill_rounding: 0.0,
+                text_color: (hex: "#A0A8B7"),
+                text_color_hovered: (hex: "#FFFFFF"),
+                border_color: (hex: "#30363F"),
+                border_color_hovered: (hex: "#585b70"),
+                background_color: (hex: "#282C34"),
+                fill_color: (hex: "#FFFFFF"),
+                dimensions: (
+                    width:  (min: -1, max: -1),
+                    height: (min: 0, max: 0)
+                ),
+            )),
+        ),
+    ],
+)

@@ -1,7 +1,19 @@
 { inputs, outputs, lib, config, pkgs, ... }:
 
 {
-  imports = builtins.attrValues outputs.homeManagerModules;
+  imports = builtins.attrValues outputs.homeManagerModules ++ [
+    inputs.wired.homeManagerModules.default
+  ];
+
+  nixpkgs = {
+    overlays = builtins.attrValues outputs.overlays ++ [
+      # inputs.neovim-nightly-overlay.overlay
+      inputs.zig-overlay.overlays.default
+      inputs.wired.overlays.default
+    ];
+
+    config.allowUnfree = true;
+  };
 
   home = {
     username = "reo101";
@@ -13,51 +25,49 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
-    # WM
-    river
+    ## WM
+    river # window manager
+    swww # wallpaper deamon
+    # wired-notify # dunst on wayland
 
-    # Terminals
+    ## Terminals
     wezterm
     foot
 
-    # Core
+    ## Core
     neovim
     git
     firefox
     discord
     vifm
 
-    # Shell
+    ## Shell
     zsh
     starship
     zoxide
+    ripgrep
 
-    # Dhall
+    ## Dhall
     dhall
     dhall-lsp-server
 
-    # Nix
+    ## Nix
     rnix-lsp
     nil
     direnv
 
-    # Torrents
+    ## Torrents
     tremc
 
-    # Zig
+    ## Rust
+    rustc
+    cargo
+
+    ## Zig
     # zigpkgs."0.10.1"
     zigpkgs.master
     # inputs.zls-overlay.packages.x86_64-linux.default
   ];
-
-  nixpkgs = {
-    overlays = [
-      # inputs.neovim-nightly-overlay.overlay
-      inputs.zig-overlay.overlays.default
-    ];
-
-    config.allowUnfree = true;
-  };
 
   # Enable the GPG Agent daemon.
   services.gpg-agent = {
@@ -70,14 +80,36 @@
     enable = true;
     userName = "reo101";
     userEmail = "pavel.atanasov2001@gmail.com";
-    # signing = {
-    #   signByDefault = true;
-    #   key = "0x52F3E1D376F692C0";
-    # };
   };
 
   reo101.shell = {
     enable = true;
+  };
+
+  systemd.user.services."swww" = {
+    Unit = {
+      Description = "Swww Daemon";
+      PartOf = "graphical-session.target";
+    };
+    Service = {
+      ExecStart = "${pkgs.swww}/bin/swww init";
+      ExecStop = "${pkgs.swww}/bin/swww kill";
+      Type = "simple";
+      Restart = "always";
+      RestartSec = 5;
+    };
+    Install = {
+      WantedBy = ["graphical-session.target"];
+    };
+  };
+
+  # services.swww = {
+  #   enabled = true;
+  # };
+
+  services.wired = {
+    enable = true;
+    config = ../configs/wired.ron;
   };
 
   home.file = {
@@ -88,7 +120,7 @@
 
   home.file.".config/river/init" = {
     executable = true;
-    source = ./../river;
+    source = ../configs/river;
   };
 
   # home.file.".stack/config.yaml".text = lib.generators.toYAML {} {
