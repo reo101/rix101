@@ -2,14 +2,13 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ inputs, outputs, config, pkgs, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      inputs.home-manager.nixosModules.home-manager
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   ### Set boot options
   boot = {
@@ -61,14 +60,27 @@
 
   nix = {
     package = pkgs.nixFlakes;
+
+    # Enable flakes, the new `nix` commands and better support for flakes in it
     extraOptions = ''
       experimental-features = nix-command flakes repl-flake
     '';
+
+    # This will add each flake input as a registry
+    # To make nix3 commands consistent with your flake
+    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
+
+    # This will additionally add your inputs to the system's legacy channels
+    # Making legacy nix commands consistent as well, awesome!
+    nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
+
     settings = {
       trusted-users = [
         "root"
         "reo101"
       ];
+
+      # Add nix-community and rix101 cachix caches
       substituters = [
         "https://rix101.cachix.org"
         "https://nix-community.cachix.org"
@@ -80,7 +92,11 @@
     };
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs = {
+    config = {
+      allowUnfree = true;
+    };
+  };
 
   ### NVIDIA
   services.xserver = {
@@ -165,11 +181,13 @@
     useUserPackages = true;
     useGlobalPkgs = false;
 
-    extraSpecialArgs = { inherit inputs outputs; } ;
+    extraSpecialArgs = { inherit inputs outputs; };
   };
 
   ### Enable plymouth (bootscreen customizations)
-  boot.plymouth.enable = true;
+  boot.plymouth = {
+    enable = true;
+  };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -182,19 +200,8 @@
   ];
 
   ### Jellyfin
-  virtualisation.oci-containers.containers."jellyfin" = {
-    autoStart = true;
-    image = "docker.io/jellyfin/jellyfin:latest";
-    volumes = [
-      "/var/cache/jellyfin/config:/config"
-      "/var/cache/jellyfin/cache:/cache"
-      "/var/log/jellyfin:/log"
-      "/media:/media:ro"
-    ];
-    ports = [ "8096:8096" ];
-    environment = {
-      JELLYFIN_LOG_DIR = "/log";
-    };
+  reo101.jellyfin = {
+    enable = true;
   };
 
   ### Transmission

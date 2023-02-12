@@ -1,4 +1,4 @@
-{ inputs, lib, config, pkgs, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -84,12 +84,12 @@
     # neovimRcContent = "";
 
     extraPackages = with pkgs; [
-        tree-sitter
-        rnix-lsp
-        # sumneko-lua-language-server
-        # stylua
-        # texlab
-        # rust-analyzer
+      tree-sitter
+      rnix-lsp
+      # sumneko-lua-language-server
+      # stylua
+      # texlab
+      # rust-analyzer
     ];
   };
 
@@ -279,7 +279,7 @@
       };
 
       custom.local = {
-        shell = ["zsh" "-d" "-f"];
+        shell = [ "zsh" "-d" "-f" ];
         when = ''[[ -z "$SSH_CLIENT" ]] && [[ `whoami` != "root" ]]'';
         format = "[$symbol$output]($style)[@](bold yellow)";
         command = "whoami";
@@ -288,7 +288,7 @@
       };
 
       custom.local_root = {
-        shell = ["zsh" "-d" "-f"];
+        shell = [ "zsh" "-d" "-f" ];
         when = ''[[ -z "$SSH_CLIENT" ]] && [[ `whoami` == "root" ]]'';
         format = "[ $output ]($style)[@](bold yellow)";
         command = "whoami";
@@ -296,7 +296,7 @@
       };
 
       custom.ssh = {
-        shell = ["zsh" "-d" "-f"];
+        shell = [ "zsh" "-d" "-f" ];
         when = ''[[ -n "$SSH_CLIENT" ]] && [[ `whoami` != "root" ]]'';
         format = "[ $symbol$output ]($style)[@](bold yellow)";
         command = "whoami";
@@ -306,7 +306,7 @@
       };
 
       custom.ssh_root = {
-        shell = ["zsh" "-d" "-f"];
+        shell = [ "zsh" "-d" "-f" ];
         when = ''[[ -n "$SSH_CLIENT" ]] && [[ `whoami` == "root" ]]'';
         format = "[ $symbol$output ]($style)[@](bold yellow)";
         command = "whoami";

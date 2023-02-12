@@ -27,6 +27,6 @@ rustPlatform.buildRustPackage rec {
     description = "A Solution to your Wayland Wallpaper Woes";
     homepage = "https://github.com/Horus645/swww";
     license = licenses.gpl3;
-    maintainers = [ maintainers.reo101 ];
+    maintainers = with maintainers; [ reo101 ];
   };
 }

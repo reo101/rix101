@@ -1,6 +1,6 @@
 # Shell for bootstrapping flake-enabled nix and other tooling
+# If pkgs is not defined, instanciate nixpkgs from locked commit
 { pkgs ?
-  # If pkgs is not defined, instanciate nixpkgs from locked commit
   (import ./nixpkgs.nix) { }
 , ...
 }: {

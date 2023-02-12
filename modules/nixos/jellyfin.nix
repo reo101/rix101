@@ -1,60 +1,61 @@
-{ config, nixpkgs, ... }:
+{ lib, pkgs, config, ... }:
 
-### Jellyfin
-# nixpkgs.config.packageOverrides = pkgs: {
-#   arc = import (builtins.fetchTarball {
-#     url = "https://github.com/arcnmx/nixexprs/archive/1a2ca1935e243383dfc8dc89f88f55678d33fcd4.tar.gz";
-#     sha256 = "sha256:0zjy3916sxxk7ds763dmmbzfdc46wdlw10m5dg6kkpqi2i81109f";
-#   }) {
-#     inherit pkgs;
-#   };
-#   vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
-# };
-
-# hardware.nvidia.package = pkgs.arc.packages.nvidia-patch.override {
-#   nvidia_x11 = config.boot.kernelPackages.nvidiaPackages.stable;
-# };
-
-# hardware.opengl = {
-#   enable = true;
-#   extraPackages = with pkgs; [
-#     intel-media-driver
-#     vaapiIntel
-#     vaapiVdpau
-#     libvdpau-va-gl
-#     intel-compute-runtime # OpenCL filter support (hardware tonemapping and subtitle burn-in)
-#   ];
-# };
-
-virtualisation.oci-containers.containers."jellyfin" = {
-  autoStart = true;
-  image = "docker.io/jellyfin/jellyfin:latest";
-  volumes = [
-    "/var/cache/jellyfin/config:/config"
-    "/var/cache/jellyfin/cache:/cache"
-    "/var/log/jellyfin:/log"
-    "/media:/media:ro"
+with lib;
+let
+  cfg = config.reo101.jellyfin;
+in
+{
+  imports = [
   ];
-  ports = [ "8096:8096" ];
-  environment = {
-    JELLYFIN_LOG_DIR = "/log";
+
+  options = {
+    reo101.jellyfin = {
+      enable = mkEnableOption "reo101 Jellyfin config";
+      image = mkOption {
+        type = types.strMatching ".+/.+:.+";
+        default = "docker.io/jellyfin/jellyfin:latest";
+        defaultText = "docker.io/jellyfin/jellyfin:latest";
+        description = ''
+          The Docker image for Jellyfin
+        '';
+      };
+      volumes = mkOption {
+        type = types.listOf (types.strMatching ".+:.+");
+        default = [
+          "/var/cache/jellyfin/config:/config"
+          "/var/cache/jellyfin/cache:/cache"
+          "/var/log/jellyfin:/log"
+          "/media:/media:ro"
+        ];
+        description = ''
+          The volumes the Jellyfin container should bind to
+        '';
+      };
+      ports = mkOption {
+        type = types.listOf (types.strMatching ".+:.+");
+        default = [
+          "8096:8096"
+        ];
+        description = ''
+          The ports the Jellyfin container should bind to
+        '';
+      };
+    };
   };
-};
 
-## services.jellyfin.enable = true;
+  config = mkIf cfg.enable {
+    virtualisation.oci-containers.containers."jellyfin" = {
+      autoStart = true;
+      image = cfg.image;
+      volumes = cfg.volumes;
+      ports = cfg.ports;
+      environment = {
+        JELLYFIN_LOG_DIR = "/log";
+      };
+    };
+  };
 
-## systemd.services."jellyfin".serviceConfig = {
-##   DeviceAllow = pkgs.lib.mkForce [
-##     "char-drm rw"
-##     "char-nvidia-frontend rw"
-##     "char-nvidia-uvm rw"
-##   ];
-##   PrivateDevices = pkgs.lib.mkForce true;
-##   RestrictAddressFamilies = pkgs.lib.mkForce [
-##     "AF_UNIX"
-##     "AF_NETLINK"
-##     "AF_INET"
-##     "AF_INET6"
-##   ];
-## };
-
+  meta = {
+    maintainers = with lib.maintainers; [ reo101 ];
+  };
+}

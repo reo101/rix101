@@ -1,7 +1,7 @@
-{ inputs, outputs, lib, config, pkgs, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 
 {
-  environment.packages = with pkgs; [];
+  environment.packages = with pkgs; [ ];
 
   # Backup etc files instead of failing to activate generation if a file already exists in /etc
   environment.etcBackupExtension = ".bak";
@@ -30,7 +30,7 @@
       };
       fontPath = "share/fonts/truetype/NerdFonts/Fira Code Regular Nerd Font Complete Mono.ttf";
     in
-      "${firacode}/${fontPath}";
+    "${firacode}/${fontPath}";
 
   home-manager = {
     config = ./home.nix;

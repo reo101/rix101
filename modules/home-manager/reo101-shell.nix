@@ -1,8 +1,10 @@
 { lib, pkgs, config, ... }:
+
 with lib;
 let
   cfg = config.reo101.shell;
-in {
+in
+{
   imports = [
   ];
 
@@ -15,10 +17,10 @@ in {
 
   config = mkIf cfg.enable {
     home.packages = with pkgs; [
-      # Shell
       zsh
       starship
       zoxide
+      direnv
     ];
 
     programs.zsh = {
@@ -216,7 +218,7 @@ in {
         };
 
         custom.local = {
-          shell = ["zsh" "-d" "-f"];
+          shell = [ "zsh" "-d" "-f" ];
           when = ''[[ -z "$SSH_CLIENT" ]] && [[ `whoami` != "root" ]]'';
           format = "[$symbol$output]($style)[@](bold yellow)";
           command = "whoami";
@@ -225,7 +227,7 @@ in {
         };
 
         custom.local_root = {
-          shell = ["zsh" "-d" "-f"];
+          shell = [ "zsh" "-d" "-f" ];
           when = ''[[ -z "$SSH_CLIENT" ]] && [[ `whoami` == "root" ]]'';
           format = "[ $output ]($style)[@](bold yellow)";
           command = "whoami";
@@ -233,7 +235,7 @@ in {
         };
 
         custom.ssh = {
-          shell = ["zsh" "-d" "-f"];
+          shell = [ "zsh" "-d" "-f" ];
           when = ''[[ -n "$SSH_CLIENT" ]] && [[ `whoami` != "root" ]]'';
           format = "[ $symbol$output ]($style)[@](bold yellow)";
           command = "whoami";
@@ -243,7 +245,7 @@ in {
         };
 
         custom.ssh_root = {
-          shell = ["zsh" "-d" "-f"];
+          shell = [ "zsh" "-d" "-f" ];
           when = ''[[ -n "$SSH_CLIENT" ]] && [[ `whoami` == "root" ]]'';
           format = "[ $symbol$output ]($style)[@](bold yellow)";
           command = "whoami";
@@ -252,5 +254,9 @@ in {
         };
       };
     };
+  };
+
+  meta = {
+    maintainers = with lib.maintainers; [ reo101 ];
   };
 }

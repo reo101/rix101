@@ -9,8 +9,8 @@ rec {
     mapAttrs
       (file: type:
         if type == "directory"
-          then recurseDir "${dir}/${file}"
-          else type
+        then recurseDir "${dir}/${file}"
+        else type
       )
       (builtins.readDir dir);
 

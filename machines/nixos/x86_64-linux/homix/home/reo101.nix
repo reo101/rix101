@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, config, pkgs, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 
 {
   imports = builtins.attrValues outputs.homeManagerModules ++ [
@@ -7,7 +7,7 @@
 
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays ++ [
-      # inputs.neovim-nightly-overlay.overlay
+      inputs.neovim-nightly-overlay.overlay
       inputs.zig-overlay.overlays.default
       inputs.wired.overlays.default
     ];
@@ -29,6 +29,7 @@
     river # window manager
     swww # wallpaper deamon
     # wired-notify # dunst on wayland
+    waybar # status bar
 
     ## Terminals
     wezterm
@@ -99,7 +100,7 @@
       RestartSec = 5;
     };
     Install = {
-      WantedBy = ["graphical-session.target"];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 

@@ -64,8 +64,8 @@
     , nix-on-droid
     , nix-darwin
     , home-manager
-    # , hardware
-    # , nix-colors
+      # , hardware
+      # , nix-colors
     , neovim-nightly-overlay
     , zig-overlay
     , zls-overlay
@@ -93,7 +93,7 @@
       );
 
       # Apps (`nix run`)
-      apps = {};
+      apps = { };
 
       # Dev Shells (`nix develop`)
       devShells = forEachPkgs (pkgs:
@@ -119,13 +119,13 @@
 
       # Machines
       machines = recurseDir ./machines;
-      homeManagerMachines = machines.home-manager or {};
-      nixDarwinMachines = machines.nix-darwin or {};
-      nixOnDroidMachines = machines.nix-on-droid or {};
-      nixosMachines = machines.nixos or {};
+      homeManagerMachines = machines.home-manager or { };
+      nixDarwinMachines = machines.nix-darwin or { };
+      nixOnDroidMachines = machines.nix-on-droid or { };
+      nixosMachines = machines.nixos or { };
 
       # mkHost helpers
-      mkNixosHost = system: hostname: users: nixpkgs.lib.nixosSystem {
+      mkNixosHost = system: hostname: users: lib.nixosSystem {
         inherit system;
 
         modules = [
@@ -135,7 +135,7 @@
             home-manager = {
               useGlobalPkgs = false;
               useUserPackages = true;
-              users = nixpkgs.lib.attrsets.genAttrs
+              users = lib.attrsets.genAttrs
                 users
                 (user: import ./machines/nixos/${system}/${hostname}/home/${user}.nix);
 
@@ -183,7 +183,7 @@
             home-manager = {
               useGlobalPkgs = false;
               useUserPackages = true;
-              users = nixpkgs.lib.attrsets.genAttrs
+              users = lib.attrsets.genAttrs
                 users
                 (user: import ./machines/nix-darwin/${system}/${hostname}/home/${user}.nix);
 
@@ -208,21 +208,21 @@
 
       createConfigurations =
         pred: mkHost: machines:
-          nixpkgs.lib.foldAttrs
-            (acc: x: acc)
-            []
-            (builtins.attrValues
-              (builtins.mapAttrs
-                (system: hosts:
-                  nixpkgs.lib.attrsets.filterAttrs
-                    (host: config: config != null)
-                    (builtins.mapAttrs
-                      (host: config:
-                        if (pred system host config)
-                          then mkHost system host config
-                          else null)
-                      hosts))
-                machines));
+        lib.foldAttrs
+          (acc: x: acc)
+          [ ]
+          (builtins.attrValues
+            (builtins.mapAttrs
+              (system: hosts:
+              lib.attrsets.filterAttrs
+                (host: config: config != null)
+                (builtins.mapAttrs
+                  (host: config:
+                  if (pred system host config)
+                  then mkHost system host config
+                  else null)
+                  hosts))
+              machines));
 
       # Final configurations
       nixosConfigurations =
@@ -236,8 +236,8 @@
               system
               host
               (builtins.map
-                (nixpkgs.lib.strings.removeSuffix ".nix")
-                (builtins.attrNames (config."home" or {}))))
+                (lib.strings.removeSuffix ".nix")
+                (builtins.attrNames (config."home" or { }))))
           nixosMachines;
 
       nixOnDroidConfigurations =
@@ -263,8 +263,8 @@
               system
               host
               (builtins.map
-                (nixpkgs.lib.strings.removeSuffix ".nix")
-                (builtins.attrNames (config."home" or {}))))
+                (lib.strings.removeSuffix ".nix")
+                (builtins.attrNames (config."home" or { }))))
           nixDarwinMachines;
 
       homeConfigurations =
