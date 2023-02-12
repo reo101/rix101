@@ -74,9 +74,10 @@
     } @ inputs:
     let
       inherit (self) outputs;
-      helpers = (import ./lib/helpers.nix) { lib = nixpkgs.lib; };
+      inherit (nixpkgs) lib;
+      helpers = (import ./lib/helpers.nix) { inherit lib; };
       inherit (helpers) recurseDir hasFiles hasDirectories;
-      forEachSystem = nixpkgs.lib.genAttrs [
+      forEachSystem = lib.genAttrs [
         "aarch64-linux"
         "i686-linux"
         "x86_64-linux"
@@ -93,7 +94,6 @@
 
       # Apps (`nix run`)
       apps = {};
-      apps.default = null;
 
       # Dev Shells (`nix develop`)
       devShells = forEachPkgs (pkgs:
