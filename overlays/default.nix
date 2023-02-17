@@ -11,5 +11,8 @@
     # example = prev.example.overrideAttrs (oldAttrs: rec {
     # ...
     # });
+    river = prev.river.overrideAttrs (oldAttrs: rec {
+      xwaylandSupport = true;
+    });
   };
 }
