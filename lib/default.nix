@@ -1,7 +1,8 @@
-{ inputs, outputs, lib, ... }:
+{ inputs, outputs, ... }:
 
 let
   inherit (inputs) nixpkgs;
+  inherit (nixpkgs) lib;
   inherit (lib) mapAttrs;
   inherit (lib.attrsets) filterAttrs;
 in
@@ -51,13 +52,13 @@ rec {
         f nixpkgs.legacyPackages.${system});
 
   # Modules
-  nixosModules = import ./modules/nixos;
-  nixOnDroidModules = import ./modules/nix-on-droid;
-  nixDarwinModules = import ./modules/nix-darwin;
-  homeManagerModules = import ./modules/home-manager;
+  nixosModules = import ../modules/nixos;
+  nixOnDroidModules = import ../modules/nix-on-droid;
+  nixDarwinModules = import ../modules/nix-darwin;
+  homeManagerModules = import ../modules/home-manager;
 
   # Machines
-  machines = recurseDir ./machines;
+  machines = recurseDir ../machines;
   homeManagerMachines = machines.home-manager or { };
   nixDarwinMachines = machines.nix-darwin or { };
   nixOnDroidMachines = machines.nix-on-droid or { };
@@ -77,7 +78,7 @@ rec {
           users = lib.attrsets.genAttrs
             users
             (user: import (root + "/home/${user}.nix"));
-
+          sharedModules = builtins.attrValues homeManagerModules;
           extraSpecialArgs = {
             inherit inputs outputs;
           };
@@ -171,7 +172,7 @@ rec {
           config)
       (system: host: config:
         mkNixosHost
-          ./machines/nixos/${system}/${host}
+          ../machines/nixos/${system}/${host}
           system
           host
           (builtins.map
@@ -187,7 +188,7 @@ rec {
           config)
       (system: host: config:
         mkNixOnDroidHost
-          ./machines/nix-on-droid/${system}/${host}
+          ../machines/nix-on-droid/${system}/${host}
           system
           host)
       nixOnDroidMachines;
@@ -200,7 +201,7 @@ rec {
           config)
       (system: host: config:
         mkNixDarwinHost
-          ./machines/nix-darwin/${system}/${host}
+          ../machines/nix-darwin/${system}/${host}
           system
           host
           (builtins.map
@@ -216,7 +217,7 @@ rec {
           config)
       (system: host: config:
         mkHomeManagerHost
-          ./machines/home-manager/${system}/${host}
+          ../machines/home-manager/${system}/${host}
           system
           host)
       homeManagerMachines;

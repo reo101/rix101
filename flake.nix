@@ -74,10 +74,8 @@
     } @ inputs:
     let
       inherit (self) outputs;
-      inherit (nixpkgs) lib;
-      helpers = import ./helpers.nix { inherit inputs outputs lib; };
     in
-    with helpers; rec {
+    with (import ./lib { inherit inputs outputs; }); rec {
       # Packages (`nix build`)
       packages = forEachPkgs (pkgs:
         import ./pkgs { inherit pkgs; }
