@@ -18,7 +18,9 @@
   system.stateVersion = "22.11";
 
   nix.extraOptions = ''
-    experimental-features = nix-command flakes
+    experimental-features = nix-command flakes repl-flake
+    keep-outputs = true
+    keep-derivations = true
   '';
 
   time.timeZone = "Europe/Sofia";
@@ -31,12 +33,4 @@
       fontPath = "share/fonts/truetype/NerdFonts/Fira Code Regular Nerd Font Complete Mono.ttf";
     in
     "${firacode}/${fontPath}";
-
-  home-manager = {
-    config = ./home.nix;
-    backupFileExtension = "hm-bak";
-    # useGlobalPkgs = true;
-
-    extraSpecialArgs = { inherit inputs; };
-  };
 }

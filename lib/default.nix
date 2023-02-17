@@ -103,6 +103,16 @@ rec {
     modules = [
       (root + "/configuration.nix")
       { nix.registry.nixpkgs.flake = nixpkgs; }
+      {
+        home-manager = {
+          config = (root + "/home.nix");
+          backupFileExtension = "hm-bak";
+          useGlobalPkgs = false;
+          useUserPackages = true;
+          sharedModules = builtins.attrValues homeManagerModules;
+          extraSpecialArgs = { inherit inputs; };
+        };
+      }
     ] ++ (builtins.attrValues nixOnDroidModules);
 
     extraSpecialArgs = {
