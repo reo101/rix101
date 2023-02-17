@@ -119,6 +119,7 @@
     "WLR_NO_HARDWARE_CURSORS" = "1";
     "MOZ_DISABLE_RDD_SANDBOX" = "1";
     "EGL_PLATFORM" = "wayland";
+    "XDG_CURRENT_DESKTOP" = "sway"; # river
   };
 
   ### Wayland specific
@@ -135,6 +136,11 @@
       };
     };
   };
+
+  # Enable desktop portal
+  xdg.portal.extraPortals = [
+    pkgs.xdg-desktop-portal-gtk
+  ];
 
   ## X11 specific
   services.xserver = {
@@ -164,7 +170,10 @@
       enable = true;
     };
   };
-  services.dbus.enable = true;
+  services.dbus = {
+    enable = true;
+    packages = [ pkgs.dconf ];
+  };
 
   ### Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -194,6 +203,7 @@
   environment.systemPackages = with pkgs; [
     river
     xdg-desktop-portal
+    xdg-desktop-portal-wlr
     neovim
     wget
     git

@@ -155,4 +155,6 @@ wireplumber &
 
 waybar &
 
+riverctl float-filter-add "flameshot"
+
 exec rivertile -view-padding 6 -outer-padding 6

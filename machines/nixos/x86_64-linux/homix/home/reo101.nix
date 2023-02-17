@@ -26,10 +26,14 @@
 
   home.packages = with pkgs; [
     ## WM
-    river # window manager
+    river
     swww # wallpaper deamon
     # wired-notify # dunst on wayland
     waybar # status bar
+    xwayland
+    wl-clipboard
+    slurp # select regions from wayland
+    grim # grap images from regions
 
     ## Terminals
     wezterm
