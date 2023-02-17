@@ -4,7 +4,6 @@
   inputs = {
     # Nixpkgs
     nixpkgs = {
-      # url = "github:nixos/nixpkgs/nixos-22.05";
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
@@ -28,13 +27,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # hardware = {
-    #   url = "github:nixos/nixos-hardware";
-    # };
+    hardware = {
+      url = "github:nixos/nixos-hardware";
+    };
 
-    # nix-colors = {
-    #   url = "github:misterio77/nix-colors";
-    # };
+    nix-colors = {
+      url = "github:misterio77/nix-colors";
+    };
 
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
@@ -64,8 +63,8 @@
     , nix-on-droid
     , nix-darwin
     , home-manager
-      # , hardware
-      # , nix-colors
+    , hardware
+    , nix-colors
     , neovim-nightly-overlay
     , zig-overlay
     , zls-overlay
