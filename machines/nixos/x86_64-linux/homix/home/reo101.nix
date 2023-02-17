@@ -36,7 +36,7 @@
     grim # grap images from regions
 
     ## Terminals
-    wezterm
+    # wezterm
     foot
 
     ## Core
@@ -44,7 +44,9 @@
     git
     firefox
     discord
-    vifm
+    vifm # file editor
+    pciutils # lspci
+    usbutils # lsusb
 
     ## Shell
     # zsh
