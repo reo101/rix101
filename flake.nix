@@ -86,7 +86,7 @@
 
       # Dev Shells (`nix develop`)
       devShells = forEachPkgs (pkgs:
-        import ./shell.nix { inherit pkgs; }
+        import ./shells { inherit pkgs; }
       );
 
       # Formatter
