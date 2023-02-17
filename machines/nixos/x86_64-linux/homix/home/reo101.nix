@@ -1,7 +1,7 @@
 { inputs, outputs, lib, pkgs, config, ... }:
 
 {
-  imports = builtins.attrValues outputs.homeManagerModules ++ [
+  imports = [
     inputs.wired.homeManagerModules.default
   ];
 
@@ -47,9 +47,9 @@
     vifm
 
     ## Shell
-    zsh
-    starship
-    zoxide
+    # zsh
+    # starship
+    # zoxide
     ripgrep
 
     ## Dhall
@@ -89,6 +89,8 @@
 
   reo101.shell = {
     enable = true;
+    direnv = true;
+    zoxide = true;
   };
 
   systemd.user.services."swww" = {
