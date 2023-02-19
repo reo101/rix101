@@ -81,7 +81,9 @@
       );
 
       # Apps (`nix run`)
-      apps = { };
+      apps = forEachPkgs (pkgs:
+        import ./apps { inherit pkgs; }
+      );
 
       # Dev Shells (`nix develop`)
       devShells = forEachPkgs (pkgs:
