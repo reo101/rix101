@@ -130,7 +130,7 @@ in
 
           # Use custom format
           format = ''
-            [╭───────┨](bold green)[reo101](bright-white)[@](bold yellow)$hostname[┠───────>](bold green)$status$cmd_duration$git_branch$git_status$git_state$git_commit
+            [╭───────┨](bold green)[${cfg.username}](bright-white)[@](bold yellow)$hostname[┠───────>](bold green)$status$cmd_duration$git_branch$git_status$git_state$git_commit
             [│](bold green)$time$jobs: $directory$package
             [╰─](bold green)$character
           '';
