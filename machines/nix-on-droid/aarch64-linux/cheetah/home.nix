@@ -102,6 +102,7 @@
 
   reo101.shell = {
     enable = true;
+    username = "reo101";
     direnv = true;
     zoxide = true;
   };
