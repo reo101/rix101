@@ -14,7 +14,6 @@ jobs:
       with:
         name: rix101
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: nix flake check -vL
     # - run: nix build
-    - run: nix flake check
-    - run: nix-build
-    - run: nix-shell -run "echo OK"
+    # - run: nix-shell --run "echo OK"
