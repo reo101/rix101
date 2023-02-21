@@ -98,6 +98,9 @@
     };
   };
 
+  ### Fonts
+  fonts.fontconfig.enable = true;
+
   ### NVIDIA
   services.xserver = {
     videoDrivers = [ "nvidia" ];

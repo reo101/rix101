@@ -89,10 +89,15 @@
     userEmail = "pavel.atanasov2001@gmail.com";
   };
 
-  reo101.shell = {
-    enable = true;
-    direnv = true;
-    zoxide = true;
+  reo101 =  {
+    shell = {
+      enable = true;
+      direnv = true;
+      zoxide = true;
+    };
+    wezterm = {
+      enable = true;
+    };
   };
 
   systemd.user.services."swww" = {

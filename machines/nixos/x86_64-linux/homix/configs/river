@@ -1,7 +1,10 @@
 #!/usr/bin/env sh
 
-# Super+Return to start an instance of foot (https://codeberg.org/dnkl/foot)
-riverctl map normal Super Return spawn foot
+# # Super+Return to start an instance of foot (https://codeberg.org/dnkl/foot)
+# riverctl map normal Super Return spawn foot
+
+# Super+Return to start an instance of wezterm
+riverctl map normal Super Return spawn wezterm
 
 # Super+Q to close the focused view
 riverctl map normal Super Q close
