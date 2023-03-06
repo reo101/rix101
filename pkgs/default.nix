@@ -6,4 +6,5 @@
 }: {
   # example = pkgs.callPackage ./example { };
   swww = pkgs.callPackage ./swww { };
+  vim-fmi = pkgs.callPackage ./vim-fmi { };
 }

@@ -70,6 +70,9 @@
     rustc
     cargo
 
+    ## Vim FMI
+    vim-fmi
+
     ## Zig
     # zigpkgs."0.10.1"
     zigpkgs.master
