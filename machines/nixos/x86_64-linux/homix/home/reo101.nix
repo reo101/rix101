@@ -48,6 +48,7 @@
     vifm # file editor
     pciutils # lspci
     usbutils # lsusb
+    (uutils-coreutils.override { prefix = ""; }) # coreutils in rust
 
     ## Shell
     # zsh
@@ -70,6 +71,10 @@
     ## Rust
     rustc
     cargo
+    rust-analyzer
+    clang
+    openssl
+    pkg-config
 
     ## Vim FMI
     vim-fmi

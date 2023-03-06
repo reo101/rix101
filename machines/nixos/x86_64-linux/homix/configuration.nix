@@ -59,7 +59,7 @@
   # };
 
   nix = {
-    package = pkgs.nixFlakes;
+    package = pkgs.nixUnstable;
 
     # Enable flakes, the new `nix` commands and better support for flakes in it
     extraOptions = ''
@@ -182,11 +182,14 @@
   ### Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  # Virtualisation
+  virtualisation.docker.enable = true;
+
   ### Define a user account. Don't forget to set a password with `passwd`.
   users.users.reo101 = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "docker" ];
   };
 
   home-manager = {
