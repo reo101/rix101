@@ -143,6 +143,7 @@
   # Enable desktop portal
   xdg.portal.extraPortals = [
     pkgs.xdg-desktop-portal-gtk
+    pkgs.xdg-desktop-portal-wlr
   ];
 
   ## X11 specific

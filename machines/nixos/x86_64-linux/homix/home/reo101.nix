@@ -34,6 +34,7 @@
     wl-clipboard
     slurp # select regions from wayland
     grim # grap images from regions
+    playerctl # music control
 
     ## Terminals
     # wezterm

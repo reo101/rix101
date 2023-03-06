@@ -1,16 +1,19 @@
 #!/usr/bin/env sh
 
-# # Super+Return to start an instance of foot (https://codeberg.org/dnkl/foot)
-# riverctl map normal Super Return spawn foot
+# Super+Return to start an instance of foot (https://codeberg.org/dnkl/foot)
+riverctl map normal Super Return spawn foot
 
-# Super+Return to start an instance of wezterm
-riverctl map normal Super Return spawn wezterm
+# # Super+Return to start an instance of wezterm
+# riverctl map normal Super Return spawn wezterm
 
 # Super+Q to close the focused view
 riverctl map normal Super Q close
 
 # Super+Shift+Q to exit river
 riverctl map normal Super+Shift Q exit
+
+# Super+F11 to screenshot
+riverctl map normal Super F11 spawn 'grim -g "$(slurp)" - | wl-copy'
 
 # export PATH="${HOME}/.local/bin:${PATH}"
 riverctl map normal Super D PATH="${HOME}/.local/bin:${PATH}" dmenu_run
@@ -153,11 +156,14 @@ riverctl csd-filter-add app-id "tapy"
 # River will send the process group of the init executable SIGTERM on exit.
 riverctl default-layout rivertile
 
-pipewire &
-wireplumber &
-
-waybar &
-
 riverctl float-filter-add "flameshot"
 
+riverctl spawn "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=river"
+riverctl spawn "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=river"
+
+pipewire &
+wireplumber &
+waybar &
+
 exec rivertile -view-padding 6 -outer-padding 6
+# exec dbus-update-activation-environment WAYLAND_DISPLAY
