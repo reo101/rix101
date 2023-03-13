@@ -17,7 +17,7 @@ in
           type = types.str;
           description = "Extra zsh config";
           default = ''
-        '';
+          '';
         };
       };
     };

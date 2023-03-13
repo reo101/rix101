@@ -26,15 +26,15 @@
 
   home.packages = with pkgs; [
     ## WM
-    river
-    swww # wallpaper deamon
-    # wired-notify # dunst on wayland
-    waybar # status bar
-    xwayland
-    wl-clipboard
-    slurp # select regions from wayland
-    grim # grap images from regions
-    playerctl # music control
+    # river
+    # swww # wallpaper deamon
+    # # wired-notify # dunst on wayland
+    # waybar # status bar
+    # xwayland
+    # wl-clipboard
+    # slurp # select regions from wayland
+    # grim # grap images from regions
+    # playerctl # music control
 
     ## Terminals
     # wezterm
@@ -45,6 +45,7 @@
     git
     firefox
     discord
+    armcord # modded discord
     vifm # file editor
     pciutils # lspci
     usbutils # lsusb
@@ -98,52 +99,24 @@
     userEmail = "pavel.atanasov2001@gmail.com";
   };
 
-  reo101 =  {
+  reo101 = {
     shell = {
       enable = true;
       direnv = true;
       zoxide = true;
+    };
+    river = {
+      enable = true;
     };
     wezterm = {
       enable = true;
     };
   };
 
-  systemd.user.services."swww" = {
-    Unit = {
-      Description = "Swww Daemon";
-      PartOf = "graphical-session.target";
-    };
-    Service = {
-      ExecStart = "${pkgs.swww}/bin/swww init";
-      ExecStop = "${pkgs.swww}/bin/swww kill";
-      Type = "simple";
-      Restart = "always";
-      RestartSec = 5;
-    };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
-  };
-
-  # services.swww = {
-  #   enabled = true;
-  # };
-
-  services.wired = {
-    enable = true;
-    config = ../configs/wired.ron;
-  };
-
   home.file = {
     ".config/nvim" = {
       source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.local/src/reovim";
     };
-  };
-
-  home.file.".config/river/init" = {
-    executable = true;
-    source = ../configs/river;
   };
 
   # home.file.".stack/config.yaml".text = lib.generators.toYAML {} {
@@ -157,5 +130,4 @@
   #   };
   #   nix.enable = true;
   # };
-
 }

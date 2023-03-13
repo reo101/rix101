@@ -123,6 +123,9 @@
     "MOZ_DISABLE_RDD_SANDBOX" = "1";
     "EGL_PLATFORM" = "wayland";
     "XDG_CURRENT_DESKTOP" = "sway"; # river
+    "XKB_DEFAULT_LAYOUT" = "us,bg";
+    "XKB_DEFAULT_VARIANT" = ",phonetic";
+    "XKB_DEFAULT_OPTIONS" = "caps:escape,grp:lalt_lshift_toggle";
   };
 
   ### Wayland specific
