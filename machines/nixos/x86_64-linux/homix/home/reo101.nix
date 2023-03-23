@@ -42,7 +42,9 @@
 
     ## Core
     neovim
+    fennel-language-server
     git
+    gnupg
     firefox
     discord
     armcord # modded discord
@@ -78,7 +80,7 @@
     pkg-config
 
     ## Vim FMI
-    vim-fmi
+    vim-fmi-cli
 
     ## Zig
     # zigpkgs."0.10.1"
