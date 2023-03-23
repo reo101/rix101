@@ -45,6 +45,14 @@ in
         source = ./river;
       };
 
+      home.file.".config/waybar/config" = {
+        source = ./waybar;
+      };
+
+      home.file.".config/waybar/style.css" = {
+        source = ./style.css;
+      };
+
       systemd.user.services."swww" = {
         Unit = {
           Description = "swww Daemon";

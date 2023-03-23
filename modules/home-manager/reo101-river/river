@@ -13,7 +13,7 @@ riverctl map normal Super Q close
 riverctl map normal Super+Shift Q exit
 
 # Super+F11 to screenshot
-riverctl map normal Super F11 spawn 'grim -g "$(slurp)" - | wl-copy'
+riverctl map normal Super F10 spawn 'grim -g "$(slurp)" - | wl-copy'
 
 # export PATH="${HOME}/.local/bin:${PATH}"
 riverctl map normal Super D PATH="${HOME}/.local/bin:${PATH}" dmenu_run
@@ -161,9 +161,18 @@ riverctl float-filter-add "flameshot"
 riverctl spawn "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=river"
 riverctl spawn "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=river"
 
+# Start audio server and manager
 pipewire &
 wireplumber &
+
+# Start statusbar
 waybar &
 
+# Set wallpaper
+{
+    swww init
+    local last_bg = "${HOME}/Wallpapers/last"
+    [ -f "${last_bg}" ] && swww img "${last_bg}"
+}
+
 exec rivertile -view-padding 6 -outer-padding 6
-# exec dbus-update-activation-environment WAYLAND_DISPLAY
