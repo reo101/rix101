@@ -27,6 +27,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Nix User Repository
+    nur = {
+      url = "github:nix-community/NUR";
+    };
+
     hardware = {
       url = "github:nixos/nixos-hardware";
     };

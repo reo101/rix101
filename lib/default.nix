@@ -71,6 +71,7 @@ rec {
     modules = [
       (root + "/configuration.nix")
       inputs.home-manager.nixosModules.home-manager
+      inputs.nur.nixosModules.nur
       {
         home-manager = {
           useGlobalPkgs = false;

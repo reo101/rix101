@@ -475,6 +475,21 @@
         "type": "gitlab"
       }
     },
+    "nur": {
+      "locked": {
+        "lastModified": 1679168785,
+        "narHash": "sha256-DQ79Ih7qhXdoePmLtf1pXVc+JZwpm+SVBkpsPkY8Y9k=",
+        "owner": "nix-community",
+        "repo": "NUR",
+        "rev": "04277085ab26a094f5eee2c0303e473bd1bc2ee0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "NUR",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "hardware": "hardware",
@@ -484,6 +499,7 @@
         "nix-darwin": "nix-darwin",
         "nix-on-droid": "nix-on-droid",
         "nixpkgs": "nixpkgs",
+        "nur": "nur",
         "wired": "wired",
         "zig-overlay": "zig-overlay",
         "zls-overlay": "zls-overlay"
