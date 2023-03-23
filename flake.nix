@@ -100,7 +100,7 @@
       );
 
       # Templates
-      templates = import ./templates;
+      templates = import ./templates { inherit inputs outputs; };
 
       # Overlays
       overlays = import ./overlays { inherit inputs outputs; };
