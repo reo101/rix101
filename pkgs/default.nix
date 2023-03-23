@@ -5,6 +5,8 @@
 , ...
 }: {
   # example = pkgs.callPackage ./example { };
+  fennel-language-server = pkgs.callPackage ./fennel-language-server { };
+  parinfer-rust = pkgs.callPackage ./parinfer-rust { };
   swww = pkgs.callPackage ./swww { };
-  vim-fmi = pkgs.callPackage ./vim-fmi { };
+  vim-fmi-cli = pkgs.callPackage ./vim-fmi-cli { };
 }

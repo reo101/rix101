@@ -1,17 +1,17 @@
 { lib, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
 
 rustPlatform.buildRustPackage rec {
-  pname = "vim-fmi-cli";
-  version = "8a405efc988473a6e9f2ab3016ad1535692efbae";
+  pname = "parinfer-rust";
+  version = "4d4f4c6c0d3b44c8443f3102bfadfb67dfb385f7";
 
   src = fetchFromGitHub {
-    owner = "AndrewRadev";
+    owner = "eraserhd";
     repo = pname;
     rev = version;
-    sha256 = "sha256-V+R+B9UR9qHeXaqeEaAD2ngVOZV07LoB36ilVhTpdog=";
+    sha256 = lib.fakeSha256;
   };
 
-  cargoSha256 = "sha256-FRU1JieyxJ2joENueKJqGW1jbiMWLbOL03gqXL9k73o=";
+  cargoSha256 = lib.fakeSha256;
 
   nativeBuildInputs = [
     pkg-config
@@ -25,9 +25,9 @@ rustPlatform.buildRustPackage rec {
   doCheck = false;
 
   meta = with lib; {
-    description = " The command-line tool for https://www.vim-fmi.bg";
-    homepage = "https://github.com/AndrewRadev/vim-fmi-cli";
-    license = licenses.mit;
+    description = "A Rust port of parinfer.";
+    homepage = "https://github.com/eraserhd/parinfer-rust";
+    license = licenses.isc;
     maintainers = with maintainers; [ reo101 ];
   };
 }
