@@ -23,7 +23,7 @@
 
     # Home Manager
     home-manager = {
-      url = "github:nix-community/home-manager/release-22.11";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -77,8 +77,9 @@
     } @ inputs:
     let
       inherit (self) outputs;
+      util = import ./util { inherit inputs outputs; };
     in
-    with (import ./lib { inherit inputs outputs; }); rec {
+    with util; rec {
       # Packages (`nix build`)
       packages = forEachPkgs (pkgs:
         import ./pkgs { inherit pkgs; }

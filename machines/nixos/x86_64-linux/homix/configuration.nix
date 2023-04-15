@@ -28,7 +28,9 @@
     };
 
     # Clean temporary directory on boot
-    cleanTmpDir = true;
+    tmp = {
+      cleanOnBoot = true;
+    };
 
     # Enable support for nfs and ntfs
     supportedFilesystems = [
@@ -121,11 +123,13 @@
     "__GLX_VENDOR_LIBRARY_NAME" = "nvidia";
     "WLR_NO_HARDWARE_CURSORS" = "1";
     "MOZ_DISABLE_RDD_SANDBOX" = "1";
+    "MOZ_ENABLE_WAYLAND" = "1";
     "EGL_PLATFORM" = "wayland";
     "XDG_CURRENT_DESKTOP" = "sway"; # river
     "XKB_DEFAULT_LAYOUT" = "us,bg";
     "XKB_DEFAULT_VARIANT" = ",phonetic";
     "XKB_DEFAULT_OPTIONS" = "caps:escape,grp:lalt_lshift_toggle";
+    # "WLR_RENDERER" = "vulkan"; # BUG: river crashes
   };
 
   ### Wayland specific
@@ -144,10 +148,16 @@
   };
 
   # Enable desktop portal
-  xdg.portal.extraPortals = [
-    pkgs.xdg-desktop-portal-gtk
-    pkgs.xdg-desktop-portal-wlr
-  ];
+  xdg.portal = {
+    enable = true;
+    wlr = {
+      enable = true;
+    };
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-wlr
+    ];
+  };
 
   ## X11 specific
   services.xserver = {
@@ -193,6 +203,10 @@
     isNormalUser = true;
     shell = pkgs.zsh;
     extraGroups = [ "wheel" "docker" ];
+  };
+
+  programs.zsh = {
+    enable = true;
   };
 
   home-manager = {
