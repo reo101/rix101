@@ -100,12 +100,12 @@ in
           }
           {
             name = "fast-syntax-highlighting";
-            file = "F-Sy-H.plugin.zsh";
+            file = "fast-syntax-highlighting.plugin.zsh";
             src = pkgs.fetchFromGitHub {
-              owner = "zdharma";
+              owner = "zdharma-continuum";
               repo = "fast-syntax-highlighting";
-              rev = "285d6ce8e1d9c7a70b427c46a4030d43e7a6406b";
-              sha256 = "4kma7Sx2RGWa9J4gr+U89ArxpM2/b8H9ytQ2pNCv6is=";
+              rev = "13d7b4e63468307b6dcb2dadf6150818f242cbff";
+              sha256 = "sha256-AmsexwVombgVmRvl4O9Kd/WbnVJHPTXETxBv18PDHz4=";
             };
           }
           {

@@ -1,23 +1,26 @@
-{ lib, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
+{ lib, stdenv, darwin, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
 
 rustPlatform.buildRustPackage rec {
   pname = "vim-fmi-cli";
-  version = "v0.1.14";
+  version = "v0.1.16";
 
   src = fetchFromGitHub {
     owner = "AndrewRadev";
     repo = pname;
     rev = version;
-    sha256 = "sha256-7Ek86uVa9fGaXwb8ZOzob2S27V+KYhogAFVLH4g20rU=";
+    sha256 = "sha256-pirsTb2GUxIjxTg0oJgfb7QzvgGTsBa2HBdcogsEB1M=";
   };
 
-  cargoSha256 = "sha256-E2MSfypho15dYXdh2h5P/pwxxBJ8iQYVgEliUcrxugI=";
+  cargoSha256 = "sha256-5Tr8tnWsQtYYNqPBSA/nT6ggvxjUvE3/AwkeJwUeMcY=";
 
   nativeBuildInputs = [
     pkg-config
   ];
 
-  buildInputs = [ ];
+  buildInputs = [ ] ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+    SystemConfiguration
+    CoreServices
+  ]);
 
   PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
   LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;

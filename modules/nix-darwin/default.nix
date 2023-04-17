@@ -4,4 +4,7 @@
 {
   # List your module files here
   # my-module = import ./my-module.nix;
+  brew = import ./brew;
+  yabai = import ./yabai;
+  system = import ./system;
 }

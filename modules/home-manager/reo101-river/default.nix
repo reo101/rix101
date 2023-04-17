@@ -78,11 +78,11 @@ in
       #   enabled = true;
       # };
 
-      # dunst on wayland
-      services.wired = {
-        enable = true;
-        config = ./wired.ron;
-      };
+      # # dunst on wayland
+      # services.wired = {
+      #   enable = true;
+      #   config = ./wired.ron;
+      # };
     };
 
   meta = {

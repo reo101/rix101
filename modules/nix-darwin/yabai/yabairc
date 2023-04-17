@@ -1,0 +1,85 @@
+#!/usr/bin/env sh
+
+# Unload the macOS WindowManager process
+launchctl unload -F /System/Library/LaunchAgents/com.apple.WindowManager.plist > /dev/null 2>&1 &
+
+sudo yabai --load-sa
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+yabai -m signal --add event=window_focused action="sketchybar --trigger window_focus"
+yabai -m signal --add event=display_added action="sleep 2 && ${HOME}/.config/yabai/create_spaces.sh"
+yabai -m signal --add event=display_removed action="sleep 1 && ${HOME}/.config/yabai/create_spaces.sh"
+yabai -m signal --add event=window_created action="sketchybar --trigger windows_on_spaces"
+yabai -m signal --add event=window_destroyed action="sketchybar --trigger windows_on_spaces"
+yabai -m signal --add event=window_destroyed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
+yabai -m signal --add event=application_terminated action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
+
+{
+    DESIRED_SPACES_PER_DISPLAY=4
+    CURRENT_SPACES="$(yabai -m query --displays | jq -r '.[].spaces | @sh')"
+
+    DELTA=0
+    while read -r line
+    do
+        LAST_SPACE="$(echo "${line##* }")"
+        LAST_SPACE=$((${LAST_SPACE}+${DELTA}))
+        EXISTING_SPACE_COUNT="$(echo "${line}" | wc -w)"
+        MISSING_SPACES=$((${DESIRED_SPACES_PER_DISPLAY} - ${EXISTING_SPACE_COUNT}))
+        if [ "${MISSING_SPACES}" -gt 0 ]; then
+            for i in $(seq 1 ${MISSING_SPACES}); do
+                yabai -m space --create "${LAST_SPACE}"
+                LAST_SPACE=$((${LAST_SPACE}+1))
+            done
+        elif [ "${MISSING_SPACES}" -lt 0 ]; then
+            for i in $(seq 1 $((-${MISSING_SPACES}))); do
+                yabai -m space --destroy "${LAST_SPACE}"
+                LAST_SPACE=$((${LAST_SPACE}-1))
+            done
+        fi
+        DELTA=$((${DELTA}+${MISSING_SPACES}))
+    done <<< "${CURRENT_SPACES}"
+
+    sketchybar --trigger space_change --trigger windows_on_spaces
+}
+
+yabai -m config "external_bar"               "all:49:0"     \
+                "window_border"              "on"           \
+                "mouse_follows_focus"        "off"          \
+                "focus_follows_mouse"        "autoraise"    \
+                "window_zoom_persist"        "off"          \
+                "window_placement"           "second_child" \
+                "window_topmost"             "off"          \
+                "window_shadow"              "float"        \
+                "window_opacity"             "on"           \
+                "window_opacity_duration"    "0.15"         \
+                "active_window_opacity"      "1.0"          \
+                "normal_window_opacity"      "0.95"         \
+                "window_border_width"        "2"            \
+                "window_border_hidpi"        "off"          \
+                "window_border_radius"       "11"           \
+                "window_animation_duration"  "0.22"         \
+                "active_window_border_color" "0xffe1e3e4"   \
+                "normal_window_border_color" "0xff2a2f38"   \
+                "insert_feedback_color"      "0xff9dd274"   \
+                "split_ratio"                "0.50"         \
+                "auto_balance"               "off"          \
+                "mouse_modifier"             "cmd"          \
+                "mouse_action1"              "move"         \
+                "mouse_action2"              "resize"       \
+                "mouse_drop_action"          "swap"         \
+                                                            \
+                "top_padding"                "10"           \
+                "bottom_padding"             "10"           \
+                "left_padding"               "10"           \
+                "right_padding"              "10"           \
+                "window_gap"                 "8"
+
+# Exclude problematic apps from being managed:
+yabai -m rule --add app="^(LuLu|Vimac|Calculator|Software Update|Dictionary|VLC|System Preferences|System Settings|zoom.us|Photo Booth|Archive Utility|Python|LibreOffice|App Store|Steam|Alfred|Activity Monitor)$" manage=off
+yabai -m rule --add label="Finder" app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
+yabai -m rule --add label="Safari" app="^Safari$" title="^(General|(Tab|Password|Website|Extension)s|AutoFill|Se(arch|curity)|Privacy|Advance)$" manage=off
+yabai -m rule --add label="About This Mac" app="System Information" title="About This Mac" manage=off
+yabai -m rule --add label="Select file to save to" app="^Inkscape$" title="Select file to save to" manage=off
+
+yabai -m config layout bsp
+
+echo "yabai configuration loaded.."

@@ -137,7 +137,7 @@ rec {
           users = lib.attrsets.genAttrs
             users
             (user: import (root + "/home/${user}.nix"));
-
+          sharedModules = builtins.attrValues homeManagerModules;
           extraSpecialArgs = { inherit inputs outputs; };
         };
       }
