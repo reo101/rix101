@@ -5,6 +5,7 @@
 , ...
 }: {
   # example = pkgs.callPackage ./example { };
+  advcp = pkgs.callPackage ./advcp { };
   fennel-language-server = pkgs.callPackage ./fennel-language-server { };
   parinfer-rust = pkgs.callPackage ./parinfer-rust { };
   swww = pkgs.callPackage ./swww { };
