@@ -25,5 +25,11 @@
     #     install -v "${openasar}" "$out/opt/Discord/resources/app.asar"
     #   '';
     # });
+
+    prismlauncher = prev.prismlauncher.overrideAttrs (oldAttrs: {
+      patches = (oldAttrs.patches or [ ]) ++ [
+        ./offline-mode-prism-launcher.diff
+      ];
+    });
   };
 }
