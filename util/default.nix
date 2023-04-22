@@ -20,7 +20,7 @@ rec {
   # NOTE: Implying `attrs` is the output of `recurseDir`
   hasFiles = files: attrs:
     builtins.all
-      (b: b)
+      lib.id
       (builtins.map
         (file:
           builtins.hasAttr file attrs &&
@@ -30,12 +30,14 @@ rec {
   # NOTE: Implying `attrs` is the output of `recurseDir`
   hasDirectories = directories: attrs:
     builtins.all
-      (b: b)
+      lib.id
       (builtins.map
         (directory:
           builtins.hasAttr directory attrs &&
-          builtins.getAttr directory attrs == "set")
+          lib.isAttrs (builtins.getAttr directory attrs))
         directories);
+
+  and = lib.all lib.id;
 
   # pkgs helpers
   forEachSystem = lib.genAttrs [
@@ -159,28 +161,35 @@ rec {
   createConfigurations =
     pred: mkHost: machines:
     lib.foldAttrs
-      (acc: x: acc)
+      lib.const
       [ ]
       (builtins.attrValues
         (builtins.mapAttrs
           (system: hosts:
-          lib.attrsets.filterAttrs
-            (host: config: config != null)
-            (builtins.mapAttrs
+            lib.attrsets.filterAttrs
               (host: config:
-              if (pred system host config)
-              then mkHost system host config
-              else null)
-              hosts))
+                config != null)
+              (builtins.mapAttrs
+                (host: config:
+                  if (pred system host config)
+                  then mkHost system host config
+                  else null)
+                hosts))
           machines));
 
   # Configurations
   autoNixosConfigurations =
     createConfigurations
       (system: host: config:
-        hasFiles
-          [ "configuration.nix" ]
-          config)
+        and
+          [
+            (hasFiles
+              [ "configuration.nix" ]
+              config)
+            (hasDirectories
+              [ "home" ]
+              config)
+          ])
       (system: host: config:
         mkNixosHost
           ../machines/nixos/${system}/${host}
@@ -194,9 +203,12 @@ rec {
   autoNixOnDroidConfigurations =
     createConfigurations
       (system: host: config:
-        hasFiles
-          [ "configuration.nix" "home.nix" ]
-          config)
+        and
+          [
+            (hasFiles
+              [ "configuration.nix" "home.nix" ]
+              config)
+          ])
       (system: host: config:
         mkNixOnDroidHost
           ../machines/nix-on-droid/${system}/${host}
@@ -207,9 +219,15 @@ rec {
   autoDarwinConfigurations =
     createConfigurations
       (system: host: config:
-        hasFiles
-          [ "configuration.nix" ]
-          config)
+        and
+          [
+            (hasFiles
+              [ "configuration.nix" ]
+              config)
+            (hasDirectories
+              [ "home" ]
+              config)
+          ])
       (system: host: config:
         mkNixDarwinHost
           ../machines/nix-darwin/${system}/${host}
@@ -223,9 +241,12 @@ rec {
   autoHomeConfigurations =
     createConfigurations
       (system: host: config:
-        hasFiles
-          [ "home.nix" ]
-          config)
+        and
+          [
+            (hasFiles
+              [ "home.nix" ]
+              config)
+          ])
       (system: host: config:
         mkHomeManagerHost
           ../machines/home-manager/${system}/${host}

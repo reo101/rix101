@@ -78,25 +78,24 @@
     let
       inherit (self) outputs;
       util = import ./util { inherit inputs outputs; };
-    in
-    with util; rec {
+    in rec {
       # Packages (`nix build`)
-      packages = forEachPkgs (pkgs:
+      packages = util.forEachPkgs (pkgs:
         import ./pkgs { inherit pkgs; }
       );
 
       # Apps (`nix run`)
-      apps = forEachPkgs (pkgs:
+      apps = util.forEachPkgs (pkgs:
         import ./apps { inherit pkgs; }
       );
 
       # Dev Shells (`nix develop`)
-      devShells = forEachPkgs (pkgs:
+      devShells = util.forEachPkgs (pkgs:
         import ./shells { inherit pkgs; }
       );
 
       # Formatter
-      formatter = forEachPkgs (pkgs:
+      formatter = util.forEachPkgs (pkgs:
         pkgs.nixpkgs-fmt
       );
 
@@ -107,22 +106,24 @@
       overlays = import ./overlays { inherit inputs outputs; };
 
       # Machines
-      inherit machines;
-      inherit homeManagerMachines;
-      inherit nixDarwinMachines;
-      inherit nixOnDroidMachines;
-      inherit nixosMachines;
+      inherit (util)
+        machines
+        homeManagerMachines
+        nixDarwinMachines
+        nixOnDroidMachines
+        nixosMachines;
 
       # Modules
-      inherit nixosModules;
-      inherit nixOnDroidModules;
-      inherit nixDarwinModules;
-      inherit homeManagerModules;
+      inherit (util)
+        nixosModules
+        nixOnDroidModules
+        nixDarwinModules
+        homeManagerModules;
 
       # Configurations
-      nixosConfigurations = autoNixosConfigurations;
-      nixOnDroidConfigurations = autoNixOnDroidConfigurations;
-      darwinConfigurations = autoDarwinConfigurations;
-      homeConfigurations = autoHomeConfigurations;
+      nixosConfigurations = util.autoNixosConfigurations;
+      nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
+      darwinConfigurations = util.autoDarwinConfigurations;
+      homeConfigurations = util.autoHomeConfigurations;
     };
 }
