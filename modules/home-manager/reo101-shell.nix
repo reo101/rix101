@@ -18,6 +18,11 @@ in
           type = types.str;
           default = "${config.home.username}";
         };
+        atuin = mkOption {
+          description = "Integrate with atuin";
+          type = types.bool;
+          default = true;
+        };
         direnv = mkOption {
           description = "Integrate with direnv";
           type = types.bool;
@@ -45,11 +50,14 @@ in
             zsh
             starship
           ]
+          (optionals cfg.atuin [
+            atuin
+          ])
           (optionals cfg.direnv [
-            zoxide
+            direnv
           ])
           (optionals cfg.zoxide [
-            direnv
+            zoxide
           ])
         ];
 
@@ -78,11 +86,20 @@ in
         initExtra =
           builtins.concatStringsSep "\n"
             [
-              (optionalString cfg.direnv ''
-                eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
+              (optionalString cfg.atuin ''
+                export ATUIN_NOBIND="true"
+                eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+                function zvm_after_init() {
+                  # bindkey '^r' _atuin_search_widget
+                  zvm_bindkey viins '^R' _atuin_search_widget
+                }
               '')
+              # NOTE: done by `programs.direnv`
+              # (optionalString cfg.direnv ''
+              #   eval "$(${pkgs.direnv}/bin/direnv hook zsh)"
+              # '')
               (optionalString cfg.zoxide ''
-                eval "$(${pkgs.direnv}/bin/direnv hook zsh)"
+                eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
               '')
               cfg.extraConfig
             ];
@@ -314,8 +331,3 @@ in
     maintainers = with lib.maintainers; [ reo101 ];
   };
 }
-
-
-
-
-
