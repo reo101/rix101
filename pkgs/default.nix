@@ -10,4 +10,5 @@
   parinfer-rust = pkgs.callPackage ./parinfer-rust { };
   swww = pkgs.callPackage ./swww { };
   vim-fmi-cli = pkgs.callPackage ./vim-fmi-cli { };
+  win2xcur = pkgs.callPackage ./win2xcur { };
 }
