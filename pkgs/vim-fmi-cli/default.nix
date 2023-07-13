@@ -2,16 +2,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "vim-fmi-cli";
-  version = "v0.1.16";
+  version = "0.2.0";
 
   src = fetchFromGitHub {
     owner = "AndrewRadev";
     repo = pname;
-    rev = version;
-    sha256 = "sha256-pirsTb2GUxIjxTg0oJgfb7QzvgGTsBa2HBdcogsEB1M=";
+    rev = "v${version}";
+    sha256 = "sha256-RAlvDiNvDVRNtex0aD8WESc4R/mAr7FjWtgzHWa4ZSI=";
   };
 
-  cargoSha256 = "sha256-5Tr8tnWsQtYYNqPBSA/nT6ggvxjUvE3/AwkeJwUeMcY=";
+  cargoSha256 = "sha256-XaBVtnUsifLKZtfxFNr7o/1A70FQRItyo00KbV4W6Pk=";
 
   nativeBuildInputs = [
     pkg-config
