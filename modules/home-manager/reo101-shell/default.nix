@@ -1,8 +1,10 @@
 { lib, pkgs, config, ... }:
 
-with lib;
 let
   cfg = config.reo101.shell;
+  inherit (lib)
+    mkEnableOption mkOption types
+    mkIf optionals optionalString;
 in
 {
   imports =
@@ -34,10 +36,10 @@ in
           default = true;
         };
         extraConfig = mkOption {
-          type = types.str;
           description = "Extra zsh config";
+          type = types.str;
           default = ''
-        '';
+          '';
         };
       };
     };
@@ -72,10 +74,13 @@ in
       programs.zsh = {
         enable = true;
         enableCompletion = true;
+        dotDir = ".config/zsh";
 
         shellAliases = {
-          # ll = "ls -l";
-          # update = "sudo nixos-rebuild switch";
+          ls = "${pkgs.lsd}/bin/lsd";
+          cp = "${pkgs.advcpmv}/bin/advcp -rvi";
+          mv = "${pkgs.advcpmv}/bin/advmv -vi";
+          mkdir = "mkdir -vp";
         };
 
         history = {
@@ -86,12 +91,30 @@ in
         initExtra =
           builtins.concatStringsSep "\n"
             [
+              ''
+                rebuild () {
+                  ${
+                    let
+                      inherit (lib.strings) hasInfix;
+                      flake_dir = builtins.toString ../../..;
+                    in
+                    if hasInfix "nixos" pkgs.system then
+                      "sudo nixos-rebuild --flake ${flake_dir}"
+                    else if hasInfix "darwin" pkgs.system then
+                      "darwin-rebuild --flake ${flake_dir}"
+                    else if "aarch64-linux" == pkgs.system then
+                      "nix-on-droid --flake ${flake_dir}"
+                    else
+                      "home-manager --flake ${flake_dir}"
+                  } ''${1:-switch} |& nix run nixpkgs#nix-output-monitor
+                }
+              ''
               (optionalString cfg.atuin ''
                 export ATUIN_NOBIND="true"
                 eval "$(${pkgs.atuin}/bin/atuin init zsh)"
                 function zvm_after_init() {
-                  # bindkey '^r' _atuin_search_widget
-                  zvm_bindkey viins '^R' _atuin_search_widget
+                  # bindkey "^r" _atuin_search_widget
+                  zvm_bindkey viins "^R" _atuin_search_widget
                 }
               '')
               # NOTE: done by `programs.direnv`
@@ -111,8 +134,8 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "chisui";
               repo = "zsh-nix-shell";
-              rev = "v0.5.0";
-              sha256 = "0za4aiwwrlawnia4f29msk822rj9bgcygw6a8a6iikiwzjjz0g91";
+              rev = "v0.7.0";
+              sha256 = "sha256-oQpYKBt0gmOSBgay2HgbXiDoZo5FoUKwyHSlUrOAP5E=";
             };
           }
           {
@@ -121,8 +144,18 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "zdharma-continuum";
               repo = "fast-syntax-highlighting";
-              rev = "13d7b4e63468307b6dcb2dadf6150818f242cbff";
-              sha256 = "sha256-AmsexwVombgVmRvl4O9Kd/WbnVJHPTXETxBv18PDHz4=";
+              rev = "cf318e06a9b7c9f2219d78f41b46fa6e06011fd9";
+              sha256 = "sha256-RVX9ZSzjBW3LpFs2W86lKI6vtcvDWP6EPxzeTcRZua4=";
+            };
+          }
+          {
+            name = "zsh-autosuggestions";
+            file = "zsh-autosuggestions.plugin.zsh";
+            src = pkgs.fetchFromGitHub {
+              owner = "zsh-users";
+              repo = "zsh-autosuggestions";
+              rev = "a411ef3e0992d4839f0732ebeb9823024afaaaa8";
+              sha256 = "sha256-KLUYpUu4DHRumQZ3w59m9aTW6TBKMCXl2UcKi4uMd7w=";
             };
           }
           {
@@ -131,11 +164,91 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "jeffreytse";
               repo = "zsh-vi-mode";
-              rev = "v0.9.0";
-              sha256 = "sha256-KQ7UKudrpqUwI6gMluDTVN0qKpB15PI5P1YHHCBIlpg=";
+              rev = "1bda23100e8d140a19be0eed67395c64f6a6074c";
+              sha256 = "sha256-3arAa5EBG+U9cCauChX9K0KF3hkd+t04/trlWKk/gOw=";
             };
           }
         ];
+      };
+
+      home.file.".config/atuin/config.toml" = mkIf cfg.atuin {
+        text = ''
+          ## where to store your database, default is your system data directory
+          ## mac: ~/Library/Application Support/com.elliehuxtable.atuin/history.db
+          ## linux: ~/.local/share/atuin/history.db
+          # db_path = "~/.history.db"
+
+          ## where to store your encryption key, default is your system data directory
+          # key_path = "~/.key"
+
+          ## where to store your auth session token, default is your system data directory
+          # session_path = "~/.key"
+
+          ## date format used, either "us" or "uk"
+          # dialect = "us"
+
+          ## enable or disable automatic sync
+          auto_sync = true
+
+          ## enable or disable automatic update checks
+          update_check = false
+
+          ## address of the sync server
+          sync_address = "https://naboo.qtrp.org/atuin"
+
+          ## how often to sync history. note that this is only triggered when a command
+          ## is ran, so sync intervals may well be longer
+          ## set it to 0 to sync after every command
+          sync_frequency = "1m"
+
+          ## which search mode to use
+          ## possible values: prefix, fulltext, fuzzy, skim
+          # search_mode = "fuzzy"
+
+          ## which filter mode to use
+          ## possible values: global, host, session, directory
+          filter_mode = "global"
+
+          # ## which filter mode to use when atuin is invoked from a shell up-key binding
+          # ## the accepted values are identical to those of "filter_mode"
+          # ## leave unspecified to use same mode set in "filter_mode"
+          # filter_mode_shell_up_keybinding = "session"
+
+          ## which style to use
+          ## possible values: auto, full, compact
+          # style = "auto"
+
+          ## the maximum number of lines the interface should take up
+          ## set it to 0 to always go full screen
+          # inline_height = 0
+
+          ## enable or disable showing a preview of the selected command
+          ## useful when the command is longer than the terminal width and is cut off
+          # show_preview = false
+
+          ## what to do when the escape key is pressed when searching
+          ## possible values: return-original, return-query
+          # exit_mode = "return-original"
+
+          ## possible values: emacs, subl
+          # word_jump_mode = "emacs"
+
+          ## characters that count as a part of a word
+          # word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+          ## number of context lines to show when scrolling by pages
+          # scroll_context_lines = 1
+
+          ## prevent commands matching any of these regexes from being written to history.
+          ## Note that these regular expressions are unanchored, i.e. if they don't start
+          ## with ^ or end with $, they'll match anywhere in the command.
+          ## For details on the supported regular expression syntax, see
+          ## https://docs.rs/regex/latest/regex/#syntax
+          # history_filter = [
+          #   "^secret-cmd",
+          #   "^innocuous-cmd .*--secret=.+"
+          # ]
+        '';
       };
 
       programs.starship = {

@@ -4,7 +4,7 @@
 {
   # List your module files here
   # my-module = import ./my-module.nix;
-  reo101-shell = import ./reo101-shell.nix;
+  reo101-shell = import ./reo101-shell;
   reo101-river = import ./reo101-river;
   reo101-wezterm = import ./reo101-wezterm;
 }
