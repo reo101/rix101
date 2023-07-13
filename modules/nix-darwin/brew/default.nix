@@ -44,11 +44,13 @@ in
         "homebrew/services"
         "cmacrae/formulae"
         "FelixKratz/formulae"
+        "jorgelbg/tap"
       ];
       brews = [
         "libusb"
         "sketchybar"
         "switchaudio-osx"
+        "pinentry-touchid"
       ];
       casks = [
         "android-platform-tools"
@@ -60,6 +62,7 @@ in
         "sf-symbols"
         # "slack"
         "spotify"
+        "xquartz"
       ];
       extraConfig = ''
         # brew "xorpse/formulae/brew", args: ["HEAD"]

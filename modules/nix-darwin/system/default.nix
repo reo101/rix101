@@ -16,7 +16,9 @@ in
 
   config = mkIf cfg.enable {
 
+    services.activate-system.enable = true;
     services.nix-daemon.enable = true;
+    programs.nix-index.enable = true;
 
     environment.shells = [ pkgs.zsh ];
 
@@ -87,6 +89,12 @@ in
           NSAutomaticWindowAnimationsEnabled = false;
         };
 
+        CustomUserPreferences = {
+          "NSGlobalDomain" = {
+            "AppleSpacesSwitchOnActivate"= 0;
+          };
+        };
+
         dock = {
 
           # Automatically show and hide the dock
@@ -115,8 +123,17 @@ in
           # Finder search in current folder by default
           FXDefaultSearchScope = "SCcf";
 
+          # Show all extensions
+          AppleShowAllExtensions = true;
+
           # Disable warning when changing file extension
           FXEnableExtensionChangeWarning = false;
+
+          # Show full paths
+          ShowPathbar = true;
+
+          # Show POSIX paths in title
+          _FXShowPosixPathInTitle = true;
 
           # Allow quitting of Finder application
           QuitMenuItem = true;
@@ -181,12 +198,40 @@ in
         defaults write com.apple.dock springboard-hide-duration -float 0
         defaults write com.apple.dock springboard-page-duration -float 0
 
+        echo "Disable Hot Corners"
+        ## wvous-**-corner
+        ## 0 - Nothing
+        ## 1 - Disabled
+        ## 2 - Mission Control
+        ## 3 - Notifications
+        ## 4 - Show the desktop
+        ## 5 - Start screen saver
+        ##
+        ## wvous-**-modifier
+        ## 0 - _
+        ## 131072 - Shift+_
+        ## 1048576 - Command+_
+        ## 524288 - Option+_
+        ## 262144 - Control+_
+        ##
+        # Top Left
+        defaults write com.apple.dock wvous-tl-corner -int 0
+        # Top Right
+        defaults write com.apple.dock wvous-tr-corner -int 0
+        # Bottom Left
+        defaults write com.apple.dock wvous-bl-corner -int 0
+        # Bottom Right
+        defaults write com.apple.dock wvous-br-corner -int 0
+
         echo "Disable Finder animations"
         defaults write com.apple.finder DisableAllAnimations -bool true
 
         echo "Disable Mail animations"
         defaults write com.apple.Mail DisableSendAnimations -bool true
         defaults write com.apple.Mail DisableReplyAnimations -bool true
+
+        # echo "Disable \"Save in Keychain\" for pinentry-mac"
+        # defaults write org.gpgtools.common DisableKeychain -bool yes
 
         echo "Define dock icon function"
         __dock_item() {
@@ -206,7 +251,7 @@ in
                           _CFURLString
                         </key>
                         <string>
-                          $\{1}
+                          ''${1}
                         </string>
                         <key>
                           _CFURLStringType
