@@ -2,13 +2,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "parinfer-rust";
-  version = "4d4f4c6c0d3b44c8443f3102bfadfb67dfb385f7";
+  version = "3c769707ad3b18d530f696fe42a9d495139149ab";
 
   src = fetchFromGitHub {
     owner = "eraserhd";
     repo = pname;
     rev = version;
-    sha256 = lib.fakeSha256;
+    sha256 = "sha256-EVFuCZo6lYXEOWQzTW7BEfB5PIbO4YA4dCMo7N4oWrM=";
   };
 
   cargoSha256 = lib.fakeSha256;
