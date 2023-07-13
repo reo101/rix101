@@ -18,7 +18,7 @@
     # Nix Darwin
     nix-darwin = {
       url = "github:lnl7/nix-darwin/master";
-      # inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Home Manager
@@ -53,6 +53,7 @@
     zls-overlay = {
       url = "github:zigtools/zls";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.zig-overlay.follows = "zig-overlay";
     };
 
     wired = {
