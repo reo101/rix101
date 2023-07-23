@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
   patches = [
     (fetchpatch {
       url = "https://raw.githubusercontent.com/${advcpmv_owner}/${name}/${patch_rev}/${name}-${advcpmv_version}-${coreutils_version}.patch";
-      sha256 = "sha256-d+SRT/R4xmfHLAdOr7m4R3WFiW64P5ZH6iqDvErYCyg=";
+      sha256 = "sha256-l7kf2vz/heW3lgT89yDs5Wdfzw3Xbb3QhPGct7SCruQ=";
     })
   ];
 

@@ -11,7 +11,12 @@ rustPlatform.buildRustPackage rec {
     sha256 = "sha256-RAlvDiNvDVRNtex0aD8WESc4R/mAr7FjWtgzHWa4ZSI=";
   };
 
-  cargoSha256 = "sha256-XaBVtnUsifLKZtfxFNr7o/1A70FQRItyo00KbV4W6Pk=";
+  cargoLock = {
+    lockFile = builtins.fetchurl {
+      url = "https://raw.githubusercontent.com/AndrewRadev/vim-fmi-cli/v${version}/Cargo.lock";
+      sha256 = "sha256-PfJ8N5aFffMxaWt0UrsUZjpTbR+b5UZfFxftZ72+fl4=";
+    };
+  };
 
   nativeBuildInputs = [
     pkg-config
