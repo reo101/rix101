@@ -31,21 +31,97 @@
   #   };
   # };
 
-  nix.package = pkgs.nixFlakes;
+  environment.variables = {
+    NIX_PATH =
+      lib.mkForce
+        (builtins.concatStringsSep
+          ":"
+          (lib.mapAttrsToList
+            (name: input:
+              "${name}=${input.sourceInfo.outPath}")
+            (lib.filterAttrs
+              (name: input:
+                builtins.hasAttr "_type" input &&
+                builtins.getAttr "_type" input == "flake")
+              inputs)));
+  };
 
-  nix.extraOptions = ''
-    experimental-features = nix-command flakes repl-flake
-    keep-outputs = true
-    keep-derivations = true
-  '';
+  nix = {
+    # Ensure we can work with flakes
+    package = pkgs.nixUnstable;
 
-  # NIX_PATH =
-  #   builtins.concatStringsSep
-  #     ":"
-  #     (lib.mapAttrsToList
-  #       (name: input:
-  #         "${name}=${input.url}?rev=${input.locked.rev}")
-  #       inputs);
+    # extraOptions = ''
+    #   # Enable flakes and new 'nix' command
+    #   experimental-features = nix-command flakes repl-flake
+    #   # Allow building multiple derivations in parallel
+    #   max-jobs = auto
+    #   # Deduplicate and optimize nix store
+    #   auto-optimise-store = true
+    #   # Keep outputs and derivations
+    #   keep-outputs = true
+    #   keep-derivations = true
+    # '';
+
+    registry.nixpkgs.flake = inputs.nixpkgs;
+    # registry =
+    #   lib.mapAttrs'
+    #     (name: value:
+    #       {
+    #         name = name;
+    #         value = { flake = value; };
+    #       })
+    #     inputs;
+
+    settings = {
+      # Enable flakes and new 'nix' command
+      experimental-features = [
+        # "nix-command"
+        # "flakes"
+        # "repl-flake"
+
+        # "no-url-literals"       # Disabling URL literals
+        "ca-derivations"        # Content-Addressable Derivations
+        "recursive-nix"         # Recursive Nix
+        "flakes"                # Flakes and related commands
+        "nix-command"           # Experimental Nix commands
+        "auto-allocate-uids"    # Automatic allocation of UIDs
+        "cgroups"               # Cgroup support
+        # "daemon-trust-override" # Overriding daemon trust settings
+        # "dynamic-derivations"   # Dynamic derivation support
+        # "discard-references"    # Discarding build output references
+        "fetch-closure"         # builtins.fetchClosure
+        "impure-derivations"    # Impure derivations
+        "repl-flake"            # Passing installables to nix repl
+      ];
+
+      # Allow building multiple derivations in parallel
+      max-jobs = "auto";
+
+      # Deduplicate and optimize nix store
+      auto-optimise-store = false;
+
+      # Keep outputs and derivations
+      keep-outputs = true;
+      keep-derivations = true;
+
+      trusted-users = [
+        "root"
+        "pavelatanasov"
+      ];
+
+      # Add nix-community and rix101 cachix caches
+      substituters = [
+        "https://rix101.cachix.org"
+        "https://nix-community.cachix.org"
+        "https://lean4.cachix.org"
+      ];
+      trusted-public-keys = [
+        "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY="
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "lean4.cachix.org-1:mawtxSxcaiWE24xCXXgh3qnvlTkyU7evRRnGeAhD4Wk="
+      ];
+    };
+  };
 
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true; # default shell on catalina

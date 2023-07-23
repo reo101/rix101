@@ -4,7 +4,7 @@
   home = {
     username = lib.mkForce "pavelatanasov";
     homeDirectory = lib.mkForce "/Users/pavelatanasov";
-    stateVersion = "22.11";
+    stateVersion = "23.05";
   };
 
   # Let Home Manager install and manage itself.
@@ -12,8 +12,38 @@
 
   # Use this flake's version of nixpkgs
   home.sessionVariables = {
-    NIX_PATH = "nixpkgs=${inputs.nixpkgs}";
+    # NIX_PATH = "nixpkgs=${inputs.nixpkgs}";
+    NIX_PATH =
+      builtins.concatStringsSep
+        ":"
+        (lib.mapAttrsToList
+          (name: input:
+            "${name}=${input.sourceInfo.outPath}")
+          inputs);
   };
+
+  # {
+  #   _type = "flake";
+  #   inputs = <CODE>;
+  #   lastModified = 1686838567;
+  #   lastModifiedDate = "20230615141607";
+  #   narHash = "sha256-aqKCUD126dRlVSKV6vWuDCitfjFrZlkwNuvj5LtjRRU=";
+  #   nixosModules = <CODE>;
+  #   outPath = "/nix/store/mf3nazm479fkbh9n3v7n73yrcvr8avi6-source";
+  #   outputs = {
+  #     nixosModules = <CODE>;
+  #   };
+  #   rev = "429f232fe1dc398c5afea19a51aad6931ee0fb89";
+  #   shortRev = "429f232";
+  #   sourceInfo = {
+  #     lastModified = 1686838567;
+  #     lastModifiedDate = "20230615141607";
+  #     narHash = "sha256-aqKCUD126dRlVSKV6vWuDCitfjFrZlkwNuvj5LtjRRU=";
+  #     outPath = "/nix/store/mf3nazm479fkbh9n3v7n73yrcvr8avi6-source";
+  #     rev = "429f232fe1dc398c5afea19a51aad6931ee0fb89";
+  #     shortRev = "429f232";
+  #   };
+  # }
 
   home.packages = with pkgs; [
     # WM
@@ -26,11 +56,16 @@
 
     # Neovim
     neovim
+    fennel
     fennel-language-server
 
     # Dhall
     dhall
     dhall-lsp-server
+
+    # Circom
+    circom
+    circom-lsp
 
     # Nix
     rnix-lsp
@@ -51,9 +86,8 @@
     zigpkgs.master
     inputs.zls-overlay.packages.x86_64-darwin.default
 
-    # Polkadot
-    srtool-cli
-    pest-ide-tools
+    # Android
+    android-tools
   ];
 
   reo101 = {
@@ -62,6 +96,11 @@
       atuin = true;
       direnv = true;
       zoxide = true;
+      extraConfig = ''
+        function take() {
+          mkdir -p "''$''\{@''\}" && cd "''$''\{@''\}"
+        }
+      '';
     };
     wezterm = {
       enable = true;
