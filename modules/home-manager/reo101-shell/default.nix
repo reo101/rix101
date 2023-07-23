@@ -35,6 +35,11 @@ in
           type = types.bool;
           default = true;
         };
+        flakePath = mkOption {
+          description = "Flake path (used for `rebuild` command)";
+          type = types.str;
+          default = "${config.xdg.configHome}/rix101";
+        };
         extraConfig = mkOption {
           description = "Extra zsh config";
           type = types.str;
@@ -96,17 +101,16 @@ in
                   ${
                     let
                       inherit (lib.strings) hasInfix;
-                      flake_dir = builtins.toString ../../..;
                     in
                     if hasInfix "nixos" pkgs.system then
-                      "sudo nixos-rebuild --flake ${flake_dir}"
+                      "sudo --validate && sudo nixos-rebuild"
                     else if hasInfix "darwin" pkgs.system then
-                      "darwin-rebuild --flake ${flake_dir}"
+                      "darwin-rebuild"
                     else if "aarch64-linux" == pkgs.system then
-                      "nix-on-droid --flake ${flake_dir}"
+                      "nix-on-droid"
                     else
-                      "home-manager --flake ${flake_dir}"
-                  } ''${1:-switch} |& nix run nixpkgs#nix-output-monitor
+                      "home-manager"
+                  } --flake ${cfg.flakePath} ''$''\{1:-switch''\} |& nix run nixpkgs#nix-output-monitor
                 }
               ''
               (optionalString cfg.atuin ''
