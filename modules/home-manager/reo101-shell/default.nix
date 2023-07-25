@@ -68,6 +68,14 @@ in
           ])
         ];
 
+      # Atuin
+      home.file."${config.xdg.configHome}/config.toml" = mkIf cfg.atuin {
+        text = import ./atuin.nix {
+          keyPath = "${config.xdg.dataHome}/atuin/key";
+        };
+      };
+
+      # Direnv
       programs.direnv = mkIf cfg.direnv {
         enable = true;
 
@@ -76,6 +84,14 @@ in
         };
       };
 
+      # Starship
+      programs.starship = {
+        enable = true;
+
+        settings = import ./starship.nix { username = cfg.username; };
+      };
+
+      # Zsh
       programs.zsh = {
         enable = true;
         enableCompletion = true;
@@ -173,274 +189,6 @@ in
             };
           }
         ];
-      };
-
-      home.file.".config/atuin/config.toml" = mkIf cfg.atuin {
-        text = ''
-          ## where to store your database, default is your system data directory
-          ## mac: ~/Library/Application Support/com.elliehuxtable.atuin/history.db
-          ## linux: ~/.local/share/atuin/history.db
-          # db_path = "~/.history.db"
-
-          ## where to store your encryption key, default is your system data directory
-          # key_path = "~/.key"
-
-          ## where to store your auth session token, default is your system data directory
-          # session_path = "~/.key"
-
-          ## date format used, either "us" or "uk"
-          # dialect = "us"
-
-          ## enable or disable automatic sync
-          auto_sync = true
-
-          ## enable or disable automatic update checks
-          update_check = false
-
-          ## address of the sync server
-          sync_address = "https://naboo.qtrp.org/atuin"
-
-          ## how often to sync history. note that this is only triggered when a command
-          ## is ran, so sync intervals may well be longer
-          ## set it to 0 to sync after every command
-          sync_frequency = "1m"
-
-          ## which search mode to use
-          ## possible values: prefix, fulltext, fuzzy, skim
-          # search_mode = "fuzzy"
-
-          ## which filter mode to use
-          ## possible values: global, host, session, directory
-          filter_mode = "global"
-
-          # ## which filter mode to use when atuin is invoked from a shell up-key binding
-          # ## the accepted values are identical to those of "filter_mode"
-          # ## leave unspecified to use same mode set in "filter_mode"
-          # filter_mode_shell_up_keybinding = "session"
-
-          ## which style to use
-          ## possible values: auto, full, compact
-          # style = "auto"
-
-          ## the maximum number of lines the interface should take up
-          ## set it to 0 to always go full screen
-          # inline_height = 0
-
-          ## enable or disable showing a preview of the selected command
-          ## useful when the command is longer than the terminal width and is cut off
-          # show_preview = false
-
-          ## what to do when the escape key is pressed when searching
-          ## possible values: return-original, return-query
-          # exit_mode = "return-original"
-
-          ## possible values: emacs, subl
-          # word_jump_mode = "emacs"
-
-          ## characters that count as a part of a word
-          # word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-          ## number of context lines to show when scrolling by pages
-          # scroll_context_lines = 1
-
-          ## prevent commands matching any of these regexes from being written to history.
-          ## Note that these regular expressions are unanchored, i.e. if they don't start
-          ## with ^ or end with $, they'll match anywhere in the command.
-          ## For details on the supported regular expression syntax, see
-          ## https://docs.rs/regex/latest/regex/#syntax
-          # history_filter = [
-          #   "^secret-cmd",
-          #   "^innocuous-cmd .*--secret=.+"
-          # ]
-        '';
-      };
-
-      programs.starship = {
-        enable = true;
-
-        settings = {
-          # Get editor completions based on the config schema
-          "$schema" = "https://starship.rs/config-schema.json";
-
-          # Use custom format
-          format = ''
-            [╭───────┨](bold green)[${cfg.username}](bright-white)[@](bold yellow)$hostname[┠───────>](bold green)$status$cmd_duration$git_branch$git_status$git_state$git_commit
-            [│](bold green)$time$jobs: $directory$package
-            [╰─](bold green)$character
-          '';
-
-          # ${custom.local}\
-          # ${custom.local_root}\
-          # ${custom.ssh}\
-          # ${custom.ssh_root}\
-
-          add_newline = true;
-
-          character = {
-            success_symbol = "[→](bold green)";
-            error_symbol = "[→](red)";
-          };
-
-          git_branch = {
-            symbol = "🌱 ";
-            truncation_length = 15;
-            truncation_symbol = "…"; # …
-          };
-
-          git_commit = {
-            commit_hash_length = 6;
-            tag_symbol = "🔖 ";
-          };
-
-          git_state = {
-            format = "[\($state( $progress_current of $progress_total)\)]($style) ";
-            cherry_pick = "[🍒 PICKING](bold red)";
-          };
-
-          git_status = {
-            # conflicted = "🏳";
-            # ahead = "🏎💨";
-            # behind = "😰";
-            # diverged = "😵";
-            # untracked = "🤷‍";
-            # stashed = "📦";
-            # modified = "📝";
-            # staged = '[++\($count\)](green)';
-            # renamed = "👅";
-            # deleted = "🗑";
-            format = "[\\[$all_status$ahead_behind\\]]($style) ";
-            conflicted = "=[\($count\)](green) ";
-            ahead = "⇡[\($count\)](green) ";
-            behind = "⇣[\($count\)](green) ";
-            diverged = "⇕[\($count\)](green) ";
-            untracked = "?[\($count\)](green) ";
-            stashed = "$[\($count\)](green) ";
-            modified = "![\($count\)](green) ";
-            staged = "+[\($count\)](green) ";
-            renamed = "»[\($count\)](green) ";
-            deleted = "✘[\($count\)](green) ";
-          };
-
-          status = {
-            style = "bg:blue fg:red";
-            symbol = "🔴";
-            format = "[\[$symbol $common_meaning$signal_name$maybe_int\]]($style) ";
-            map_symbol = true;
-            disabled = false;
-          };
-
-          time = {
-            disabled = false;
-            format = "🕙[$time]($style) ";
-            # format = '🕙[\[ $time \]]($style) ';
-            time_format = "%T";
-            utc_time_offset = "+3";
-            # time_range = "10:00:00-14:00:00";
-          };
-
-          cmd_duration = {
-            min_time = 2000; # miliseconds
-            # show_notifications = true;
-            min_time_to_notify = 45000; # miliseconds
-            format = "took [$duration](bold yellow) ";
-          };
-
-          hostname = {
-            ssh_only = false;
-            format = "[$hostname](bold fg:#CC59B0)";
-            disabled = false;
-          };
-
-          username = {
-            disabled = false;
-            style_user = "white bold";
-            style_root = "red bold";
-            format = "[$user]($style)[@](bold yellow)";
-            show_always = true;
-          };
-
-          directory = {
-            read_only = "🔒";
-            read_only_style = "bold white";
-            style = "fg:#A7F3E4";
-            truncate_to_repo = false;
-            truncation_length = 5;
-            truncation_symbol = "…/";
-            home_symbol = "🏡";
-            format = "[$read_only]($read_only_style)[$path]($style) ";
-          };
-
-          directory.substitutions = {
-            ".config" = " ";
-            "nvim" = "";
-            "emacs" = "𝓔";
-            "doom" = "𝓔";
-            "Projects" = "💻";
-            "FMI" = "🏫";
-            "Home" = "🏠";
-            "CPP" = "";
-            "Java" = "";
-            "Python" = "";
-          };
-
-          # Language Environments
-          package = {
-            style = "bold fg:#5E5E5E";
-          };
-
-          python = {
-            style = "bold fg:#5E5E5E";
-            symbol = "[](bold yellow) ";
-          };
-
-          nodejs = {
-            style = "bold fg:#5E5E5E";
-            symbol = "[⬢](bold green) ";
-          };
-
-          # Custom
-          jobs = {
-            format = "[ $symbol$number ]($style)";
-            style = "bg:#587744 fg:bright-white";
-            symbol = "⚙";
-          };
-
-          custom.local = {
-            shell = [ "zsh" "-d" "-f" ];
-            when = '' [ [ -z "$SSH_CLIENT" ] ] && [ [ `whoami` != "root" ] ] '';
-            format = "[$symbol$output]($style)[@](bold yellow)";
-            command = "whoami";
-            style = "fg:bright-white";
-            symbol = "";
-          };
-
-          custom.local_root = {
-            shell = [ "zsh" "-d" "-f" ];
-            when = '' [ [ -z "$SSH_CLIENT" ] ] && [ [ `whoami` == "root" ] ] '';
-            format = "[ $output ]($style)[@](bold yellow)";
-            command = "whoami";
-            style = "bg:red fg:bright-white";
-          };
-
-          custom.ssh = {
-            shell = [ "zsh" "-d" "-f" ];
-            when = '' [ [ -n "$SSH_CLIENT" ] ] && [ [ `whoami` != "root" ] ] '';
-            format = "[ $symbol$output ]($style)[@](bold yellow)";
-            command = "whoami";
-            style = "bg:blue fg:bright-white";
-            # style = "bg:#FD7208 fg:bright-white";
-            symbol = "⌁";
-          };
-
-          custom.ssh_root = {
-            shell = [ "zsh" "-d" "-f" ];
-            when = '' [ [ -n "$SSH_CLIENT" ] ] && [ [ `whoami` == "root" ] ] '';
-            format = "[ $symbol$output ]($style)[@](bold yellow)";
-            command = "whoami";
-            style = "bg:red fg:bright-white";
-            symbol = "⌁";
-          };
-        };
       };
     };
 

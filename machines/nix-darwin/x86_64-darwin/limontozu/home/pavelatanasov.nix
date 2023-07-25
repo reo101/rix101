@@ -7,43 +7,21 @@
     stateVersion = "23.05";
   };
 
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
-
-  # Use this flake's version of nixpkgs
-  home.sessionVariables = {
-    # NIX_PATH = "nixpkgs=${inputs.nixpkgs}";
-    NIX_PATH =
-      builtins.concatStringsSep
-        ":"
-        (lib.mapAttrsToList
-          (name: input:
-            "${name}=${input.sourceInfo.outPath}")
-          inputs);
+  # Add custom overlays
+  nixpkgs = {
+    overlays = [
+      inputs.neovim-nightly-overlay.overlay
+      inputs.zig-overlay.overlays.default
+    ];
   };
 
-  # {
-  #   _type = "flake";
-  #   inputs = <CODE>;
-  #   lastModified = 1686838567;
-  #   lastModifiedDate = "20230615141607";
-  #   narHash = "sha256-aqKCUD126dRlVSKV6vWuDCitfjFrZlkwNuvj5LtjRRU=";
-  #   nixosModules = <CODE>;
-  #   outPath = "/nix/store/mf3nazm479fkbh9n3v7n73yrcvr8avi6-source";
-  #   outputs = {
-  #     nixosModules = <CODE>;
-  #   };
-  #   rev = "429f232fe1dc398c5afea19a51aad6931ee0fb89";
-  #   shortRev = "429f232";
-  #   sourceInfo = {
-  #     lastModified = 1686838567;
-  #     lastModifiedDate = "20230615141607";
-  #     narHash = "sha256-aqKCUD126dRlVSKV6vWuDCitfjFrZlkwNuvj5LtjRRU=";
-  #     outPath = "/nix/store/mf3nazm479fkbh9n3v7n73yrcvr8avi6-source";
-  #     rev = "429f232fe1dc398c5afea19a51aad6931ee0fb89";
-  #     shortRev = "429f232";
-  #   };
-  # }
+  # Set env vars
+  home.sessionVariables = {
+    EDITOR = "nvim";
+  };
+
+  # Let Home Manager install and manage itself.
+  programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
     # WM
@@ -76,7 +54,7 @@
     gnupg
     pinentry_mac
     (pass.withExtensions (extensions: with extensions; [
-        pass-otp
+      pass-otp
     ]))
 
     # FMI
@@ -107,15 +85,6 @@
     };
   };
 
-  nixpkgs = {
-    overlays = lib.attrValues outputs.overlays ++ [
-      inputs.neovim-nightly-overlay.overlay
-      inputs.zig-overlay.overlays.default
-    ];
-
-    config.allowUnfree = true;
-  };
-
   programs.git = {
     enable = true;
     userName = "reo101";
@@ -139,7 +108,7 @@
   };
 
   home.file.".gnupg/sshcontrol" = {
-    text =''
+    text = ''
       CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7
     '';
   };

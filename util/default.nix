@@ -163,7 +163,7 @@ rec {
           useGlobalPkgs = false;
           useUserPackages = true;
           sharedModules = builtins.attrValues homeManagerModules;
-          extraSpecialArgs = { inherit inputs; };
+          extraSpecialArgs = { inherit inputs outputs; };
         };
       }
     ] ++ (builtins.attrValues nixOnDroidModules);

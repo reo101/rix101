@@ -7,7 +7,16 @@
     username = "nix-on-droid";
     # username = "reo101";
     homeDirectory = "/data/data/com.termux.nix/files/home";
-    stateVersion = "22.11";
+    stateVersion = "23.05";
+  };
+
+  # Add custom overlays
+  nixpkgs = {
+    overlays = [
+      inputs.neovim-nightly-overlay.overlay
+      inputs.zig-overlay.overlays.default
+      # inputs.zls-overlay.???
+    ];
   };
 
   # Let Home Manager install and manage itself.
@@ -64,16 +73,6 @@
     #
     j
   ];
-
-  nixpkgs = {
-    overlays = [
-      inputs.neovim-nightly-overlay.overlay
-      inputs.zig-overlay.overlays.default
-      # inputs.zls-overlay.???
-    ];
-
-    config.allowUnfree = true;
-  };
 
   programs.neovim = {
     enable = true;
