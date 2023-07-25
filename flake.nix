@@ -68,6 +68,7 @@
     , nix-on-droid
     , nix-darwin
     , home-manager
+    , nur
     , hardware
     , nix-colors
     , neovim-nightly-overlay
@@ -79,7 +80,8 @@
     let
       inherit (self) outputs;
       util = import ./util { inherit inputs outputs; };
-    in rec {
+    in
+    rec {
       # Packages (`nix build`)
       packages = util.forEachPkgs (pkgs:
         import ./pkgs { inherit pkgs; }
@@ -101,10 +103,14 @@
       );
 
       # Templates
-      templates = import ./templates { inherit inputs outputs; };
+      templates = import ./templates {
+        inherit inputs outputs;
+      };
 
       # Overlays
-      overlays = import ./overlays { inherit inputs outputs; };
+      overlays = import ./overlays {
+        inherit inputs outputs;
+      };
 
       # Machines
       inherit (util)
