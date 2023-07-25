@@ -7,7 +7,12 @@ let
   inherit (lib.attrsets) filterAttrs;
 in
 rec {
-  # Directory walker
+  # Boolean helpers
+  and = lib.all lib.id;
+  or  = lib.any lib.id;
+  eq  = x: y: x == y;
+
+  # Directory walking helpers
   recurseDir = dir:
     mapAttrs
       (file: type:
@@ -17,27 +22,19 @@ rec {
       )
       (builtins.readDir dir);
 
-  # NOTE: Implying `attrs` is the output of `recurseDir`
-  hasFiles = files: attrs:
-    builtins.all
-      lib.id
+  allSatisfy = predicate: attrs: attrset:
+    and
       (builtins.map
-        (file:
-          builtins.hasAttr file attrs &&
-          builtins.getAttr file attrs == "regular")
-        files);
+        (attr:
+          builtins.hasAttr attr attrset &&
+          predicate (builtins.getAttr attr attrset))
+        attrs);
 
-  # NOTE: Implying `attrs` is the output of `recurseDir`
-  hasDirectories = directories: attrs:
-    builtins.all
-      lib.id
-      (builtins.map
-        (directory:
-          builtins.hasAttr directory attrs &&
-          lib.isAttrs (builtins.getAttr directory attrs))
-        directories);
+  # NOTE: Implying last argument is the output of `recurseDir`
+  hasFiles = allSatisfy (eq "regular");
 
-  and = lib.all lib.id;
+  # NOTE: Implying last argument is the output of `recurseDir`
+  hasDirectories = allSatisfy lib.isAttrs;
 
   # pkgs helpers
   forEachSystem = lib.genAttrs [
@@ -53,18 +50,68 @@ rec {
       (system:
         f nixpkgs.legacyPackages.${system});
 
+  # Modules helpers
+  createModules = baseDir: { passthru ? { inherit inputs outputs; }, ... }:
+    lib.pipe baseDir [
+      # Read given directory
+      builtins.readDir
+      # Map each entry to a module
+      (lib.mapAttrs'
+        (name: type:
+          let
+            moduleDir = baseDir + "/${name}";
+          in
+          if and [
+            (type == "directory")
+            (hasFiles ["default.nix"] (builtins.readDir moduleDir))
+          ] then
+            # Classic module in a directory
+            lib.nameValuePair
+              name
+              (import moduleDir)
+          else if and [
+            (type == "regular")
+            (lib.hasSuffix ".nix" name)
+          ] then
+            # Classic module in a file
+            lib.nameValuePair
+              (lib.removeSuffix ".nix" name)
+              (import moduleDir)
+          else
+            # Invalid module
+            lib.nameValuePair
+              name
+              null))
+      # Filter invalid modules
+      (lib.filterAttrs
+        (moduleName: module:
+          module != null))
+      # Passthru if needed
+      (lib.mapAttrs
+        (moduleName: module:
+          if and [
+            (builtins.isFunction
+              module)
+            (eq
+              (lib.pipe module [builtins.functionArgs builtins.attrNames])
+              (lib.pipe passthru [builtins.attrNames]))
+          ]
+          then module passthru
+          else module))
+    ];
+
   # Modules
-  nixosModules = import ../modules/nixos;
-  nixOnDroidModules = import ../modules/nix-on-droid;
-  nixDarwinModules = import ../modules/nix-darwin;
-  homeManagerModules = import ../modules/home-manager;
+  nixosModules       = createModules ../modules/nixos        { };
+  nixOnDroidModules  = createModules ../modules/nix-on-droid { };
+  nixDarwinModules   = createModules ../modules/nix-darwin   { };
+  homeManagerModules = createModules ../modules/home-manager { };
 
   # Machines
   machines = recurseDir ../machines;
   homeManagerMachines = machines.home-manager or { };
-  nixDarwinMachines = machines.nix-darwin or { };
-  nixOnDroidMachines = machines.nix-on-droid or { };
-  nixosMachines = machines.nixos or { };
+  nixDarwinMachines   = machines.nix-darwin   or { };
+  nixOnDroidMachines  = machines.nix-on-droid or { };
+  nixosMachines       = machines.nixos        or { };
 
   # Configuration helpers
   mkNixosHost = root: system: hostname: users: lib.nixosSystem {
@@ -72,8 +119,8 @@ rec {
 
     modules = [
       (root + "/configuration.nix")
-      inputs.home-manager.nixosModules.home-manager
       inputs.nur.nixosModules.nur
+      inputs.home-manager.nixosModules.home-manager
       {
         home-manager = {
           useGlobalPkgs = false;
@@ -86,6 +133,9 @@ rec {
             inherit inputs outputs;
           };
         };
+      }
+      {
+        networking.hostName = hostname;
       }
     ] ++ (builtins.attrValues nixosModules);
 
@@ -166,7 +216,7 @@ rec {
       (builtins.attrValues
         (builtins.mapAttrs
           (system: hosts:
-            lib.attrsets.filterAttrs
+            lib.filterAttrs
               (host: config:
                 config != null)
               (builtins.mapAttrs
