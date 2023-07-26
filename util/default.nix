@@ -3,8 +3,6 @@
 let
   inherit (inputs) nixpkgs;
   inherit (nixpkgs) lib;
-  inherit (lib) mapAttrs;
-  inherit (lib.attrsets) filterAttrs;
 in
 rec {
   # Boolean helpers
@@ -14,7 +12,7 @@ rec {
 
   # Directory walking helpers
   recurseDir = dir:
-    mapAttrs
+    lib.mapAttrs
       (file: type:
         if type == "directory"
         then recurseDir "${dir}/${file}"
@@ -131,6 +129,7 @@ rec {
           sharedModules = builtins.attrValues homeManagerModules;
           extraSpecialArgs = {
             inherit inputs outputs;
+            inherit hostname;
           };
         };
       }
@@ -163,13 +162,17 @@ rec {
           useGlobalPkgs = false;
           useUserPackages = true;
           sharedModules = builtins.attrValues homeManagerModules;
-          extraSpecialArgs = { inherit inputs outputs; };
+          extraSpecialArgs = {
+            inherit inputs outputs;
+            inherit hostname;
+          };
         };
       }
     ] ++ (builtins.attrValues nixOnDroidModules);
 
     extraSpecialArgs = {
       inherit inputs outputs;
+      inherit hostname;
       # rootPath = ./.;
     };
 
@@ -190,12 +193,18 @@ rec {
             users
             (user: import (root + "/home/${user}.nix"));
           sharedModules = builtins.attrValues homeManagerModules;
-          extraSpecialArgs = { inherit inputs outputs; };
+          extraSpecialArgs = {
+            inherit inputs outputs;
+            inherit hostname;
+          };
         };
       }
     ] ++ (builtins.attrValues nixDarwinModules);
 
-    inputs = { inherit inputs outputs nixpkgs; };
+    inputs = {
+      inherit inputs outputs;
+      inherit nixpkgs;
+    };
   };
 
   mkHomeManagerHost = root: system: hostname: inputs.home-manager.lib.homeManagerConfiguration {
@@ -205,7 +214,10 @@ rec {
       (root + "/home.nix")
     ] ++ (builtins.attrValues homeManagerModules);
 
-    extraSpecialArgs = { inherit inputs outputs; };
+    extraSpecialArgs = {
+      inherit inputs outputs;
+      inherit hostname;
+    };
   };
 
   createConfigurations =

@@ -16,9 +16,14 @@ in
       reo101.shell = {
         enable = mkEnableOption "reo101 zsh setup";
         username = mkOption {
-          description = "Username to be used in prompt";
+          description = "Username to be used (for prompt)";
           type = types.str;
           default = "${config.home.username}";
+        };
+        hostname = mkOption {
+          description = "Hostname to be used (for `rebuild`)";
+          type = types.nullOr types.str;
+          default = null;
         };
         atuin = mkOption {
           description = "Integrate with atuin";
@@ -36,7 +41,7 @@ in
           default = true;
         };
         flakePath = mkOption {
-          description = "Flake path (used for `rebuild` command)";
+          description = "Flake path (for `rebuild`)";
           type = types.str;
           default = "${config.xdg.configHome}/rix101";
         };
@@ -69,7 +74,7 @@ in
         ];
 
       # Atuin
-      home.file."${config.xdg.configHome}/config.toml" = mkIf cfg.atuin {
+      home.file."${config.xdg.configHome}/atuin/config.toml" = mkIf cfg.atuin {
         text = import ./atuin.nix {
           keyPath = "${config.xdg.dataHome}/atuin/key";
         };
@@ -88,7 +93,9 @@ in
       programs.starship = {
         enable = true;
 
-        settings = import ./starship.nix { username = cfg.username; };
+        settings = import ./starship.nix {
+          inherit (cfg) username;
+        };
       };
 
       # Zsh
@@ -116,17 +123,25 @@ in
                 rebuild () {
                   ${
                     let
-                      inherit (lib.strings) hasInfix;
+                      inherit (lib.strings)
+                        hasInfix;
+                      inherit (pkgs.hostPlatform)
+                        isx86_64 isAarch64
+                        isLinux isDarwin;
                     in
-                    if hasInfix "nixos" pkgs.system then
+                    if isx86_64 && isLinux then
                       "sudo --validate && sudo nixos-rebuild"
-                    else if hasInfix "darwin" pkgs.system then
+                    else if isDarwin then
                       "darwin-rebuild"
-                    else if "aarch64-linux" == pkgs.system then
+                    else if isAarch64 then
                       "nix-on-droid"
                     else
                       "home-manager"
-                  } --flake ${cfg.flakePath} ''$''\{1:-switch''\} |& nix run nixpkgs#nix-output-monitor
+                  } --flake ${
+                    if cfg.hostname != null
+                    then "${cfg.flakePath}#${cfg.hostname}"
+                    else "${cfg.flakePath}"
+                  } ''$''\{1:-switch''\} "''$''\{@:2''\}" |& nix run nixpkgs#nix-output-monitor
                 }
               ''
               (optionalString cfg.atuin ''

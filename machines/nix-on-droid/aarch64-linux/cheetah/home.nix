@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, pkgs, config, ... }:
+{ inputs, outputs, hostname, lib, pkgs, config, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -102,6 +102,7 @@
   reo101.shell = {
     enable = true;
     username = "reo101";
+    inherit hostname;
     direnv = true;
     zoxide = true;
   };
