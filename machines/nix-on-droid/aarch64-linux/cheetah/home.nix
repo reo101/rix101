@@ -1,4 +1,4 @@
-{ inputs, outputs, hostname, lib, pkgs, config, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 
 {
   # Home Manager needs a bit of information about you and the
@@ -56,8 +56,9 @@
     duf
 
     # Passwords
-    pass
-    passExtensions.pass-otp
+    (pass.withExtensions (extensions: with extensions; [
+      pass-otp
+    ]))
 
     # Dhall
     # dhall
@@ -102,7 +103,7 @@
   reo101.shell = {
     enable = true;
     username = "reo101";
-    inherit hostname;
+    hostname = "cheetah";
     direnv = true;
     zoxide = true;
   };
@@ -116,7 +117,6 @@
   programs.git = {
     enable = true;
     userName = "reo101";
-    # userName = "Pavel Atanasov";
     userEmail = "pavel.atanasov2001@gmail.com";
   };
 
