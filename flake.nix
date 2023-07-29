@@ -27,6 +27,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Nix User Repository
     nur = {
       url = "github:nix-community/NUR";
@@ -68,6 +73,7 @@
     , nix-on-droid
     , nix-darwin
     , home-manager
+    , deploy-rs
     , nur
     , hardware
     , nix-colors
@@ -132,5 +138,9 @@
       nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
       darwinConfigurations = util.autoDarwinConfigurations;
       homeConfigurations = util.autoHomeConfigurations;
+
+      # Deploy.rs nodes
+      deploy.nodes = util.deploy.autoNodes;
+      checks = util.autoChecks;
     };
 }

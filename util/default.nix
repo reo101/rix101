@@ -7,8 +7,8 @@ in
 rec {
   # Boolean helpers
   and = lib.all lib.id;
-  or  = lib.any lib.id;
-  eq  = x: y: x == y;
+  or = lib.any lib.id;
+  eq = x: y: x == y;
 
   # Directory walking helpers
   recurseDir = dir:
@@ -61,7 +61,7 @@ rec {
           in
           if and [
             (type == "directory")
-            (hasFiles ["default.nix"] (builtins.readDir moduleDir))
+            (hasFiles [ "default.nix" ] (builtins.readDir moduleDir))
           ] then
             # Classic module in a directory
             lib.nameValuePair
@@ -91,25 +91,25 @@ rec {
             (builtins.isFunction
               module)
             (eq
-              (lib.pipe module [builtins.functionArgs builtins.attrNames])
-              (lib.pipe passthru [builtins.attrNames]))
+              (lib.pipe module [ builtins.functionArgs builtins.attrNames ])
+              (lib.pipe passthru [ builtins.attrNames ]))
           ]
           then module passthru
           else module))
     ];
 
   # Modules
-  nixosModules       = createModules ../modules/nixos        { };
-  nixOnDroidModules  = createModules ../modules/nix-on-droid { };
-  nixDarwinModules   = createModules ../modules/nix-darwin   { };
+  nixosModules = createModules ../modules/nixos { };
+  nixOnDroidModules = createModules ../modules/nix-on-droid { };
+  nixDarwinModules = createModules ../modules/nix-darwin { };
   homeManagerModules = createModules ../modules/home-manager { };
 
   # Machines
   machines = recurseDir ../machines;
   homeManagerMachines = machines.home-manager or { };
-  nixDarwinMachines   = machines.nix-darwin   or { };
-  nixOnDroidMachines  = machines.nix-on-droid or { };
-  nixosMachines       = machines.nixos        or { };
+  nixDarwinMachines = machines.nix-darwin   or { };
+  nixOnDroidMachines = machines.nix-on-droid or { };
+  nixosMachines = machines.nixos        or { };
 
   # Configuration helpers
   mkNixosHost = root: system: hostname: users: lib.nixosSystem {
@@ -315,4 +315,38 @@ rec {
           system
           host)
       homeManagerMachines;
+
+  # Deploy.rs nodes
+  deploy.autoNodes =
+    let
+      # TODO: extract `${system}` from `nixosConfigurations`
+      system = "x86_64-linux";
+      deploy-rs-config = system: host:
+        ../machines/nixos/${system}/${host}/deploy.nix;
+    in
+    lib.pipe
+      outputs.nixosConfigurations
+      [
+        (lib.filterAttrs
+          (host: config:
+            builtins.pathExists (deploy-rs-config system host)))
+        (lib.mapAttrs
+          (host: config:
+            let
+              nodeConfig = import (deploy-rs-config system host);
+              system = config.pkgs.system;
+            in
+            {
+              inherit (nodeConfig)
+                hostname;
+              profiles.system = {
+                path = inputs.deploy-rs.lib.${system}.activate.nixos config;
+                inherit (nodeConfig)
+                  sshUser user sshOpts
+                  magicRollback remoteBuild;
+              };
+            }))
+      ];
+
+  autoChecks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks inputs.self.deploy) inputs.deploy-rs.lib;
 }
