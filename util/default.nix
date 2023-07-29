@@ -99,17 +99,17 @@ rec {
     ];
 
   # Modules
-  nixosModules = createModules ../modules/nixos { };
-  nixOnDroidModules = createModules ../modules/nix-on-droid { };
-  nixDarwinModules = createModules ../modules/nix-darwin { };
+  nixosModules       = createModules ../modules/nixos        { };
+  nixOnDroidModules  = createModules ../modules/nix-on-droid { };
+  nixDarwinModules   = createModules ../modules/nix-darwin   { };
   homeManagerModules = createModules ../modules/home-manager { };
 
   # Machines
-  machines = recurseDir ../machines;
+  machines            = recurseDir ../machines;
   homeManagerMachines = machines.home-manager or { };
-  nixDarwinMachines = machines.nix-darwin   or { };
-  nixOnDroidMachines = machines.nix-on-droid or { };
-  nixosMachines = machines.nixos        or { };
+  nixDarwinMachines   = machines.nix-darwin   or { };
+  nixOnDroidMachines  = machines.nix-on-droid or { };
+  nixosMachines       = machines.nixos        or { };
 
   # Configuration helpers
   mkNixosHost = root: system: hostname: users: lib.nixosSystem {
@@ -134,7 +134,7 @@ rec {
         };
       }
       {
-        networking.hostName = hostname;
+        networking.hostName = lib.mkDefault hostname;
       }
     ] ++ (builtins.attrValues nixosModules);
 
@@ -228,15 +228,15 @@ rec {
       (builtins.attrValues
         (builtins.mapAttrs
           (system: hosts:
-            lib.filterAttrs
+          lib.filterAttrs
+            (host: config:
+            config != null)
+            (builtins.mapAttrs
               (host: config:
-                config != null)
-              (builtins.mapAttrs
-                (host: config:
-                  if (pred system host config)
-                  then mkHost system host config
-                  else null)
-                hosts))
+              if (pred system host config)
+              then mkHost system host config
+              else null)
+              hosts))
           machines));
 
   # Configurations
@@ -316,37 +316,115 @@ rec {
           host)
       homeManagerMachines;
 
-  # Deploy.rs nodes
-  deploy.autoNodes =
-    let
-      # TODO: extract `${system}` from `nixosConfigurations`
-      system = "x86_64-linux";
-      deploy-rs-config = system: host:
-        ../machines/nixos/${system}/${host}/deploy.nix;
-    in
-    lib.pipe
-      outputs.nixosConfigurations
-      [
-        (lib.filterAttrs
-          (host: config:
-            builtins.pathExists (deploy-rs-config system host)))
-        (lib.mapAttrs
-          (host: config:
-            let
-              nodeConfig = import (deploy-rs-config system host);
-              system = config.pkgs.system;
-            in
-            {
-              inherit (nodeConfig)
-                hostname;
-              profiles.system = {
-                path = inputs.deploy-rs.lib.${system}.activate.nixos config;
-                inherit (nodeConfig)
-                  sshUser user sshOpts
-                  magicRollback remoteBuild;
-              };
-            }))
-      ];
+  # Automatic deploy.rs nodes (for NixOS and nix-darwin)
 
-  autoChecks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks inputs.self.deploy) inputs.deploy-rs.lib;
+  gen-config-type-to = mappings: mkError: config-type:
+    mappings.${config-type} or
+      (builtins.throw
+        (mkError config-type));
+
+  config-type-to-outputs-machines =
+    gen-config-type-to
+      {
+        nixos = "nixosMachines";
+        nix-on-droid = "nixOnDroidMachines";
+        nix-darwin = "nixDarwinMachines";
+        home-manager = "homeMachines";
+      }
+      (config-type:
+        builtins.throw
+          "Invaild config-type \"${config-type}\" for flake outputs' machines");
+
+  config-type-to-outputs-configurations =
+    gen-config-type-to
+      {
+        nixos = "nixosConfigurations";
+        nix-on-droid = "nixOnDroidConfigurations";
+        nix-darwin = "darwinConfigurations";
+        home-manager = "homeConfigurations";
+      }
+      (config-type:
+        builtins.throw
+          "Invaild config-type \"${config-type}\" for flake outputs' configurations");
+
+  config-type-to-deploy-type =
+    gen-config-type-to
+      {
+        nixos = "nixos";
+        nix-darwin = "darwin";
+      }
+      (config-type:
+        builtins.throw
+          "Invaild config-type \"${config-type}\" for deploy-rs deployment");
+
+  deploy.autoNodes =
+    lib.flip lib.concatMapAttrs
+      (lib.genAttrs
+        [
+          "nixos"
+          "nix-darwin"
+        ]
+        (config-type:
+          let
+            machines = config-type-to-outputs-machines config-type;
+          in
+            outputs.${machines}))
+      (config-type: machines:
+        lib.pipe
+          machines
+          [
+            # Filter out nondirectories
+            (lib.filterAttrs
+              (system: configs:
+                builtins.isAttrs configs))
+            # Convert non-template configs into `system-and-config` pairs
+            (lib.concatMapAttrs
+              (system: configs:
+                (lib.concatMapAttrs
+                  (host: config:
+                    lib.optionalAttrs
+                      (host != "__template__")
+                      {
+                        ${host} = {
+                          inherit system;
+                          config =
+                            let
+                              configurations = config-type-to-outputs-configurations config-type;
+                            in
+                              outputs.${configurations}.${host};
+                        };
+                      })
+                  configs)))
+            # Convert each `system-and-config` pair into a deploy-rs node
+            (lib.concatMapAttrs
+              (host: { system, config }:
+                let
+                  deploy-config-path =
+                    ../machines/${config-type}/${system}/${host}/deploy.nix;
+                  deploy-config =
+                    import deploy-config-path;
+                in
+                lib.optionalAttrs
+                  (builtins.pathExists deploy-config-path)
+                  {
+                    ${host} = {
+                      inherit (deploy-config)
+                        hostname;
+                      profiles.system = deploy-config // {
+                        path =
+                          let
+                            deploy-type = config-type-to-deploy-type config-type;
+                          in
+                            inputs.deploy-rs.lib.${system}.activate.${deploy-type} config;
+                      };
+                    };
+                  }))
+          ]);
+
+  autoChecks =
+    lib.mapAttrs
+      (system: deployLib:
+        deployLib.deployChecks
+          outputs.deploy)
+      inputs.deploy-rs.lib;
 }
