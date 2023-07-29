@@ -29,10 +29,24 @@ in
         skhdConfig = (builtins.readFile ./skhdrc);
       };
 
-      # sketchybar = {
-      #   enable = true;
-      #   package = pkgs.sketchybar;
-      # };
+      sketchybar = {
+        enable = true;
+        package = pkgs.sketchybar;
+        extraPackages = with pkgs; [
+          jq
+        ];
+        config = import ./sketchybar;
+      };
+    };
+
+    # For sketchybar
+    homebrew = {
+      taps = [
+        "shaunsingh/SFMono-Nerd-Font-Ligaturized"
+      ];
+      casks = [
+        "font-sf-mono-nerd-font-ligaturized"
+      ];
     };
   };
 
