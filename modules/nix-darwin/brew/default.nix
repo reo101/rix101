@@ -48,7 +48,6 @@ in
       ];
       brews = [
         "libusb"
-        "sketchybar"
         "switchaudio-osx"
         "pinentry-touchid"
       ];
