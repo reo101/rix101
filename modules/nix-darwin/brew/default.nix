@@ -53,7 +53,6 @@ in
       ];
       casks = [
         "android-platform-tools"
-        "discord"
         "docker"
         "font-fira-code-nerd-font"
         "karabiner-elements"

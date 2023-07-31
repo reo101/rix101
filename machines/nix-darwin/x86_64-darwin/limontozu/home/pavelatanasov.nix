@@ -28,6 +28,9 @@
     yabai
     skhd
 
+    # Discord
+    discord
+
     # Shell
     btop
     ripgrep
