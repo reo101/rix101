@@ -99,9 +99,16 @@ in
       };
 
       # Zsh
+      home.sessionVariables = {
+        SHELL = "${pkgs.zsh}/bin/zsh";
+      };
+
       programs.zsh = {
         enable = true;
+        package = pkgs.zsh;
+
         enableCompletion = true;
+
         dotDir = ".config/zsh";
 
         shellAliases = {
