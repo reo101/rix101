@@ -31,21 +31,6 @@
   #   };
   # };
 
-  environment.variables = {
-    NIX_PATH =
-      lib.mkForce
-        (builtins.concatStringsSep
-          ":"
-          (lib.mapAttrsToList
-            (name: input:
-              "${name}=${input.sourceInfo.outPath}")
-            (lib.filterAttrs
-              (name: input:
-                builtins.hasAttr "_type" input &&
-                builtins.getAttr "_type" input == "flake")
-              inputs)));
-  };
-
   nix = {
     # Ensure we can work with flakes
     package = pkgs.nixUnstable;
