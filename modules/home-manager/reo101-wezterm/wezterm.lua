@@ -42,8 +42,8 @@ M.freetype_render_target = "Light"
 --------------------
 M.window_background_opacity = 0.8
 M.text_background_opacity = 1.0
--- M.window_background_image = "/home/reo101/.local/share/bg/ide_bg.jpeg"
--- M.window_decorations = "NONE"
+-- M.window_background_image = ""
+M.window_decorations = "RESIZE"
 M.window_close_confirmation = "NeverPrompt"
 M.use_resize_increments = false
 M.enable_scroll_bar = false

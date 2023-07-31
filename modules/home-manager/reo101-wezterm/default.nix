@@ -15,7 +15,7 @@ in
         enable = mkEnableOption "reo101 wezterm setup";
         extraConfig = mkOption {
           type = types.str;
-          description = "Extra zsh config";
+          description = "Extra wezterm config";
           default = ''
           '';
         };
