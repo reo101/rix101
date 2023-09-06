@@ -61,7 +61,7 @@
 
     ## Dhall
     dhall
-    dhall-lsp-server
+    # dhall-lsp-server
 
     ## Nix
     rnix-lsp

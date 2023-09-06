@@ -13,7 +13,7 @@
   home.packages = with pkgs; [
     # Dhall
     dhall
-    dhall-lsp-server
+    # dhall-lsp-server
 
     # Nix
     rnix-lsp

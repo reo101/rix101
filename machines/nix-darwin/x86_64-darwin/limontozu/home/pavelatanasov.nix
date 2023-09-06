@@ -42,7 +42,7 @@
 
     # Dhall
     dhall
-    dhall-lsp-server
+    # dhall-lsp-server
 
     # Circom
     circom
