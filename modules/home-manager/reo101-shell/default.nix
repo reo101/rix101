@@ -2,9 +2,42 @@
 
 let
   cfg = config.reo101.shell;
+
   inherit (lib)
     mkEnableOption mkOption types
-    mkIf optionals optionalString;
+    mkIf optionals optionalString
+    mkMerge;
+
+  shellAliases = {
+    cp = "${pkgs.advcpmv}/bin/advcp -rvi";
+    mv = "${pkgs.advcpmv}/bin/advmv -vi";
+    rebuild = let
+      rebuild_script = pkgs.writeShellScript "rebuild" ''
+        ${
+          let
+            inherit (lib.strings)
+              hasInfix;
+            inherit (pkgs.hostPlatform)
+              isx86_64 isAarch64
+              isLinux isDarwin;
+          in
+          if isx86_64 && isLinux then
+            "sudo --validate && sudo nixos-rebuild"
+          else if isDarwin then
+            "darwin-rebuild"
+          else if isAarch64 then
+            "nix-on-droid"
+          else
+            "home-manager"
+        } --flake ${
+          if cfg.hostname != null
+          then "${cfg.flakePath}#${cfg.hostname}"
+          else "${cfg.flakePath}"
+        } ''$''\{1:-switch''\} "''$''\{@:2''\}" |& nix run nixpkgs#nix-output-monitor
+      '';
+    in
+      "${rebuild_script}";
+  };
 in
 {
   imports =
@@ -14,7 +47,7 @@ in
   options =
     {
       reo101.shell = {
-        enable = mkEnableOption "reo101 zsh setup";
+        enable = mkEnableOption "reo101 shell setup";
         username = mkOption {
           description = "Username to be used (for prompt)";
           type = types.str;
@@ -24,6 +57,25 @@ in
           description = "Hostname to be used (for `rebuild`)";
           type = types.nullOr types.str;
           default = null;
+        };
+        shells = mkOption {
+          description = "Shells to be configured (first one is used for $SHELL)";
+          type =
+            lib.pipe
+              [
+                "nushell"
+                "zsh"
+              ]
+              [
+                types.enum
+                types.listOf
+              ];
+          default = [ "nushell" "zsh" ];
+        };
+        starship = mkOption {
+          description = "Use starship prompt";
+          type = types.bool;
+          default = true;
         };
         atuin = mkOption {
           description = "Integrate with atuin";
@@ -45,12 +97,6 @@ in
           type = types.str;
           default = "${config.xdg.configHome}/rix101";
         };
-        extraConfig = mkOption {
-          description = "Extra zsh config";
-          type = types.str;
-          default = ''
-          '';
-        };
       };
     };
 
@@ -58,10 +104,12 @@ in
     mkIf cfg.enable {
       home.packages = with pkgs;
         builtins.concatLists [
-          [
-            zsh
+          (builtins.map
+            (lib.flip builtins.getAttr pkgs)
+            cfg.shells)
+          (optionals cfg.starship [
             starship
-          ]
+          ])
           (optionals cfg.atuin [
             atuin
           ])
@@ -84,26 +132,104 @@ in
       programs.direnv = mkIf cfg.direnv {
         enable = true;
 
+        enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+        enableZshIntegration = builtins.elem "zsh" cfg.shells;
+
         nix-direnv = {
           enable = true;
         };
       };
 
       # Starship
-      programs.starship = {
+      programs.starship = mkIf cfg.starship {
         enable = true;
+
+        package = pkgs.starship;
 
         settings = import ./starship.nix {
           inherit (cfg) username;
         };
       };
 
-      # Zsh
-      home.sessionVariables = {
-        SHELL = "${pkgs.zsh}/bin/zsh";
+      # Zoxide
+      programs.zoxide = mkIf cfg.zoxide {
+        enable = true;
+
+        package = pkgs.zoxide;
+
+        enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+        enableZshIntegration = builtins.elem "zsh" cfg.shells;
       };
 
-      programs.zsh = {
+      # Shell
+      home.sessionVariables = {
+        SHELL =
+          let
+            shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
+          in
+            "${shellPackage}/${shellPackage.shellPath}";
+      };
+
+      # Nushell
+      programs.nushell/* -reo101 */ = mkMerge [
+        (mkIf (builtins.elem "nushell" cfg.shells) {
+          enable = true;
+
+          package = pkgs.nushell;
+
+          configFile.source = ./nushell/config.nu;
+          envFile.source    = ./nushell/env.nu;
+          loginFile.source  = ./nushell/login.nu;
+
+          inherit shellAliases;
+
+          environmentVariables = {};
+        })
+        (mkIf cfg.atuin {
+          extraEnv = ''
+            let atuin_cache = "${config.xdg.cacheHome}/atuin"
+            if not ($atuin_cache | path exists) {
+                mkdir $atuin_cache
+            }
+            ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
+          '';
+
+          extraConfig = ''
+            source ${config.xdg.cacheHome}/atuin/init.nu
+
+            # Ctrl-R
+            $env.config = (
+                $env.config | upsert keybindings (
+                    $env.config.keybindings
+                    | append {
+                        name: atuin
+                        modifier: control
+                        keycode: char_r
+                        mode: [emacs, vi_normal, vi_insert]
+                        event: { send: executehostcommand cmd: (_atuin_search_cmd) }
+                    }
+                )
+            )
+
+            # Up
+            $env.config = (
+                $env.config | upsert keybindings (
+                    $env.config.keybindings
+                    | append {
+                        name: atuin
+                        modifier: none
+                        keycode: up
+                        mode: [emacs, vi_normal, vi_insert]
+                        event: { send: executehostcommand cmd: (_atuin_search_cmd '--shell-up-key-binding') }
+                    }
+                )
+            )
+          '';
+        })
+      ];
+
+      # Zsh
+      programs.zsh = mkIf (builtins.elem "zsh" cfg.shells) {
         enable = true;
         package = pkgs.zsh;
 
@@ -111,10 +237,8 @@ in
 
         dotDir = ".config/zsh";
 
-        shellAliases = {
+        shellAliases = shellAliases // {
           ls = "${pkgs.lsd}/bin/lsd";
-          cp = "${pkgs.advcpmv}/bin/advcp -rvi";
-          mv = "${pkgs.advcpmv}/bin/advmv -vi";
           mkdir = "mkdir -vp";
         };
 
@@ -127,28 +251,8 @@ in
           builtins.concatStringsSep "\n"
             [
               ''
-                rebuild () {
-                  ${
-                    let
-                      inherit (lib.strings)
-                        hasInfix;
-                      inherit (pkgs.hostPlatform)
-                        isx86_64 isAarch64
-                        isLinux isDarwin;
-                    in
-                    if isx86_64 && isLinux then
-                      "sudo --validate && sudo nixos-rebuild"
-                    else if isDarwin then
-                      "darwin-rebuild"
-                    else if isAarch64 then
-                      "nix-on-droid"
-                    else
-                      "home-manager"
-                  } --flake ${
-                    if cfg.hostname != null
-                    then "${cfg.flakePath}#${cfg.hostname}"
-                    else "${cfg.flakePath}"
-                  } ''$''\{1:-switch''\} "''$''\{@:2''\}" |& nix run nixpkgs#nix-output-monitor
+                function take() {
+                  mkdir -p "''$''\{@''\}" && cd "''$''\{@''\}"
                 }
               ''
               (optionalString cfg.atuin ''
@@ -163,10 +267,11 @@ in
               # (optionalString cfg.direnv ''
               #   eval "$(${pkgs.direnv}/bin/direnv hook zsh)"
               # '')
-              (optionalString cfg.zoxide ''
-                eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
-              '')
-              cfg.extraConfig
+              # NOTE: done by `programs.zoxide`
+              # (optionalString cfg.zoxide ''
+              #   eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
+              # '')
+              # cfg.extraConfig
             ];
 
         plugins = [
