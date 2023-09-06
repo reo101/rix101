@@ -35,7 +35,7 @@ in
         extraPackages = with pkgs; [
           jq
         ];
-        config = import ./sketchybar;
+        config = import ./sketchybar pkgs;
       };
     };
 

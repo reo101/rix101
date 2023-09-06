@@ -1,8 +1,28 @@
+# TODO: AppleSelectedInputSourcesChangedNotification
+{ lib, darwin, ... }:
+
 let
   plugin_dir = ./plugins;
+  util_dir = ./utils;
+  get_menu_bar_height = darwin.apple_sdk.stdenv.mkDerivation {
+    name = "get_menu_bar_height";
+    version = "0.0.1";
+    src = lib.cleanSource ./get_menu_bar_height;
+    buildInputs = with darwin.apple_sdk.frameworks; [
+      Cocoa
+    ];
+    buildPhase = ''
+      clang -framework cocoa get_menu_bar_height.m -o get_menu_bar_height
+    '';
+    installPhase = ''
+      mkdir -p $out/bin
+      mv get_menu_bar_height $out/bin/get_menu_bar_height
+    '';
+  };
 in
 ''
-PLUGIN_DIR="${plugin_dir}"
+export PLUGIN_DIR="${plugin_dir}"
+export UTIL_DIR="${util_dir}"
 
 ##### Bar Appearance #####
 BACKGROUND_COLOR="0x502a2d3d"
@@ -12,6 +32,8 @@ appearance=''$''\(defaults read -g AppleInterfaceStyle''\)
 if [[ ''$''\{appearance''\} != 'Dark' ]]; then
     BACKGROUND_COLOR="0x50f5f0f5"
 fi
+
+height=''$''\(${get_menu_bar_height}/bin/get_menu_bar_height''\)
 
 sketchybar --bar height="32"               \
                  blur_radius="25"          \
@@ -96,20 +118,7 @@ sketchybar --add item space_separator left                              \
 # volume is registered. More info about the event system can be found here:
 # https://felixkratz.github.io/SketchyBar/config/events
 
-sketchybar --add item test right                                         \
-           --set test    script="''$''\{PLUGIN_DIR''\}/theme.sh"                 \
-                         icon="􀝦"                                        \
-                         background.height="30"                          \
-                         background.color="''$''\{BACKGROUND_COLOR''\}"          \
-                         background.corner_radius="7"                    \
-                         icon.padding_left="10"                          \
-                         icon.padding_right="13"                         \
-                         blur_radius="30"                                \
-                         background.border_color="0x80c4a7e7"            \
-                         background.border_width="1"                     \
-                         label.drawing="off"                             \
-                         click_script="~/.dotfiles/macos/wallpapers.zsh" \
-            --add item clock right   i                                   \
+sketchybar  --add item clock right   i                                   \
             --set clock  update_freq="10"                                \
                          icon="􀐬"                                        \
                          background.color="''$''\{BACKGROUND_COLOR''\}"          \

@@ -22,6 +22,7 @@ cmd - 6 : yabai -m space --focus 6
 cmd - 7 : yabai -m space --focus 7
 cmd - 8 : yabai -m space --focus 8
 cmd - 9 : yabai -m space --focus 9
+cmd - 0 : yabai -m space --focus 10
 cmd - tab : yabai -m space --focus recent
 # cmd - ; : yabai -m space --focus next
 
@@ -44,6 +45,7 @@ shift + cmd - 6 : yabai -m window --space 6; sketchybar --trigger windows_on_spa
 shift + cmd - 7 : yabai -m window --space 7; sketchybar --trigger windows_on_spaces
 shift + cmd - 8 : yabai -m window --space 8; sketchybar --trigger windows_on_spaces
 shift + cmd - 9 : yabai -m window --space 9; sketchybar --trigger windows_on_spaces
+shift + cmd - 0 : yabai -m window --space 0; sketchybar --trigger windows_on_spaces
 
 # Move focus container to workspace
 shift + alt - m : yabai -m window --space last; yabai -m space --focus last; sketchybar --trigger windows_on_spaces
@@ -58,6 +60,7 @@ shift + alt - 6 : yabai -m window --space 6; yabai -m space --focus 6; sketchyba
 shift + alt - 7 : yabai -m window --space 7; yabai -m space --focus 7; sketchybar --trigger windows_on_spaces
 shift + alt - 8 : yabai -m window --space 8; yabai -m space --focus 8; sketchybar --trigger windows_on_spaces
 shift + alt - 9 : yabai -m window --space 9; yabai -m space --focus 9; sketchybar --trigger windows_on_spaces
+shift + alt - 0 : yabai -m window --space 0; yabai -m space --focus 9; sketchybar --trigger windows_on_spaces
 
 # Resize windows
 lctrl + alt - h : yabai -m window --resize left:-50:0; \
