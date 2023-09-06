@@ -228,15 +228,17 @@ rec {
       (builtins.attrValues
         (builtins.mapAttrs
           (system: hosts:
-            lib.filterAttrs
+            lib.concatMapAttrs
               (host: config:
-                config != null)
-                (builtins.mapAttrs
-                  (host: config:
-                    if (pred system host config)
-                    then mkHost system host config
-                    else null)
-                  hosts))
+                lib.optionalAttrs
+                  (and [
+                    (host != "__template__")
+                    (pred system host config)
+                  ])
+                  {
+                    ${host} = mkHost system host config;
+                  })
+              hosts)
           machines));
 
   # Configurations
