@@ -16,17 +16,17 @@ rec {
       (file: type:
         if type == "directory"
         then recurseDir "${dir}/${file}"
-        else type
-      )
+        else type)
       (builtins.readDir dir);
 
   allSatisfy = predicate: attrs: attrset:
-    and
-      (builtins.map
-        (attr:
-          builtins.hasAttr attr attrset &&
-          predicate (builtins.getAttr attr attrset))
-        attrs);
+    lib.all
+      (attr:
+         and [
+           (builtins.hasAttr attr attrset)
+           (predicate (builtins.getAttr attr attrset))
+         ])
+      attrs;
 
   # NOTE: Implying last argument is the output of `recurseDir`
   hasFiles = allSatisfy (eq "regular");
@@ -57,7 +57,7 @@ rec {
       (lib.mapAttrs'
         (name: type:
           let
-            moduleDir = baseDir + "/${name}";
+            moduleDir = lib.path.append baseDir "${name}";
           in
           if and [
             (type == "directory")
@@ -116,7 +116,7 @@ rec {
     inherit system;
 
     modules = [
-      (root + "/configuration.nix")
+      (lib.path.append root "configuration.nix")
       inputs.nur.nixosModules.nur
       inputs.home-manager.nixosModules.home-manager
       {
@@ -125,7 +125,7 @@ rec {
           useUserPackages = true;
           users = lib.attrsets.genAttrs
             users
-            (user: import (root + "/home/${user}.nix"));
+            (user: import (lib.path.append root "home/${user}.nix"));
           sharedModules = builtins.attrValues homeManagerModules;
           extraSpecialArgs = {
             inherit inputs outputs;
@@ -153,11 +153,11 @@ rec {
     };
 
     modules = [
-      (root + "/configuration.nix")
+      (lib.path.append root "configuration.nix")
       { nix.registry.nixpkgs.flake = nixpkgs; }
       {
         home-manager = {
-          config = (root + "/home.nix");
+          config = (lib.path.append root "home.nix");
           backupFileExtension = "hm-bak";
           useGlobalPkgs = false;
           useUserPackages = true;
@@ -183,7 +183,7 @@ rec {
     inherit system;
 
     modules = [
-      (root + "/configuration.nix")
+      (lib.path.append root "configuration.nix")
       inputs.home-manager.darwinModules.home-manager
       {
         home-manager = {
@@ -191,7 +191,7 @@ rec {
           useUserPackages = true;
           users = lib.attrsets.genAttrs
             users
-            (user: import (root + "/home/${user}.nix"));
+            (user: import (lib.path.append root "home/${user}.nix"));
           sharedModules = builtins.attrValues homeManagerModules;
           extraSpecialArgs = {
             inherit inputs outputs;
@@ -211,7 +211,7 @@ rec {
     pkgs = nixpkgs.legacyPackages.${system};
 
     modules = [
-      (root + "/home.nix")
+      (lib.path.append root "home.nix")
     ] ++ (builtins.attrValues homeManagerModules);
 
     extraSpecialArgs = {
@@ -228,15 +228,15 @@ rec {
       (builtins.attrValues
         (builtins.mapAttrs
           (system: hosts:
-          lib.filterAttrs
-            (host: config:
-            config != null)
-            (builtins.mapAttrs
+            lib.filterAttrs
               (host: config:
-              if (pred system host config)
-              then mkHost system host config
-              else null)
-              hosts))
+                config != null)
+                (builtins.mapAttrs
+                  (host: config:
+                    if (pred system host config)
+                    then mkHost system host config
+                    else null)
+                  hosts))
           machines));
 
   # Configurations
@@ -248,9 +248,9 @@ rec {
             (hasFiles
               [ "configuration.nix" ]
               config)
-            (hasDirectories
-              [ "home" ]
-              config)
+            # (hasDirectories
+            #   [ "home" ]
+            #   config)
           ])
       (system: host: config:
         mkNixosHost
