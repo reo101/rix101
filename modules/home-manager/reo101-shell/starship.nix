@@ -7,7 +7,7 @@
   format = ''
     [╭───────┨](bold green)[${username}](bright-white)[@](bold yellow)$hostname[┠───────>](bold green)$status$cmd_duration$git_branch$git_status$git_state$git_commit
     [│](bold green)$time$jobs: $directory$package
-    [╰─](bold green)$character
+    [╰─](bold green)''${custom.character_zsh}''${custom.character_nu}
   '';
 
   # ${custom.local}\
@@ -17,9 +17,16 @@
 
   add_newline = true;
 
-  character = {
-    success_symbol = "[→](bold green)";
-    error_symbol = "[→](red)";
+  custom.character_zsh = {
+    shell = "/bin/sh";
+    when = "[ $STARSHIP_SHELL = zsh ]";
+    format = "[](bold green) ";
+  };
+
+  custom.character_nu = {
+    shell = "/bin/sh";
+    when = "[ $STARSHIP_SHELL = nu ]";
+    format = "";
   };
 
   git_branch = {
