@@ -40,7 +40,6 @@ in
         "homebrew/core"
         "homebrew/cask"
         "homebrew/cask-fonts"
-        "homebrew/cask-drivers"
         "homebrew/services"
         "cmacrae/formulae"
         "FelixKratz/formulae"
@@ -48,17 +47,21 @@ in
       ];
       brews = [
         "libusb"
+        "openssl"
         "switchaudio-osx"
         "pinentry-touchid"
       ];
       casks = [
         "android-platform-tools"
         "docker"
+        "firefox"
         "font-fira-code-nerd-font"
         "karabiner-elements"
+        "notion"
+        # "osxfuse"
         "scroll-reverser"
         "sf-symbols"
-        # "slack"
+        "slack"
         "spotify"
         "xquartz"
       ];

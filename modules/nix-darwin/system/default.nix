@@ -18,7 +18,7 @@ in
 
     services.activate-system.enable = true;
     services.nix-daemon.enable = true;
-    programs.nix-index.enable = true;
+    # programs.nix-index.enable = true;
 
     environment.shells = [ pkgs.zsh ];
 
@@ -177,6 +177,9 @@ in
         if ! [ "$\{SPCTL}" = "assessments disabled" ]; then
             sudo spctl --master-disable
         fi
+
+        # echo "Set hostname"
+        # sudo scutil --set HostName $hostname
       '';
 
       # User-level settings
@@ -232,6 +235,9 @@ in
 
         # echo "Disable \"Save in Keychain\" for pinentry-mac"
         # defaults write org.gpgtools.common DisableKeychain -bool yes
+
+        echo "Disable bezels (volume/brightness popups)"
+        launchctl unload -wF /System/Library/LaunchAgents/com.apple.OSDUIHelper.plist
 
         echo "Define dock icon function"
         __dock_item() {
