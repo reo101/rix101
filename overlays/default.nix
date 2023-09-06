@@ -30,6 +30,19 @@
       };
     };
 
+    himalaya = prev.himalaya.overrideAttrs (oldAttrs: rec {
+      buildInputs =
+        (prev.buildInputs or [ ]) ++
+        final.lib.optionals final.stdenv.isDarwin ([
+          (with final.darwin.apple_sdk.frameworks; [
+            Security
+          ])
+          (with final; [
+            iconv
+          ])
+        ]);
+    });
+
     river = prev.river.overrideAttrs (oldAttrs: rec {
       xwaylandSupport = true;
     });
