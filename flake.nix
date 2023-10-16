@@ -32,10 +32,37 @@
       flake = false;
     };
 
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        darwin.follows = "nix-darwin";
+        home-manager.follows = "home-manager";
+      };
+    };
+
+    ragenix = {
+      url = "github:yaxitech/ragenix";
+    };
+
+    # sops-nix = {
+    #   url = "github:Mic92/sops-nix";
+    #   inputs = {
+    #     nixpkgs.follows = "nixpkgs";
+    #     darwin.follows = "nix-darwin";
+    #     home-manager.follows = "home-manager";
+    #   };
+    # };
 
     # Nix User Repository
     nur = {
@@ -78,7 +105,10 @@
     , nix-on-droid
     , nix-darwin
     , home-manager
+    , disko
     , deploy-rs
+    , agenix
+    , ragenix
     , nur
     , hardware
     , nix-colors
@@ -105,7 +135,7 @@
 
       # Dev Shells (`nix develop`)
       devShells = util.forEachPkgs (pkgs:
-        import ./shells { inherit pkgs; }
+        import ./shells { inherit pkgs inputs outputs; }
       );
 
       # Formatter
