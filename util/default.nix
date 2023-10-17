@@ -117,7 +117,6 @@ rec {
 
     modules = [
       (lib.path.append root "configuration.nix")
-      inputs.nur.nixosModules.nur
       inputs.home-manager.nixosModules.home-manager
       {
         home-manager = {
