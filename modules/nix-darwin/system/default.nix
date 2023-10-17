@@ -28,6 +28,7 @@ in
 
       keyboard = {
         remapCapsLockToControl = true;
+        nonUS.remapTilde = true;
         enableKeyMapping = true; # Allows for skhd
       };
 
