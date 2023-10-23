@@ -44,3 +44,35 @@
 </div>
 
 ---
+
+# NixOS setup
+
+```bash
+# Initial setup
+nix run nixpkgs#nixos-anywhere -- --flake .#${HOSTNAME} --build-on-remote --ssh-port 22 root@${HOSTNAME} --no-reboott
+
+# Deploy
+deploy .#${HOSTNAME} --skip-checks
+```
+
+---
+
+# Mac (silicon) setup
+
+```sh
+# Setup system tools
+softwareupdate --install-rosetta --agree-to-license
+sudo xcodebuild -license
+
+# Install nix
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# Apply configuration
+git clone https://www.github.com/reo101/rix101 ~/.config/rix101
+cd ~/.config/rix101
+nix build ".#darwinConfigurations.${HOSTNAME}.system"
+./result/sw/bin/darwin-rebuild switch --flake .
+
+# System setup for `yabai` (in system recovery)
+csrutil enable --without fs --without debug --without nvram
+```
