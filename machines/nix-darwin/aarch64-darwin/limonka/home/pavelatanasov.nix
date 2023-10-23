@@ -119,6 +119,9 @@
       pass-otp
     ]))
 
+    # GCP
+    google-cloud-sdk
+
     # FMI
     vim-fmi-cli
 

@@ -54,11 +54,13 @@
         "https://rix101.cachix.org"
         "https://nix-community.cachix.org"
         "https://lean4.cachix.org"
+        "https://nixpkgs-cross-overlay.cachix.org"
       ];
       trusted-public-keys = [
         "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "lean4.cachix.org-1:mawtxSxcaiWE24xCXXgh3qnvlTkyU7evRRnGeAhD4Wk="
+        "nixpkgs-cross-overlay.cachix.org-1:TjKExGN4ys960TlsGqNOI/NBdoz2Jdr2ow1VybWV5JM="
       ];
     };
   };

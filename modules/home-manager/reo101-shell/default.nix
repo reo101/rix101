@@ -171,7 +171,7 @@ in
       };
 
       # Nushell
-      programs.nushell/* -reo101 */ = mkMerge [
+      programs.nushell = mkMerge [
         (mkIf (builtins.elem "nushell" cfg.shells) {
           enable = true;
 

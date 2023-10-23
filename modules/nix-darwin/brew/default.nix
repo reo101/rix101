@@ -49,7 +49,6 @@ in
         "libusb"
         "openssl"
         "switchaudio-osx"
-        "pinentry-touchid"
       ];
       casks = [
         "android-platform-tools"
