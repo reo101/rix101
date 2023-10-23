@@ -25,5 +25,4 @@ in
   "home/jeeves_password.age".publicKeys = users ++ [ jeeves_system ];
   "home/wireguard/server.private.age".publicKeys = users ++ [ jeeves_system ];
   "home/wireguard/server.public.age".publicKeys = users ++ [ jeeves_system ];
-  "home/wireguard/cheetah.pub.age".publicKeys = users ++ [ jeeves_system ];
 }

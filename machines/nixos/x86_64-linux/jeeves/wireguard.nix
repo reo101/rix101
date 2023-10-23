@@ -18,11 +18,6 @@
     file = ../../../../secrets/home/wireguard/server.public.age;
   };
 
-  # Peers
-  age.secrets."wireguard/cheetah.pub" = {
-    file = ../../../../secrets/home/wireguard/cheetah.pub.age;
-  };
-
   networking.firewall.allowedUDPPorts = [51820];
   systemd.network = {
     netdevs = {
@@ -40,7 +35,7 @@
           {
             # cheetah
             wireguardPeerConfig = {
-              PublicKey = config.age.secrets."wireguard/cheetah.pub".path;
+              PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
               AllowedIPs = [
                 "0.0.0.0/0"
                 # "::/0"
