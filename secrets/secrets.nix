@@ -23,7 +23,7 @@ in
 {
   "home/wifi.env.age".publicKeys = users ++ systems;
   "home/jeeves_password.age".publicKeys = users ++ [ jeeves_system ];
-  "home/wireguard/server_private.age".publicKeys = users ++ [ jeeves_system ];
-  "home/wireguard/server_public.age".publicKeys = users ++ [ jeeves_system ];
+  "home/wireguard/server.private.age".publicKeys = users ++ [ jeeves_system ];
+  "home/wireguard/server.public.age".publicKeys = users ++ [ jeeves_system ];
   "home/wireguard/cheetah.pub.age".publicKeys = users ++ [ jeeves_system ];
 }
