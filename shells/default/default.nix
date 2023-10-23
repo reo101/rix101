@@ -14,6 +14,7 @@
     deploy-rs
     # inputs.agenix.packages.${pkgs.system}.agenix
     inputs.ragenix.packages.${pkgs.system}.ragenix
+    wireguard-tools
     rage
   ];
 }

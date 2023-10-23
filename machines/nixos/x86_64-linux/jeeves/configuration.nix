@@ -4,6 +4,7 @@
     (import ./disko.nix { inherit inputs outputs; })
     inputs.agenix.nixosModules.default
     ./network.nix
+    ./wireguard.nix
   ];
 
   nixpkgs = {

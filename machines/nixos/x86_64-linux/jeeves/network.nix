@@ -3,7 +3,6 @@
   environment.systemPackages = with pkgs; [
   ];
 
-  # Networking
   age.secrets."home/wifi.env".file = ../../../../secrets/home/wifi.env.age;
   networking.wireless = {
     iwd.enable = true;
