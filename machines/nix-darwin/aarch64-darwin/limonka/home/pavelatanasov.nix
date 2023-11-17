@@ -109,7 +109,7 @@
     nixd
 
     # Mail
-    himalaya
+    # himalaya
 
     # SSH and GPG
     openssh

@@ -21,7 +21,14 @@ in
     services.nix-daemon.enable = true;
     # programs.nix-index.enable = true;
 
-    environment.shells = [ pkgs.zsh ];
+    environment.systemPackages = [
+      pkgs.zsh
+      pkgs.nushell
+    ];
+    environment.shells = [
+      pkgs.zsh
+      pkgs.nushell
+    ];
 
     security.pam.enableSudoTouchIdAuth = true;
 
