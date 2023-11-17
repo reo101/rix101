@@ -1,10 +1,13 @@
 { inputs, outputs, lib, pkgs, config, ... }:
 {
   imports = [
+    inputs.hardware.nixosModules.common-cpu-amd
+    inputs.hardware.nixosModules.common-gpu-amd
     (import ./disko.nix { inherit inputs outputs; })
     inputs.agenix.nixosModules.default
     ./network.nix
     ./wireguard.nix
+    ./jellyfin.nix
   ];
 
   nixpkgs = {
@@ -57,14 +60,15 @@
   ];
 
   # NOTE: made with `mkpasswd -m sha-516`
-  age.secrets."home/jeeves_password".file = ../../../../secrets/home/jeeves_password.age;
+  age.secrets."jeeves_password".file = ../../../../secrets/home/jeeves_password.age;
+
   users = {
     mutableUsers = true;
     users = {
       jeeves = {
         isNormalUser = true;
         shell = pkgs.zsh;
-        passwordFile = config.age.secrets."home/jeeves_password".path;
+        hashedPasswordFile = config.age.secrets."jeeves_password".path;
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBj8ZGcvI80WrJWV+dNy1a3L973ydSNqtwcVHzurDUaW (none)"
         ];
@@ -73,6 +77,7 @@
           "networkmanager"
           "audio"
           "docker"
+          "transmission"
         ];
       };
     };

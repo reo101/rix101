@@ -189,6 +189,9 @@
                   ];
                 };
                 "/data/media" = { };
+                "/data/torrents" = { };
+                "/data/torrents/download" = { };
+                "/data/torrents/incomplete" = { };
                 "/data/media/jellyfin" = { };
               };
             };

@@ -42,6 +42,25 @@
               ];
             };
           }
+          {
+            # limonka
+            wireguardPeerConfig = {
+              PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
+              AllowedIPs = [
+                "0.0.0.0/0"
+                # "192.168.1.0/24"
+              ];
+            };
+          }
+          {
+            # s42
+            wireguardPeerConfig = {
+              PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
+              AllowedIPs = [
+                "0.0.0.0/0"
+              ];
+            };
+          }
         ];
       };
     };
