@@ -21,6 +21,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+    };
+
     # Home Manager
     home-manager = {
       url = "github:nix-community/home-manager/master";
@@ -104,6 +108,7 @@
     , nixpkgs
     , nix-on-droid
     , nix-darwin
+    , mac-app-util
     , home-manager
     , disko
     , deploy-rs

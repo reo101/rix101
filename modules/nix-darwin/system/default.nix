@@ -1,3 +1,4 @@
+{ inputs, outputs, ... }:
 { lib, pkgs, config, ... }:
 
 with lib;
@@ -181,6 +182,8 @@ in
 
         # echo "Set hostname"
         # sudo scutil --set HostName $hostname
+
+        ${inputs.mac-app-util.packages.${pkgs.stdenv.system}.default}/bin/mac-app-util sync-trampolines "/Applications/Nix Apps" "/Applications/Nix Trampolines"
       '';
 
       # User-level settings
