@@ -45,6 +45,32 @@
 
 ---
 
+# Secrets
+
+```bash
+# To put `agenix` and friends in `$PATH`
+nix develop
+cd secrets
+```
+
+## Make new key
+
+```bash
+rage-keygen -o key
+```
+
+## Edit secret
+
+```bash
+agenix -i key -e sub/dir/secret_file.age
+```
+
+## Rekey all secrets
+
+```bash
+agenix -i key --rekey
+```
+
 # NixOS setup
 
 ```bash
