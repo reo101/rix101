@@ -73,6 +73,10 @@
       url = "github:nix-community/NUR";
     };
 
+    spicetify-nix = {
+      url = "github:the-argus/spicetify-nix";
+    };
+
     hardware = {
       url = "github:nixos/nixos-hardware";
     };
@@ -115,6 +119,7 @@
     , agenix
     , ragenix
     , nur
+    , spicetify-nix
     , hardware
     , nix-colors
     , neovim-nightly-overlay
