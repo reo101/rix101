@@ -8,6 +8,7 @@
   advcpmv = pkgs.callPackage ./advcpmv { };
   circom = pkgs.callPackage ./circom { };
   circom-lsp = pkgs.callPackage ./circom-lsp { };
+  envsub = pkgs.callPackage ./envsub { };
   fennel-language-server = pkgs.callPackage ./fennel-language-server { };
   parinfer-rust = pkgs.callPackage ./parinfer-rust { };
   pest-ide-tools = pkgs.callPackage ./pest-ide-tools { };
