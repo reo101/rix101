@@ -8,6 +8,7 @@
     ./network.nix
     ./wireguard.nix
     ./jellyfin.nix
+    ./mindustry.nix
   ];
 
   nixpkgs = {
