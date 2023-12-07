@@ -123,6 +123,7 @@ in
 
       # Atuin
       home.file."${config.xdg.configHome}/atuin/config.toml" = mkIf cfg.atuin {
+        # TODO: use pkgs.substituteAll
         text = import ./atuin.nix {
           keyPath = "${config.xdg.dataHome}/atuin/key";
         };
