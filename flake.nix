@@ -59,13 +59,14 @@
       };
     };
 
+    ragenix = {
+      url = "github:yaxitech/ragenix";
+      inputs.agenix.follows = "agenix";
+    };
+
     agenix-rekey = {
       url = "github:oddlama/agenix-rekey";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    ragenix = {
-      url = "github:yaxitech/ragenix";
     };
 
     # Nix User Repository
@@ -118,8 +119,8 @@
     , disko
     , deploy-rs
     , agenix
-    , agenix-rekey
     , ragenix
+    , agenix-rekey
     , nur
     , spicetify-nix
     , hardware
