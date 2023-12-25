@@ -30,6 +30,16 @@
       };
     };
 
+    nix = inputs.nix-monitored.packages.${final.system}.default.override {
+      nix = prev.nix;
+      nix-output-monitor = prev.nix-output-monitor;
+    };
+
+    nixUnstable = inputs.nix-monitored.packages.${final.system}.default.override {
+      nix = prev.nixUnstable;
+      nix-output-monitor = prev.nix-output-monitor;
+    };
+
     himalaya = prev.himalaya.overrideAttrs (oldAttrs: rec {
       buildInputs =
         (prev.buildInputs or [ ]) ++

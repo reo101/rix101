@@ -36,6 +36,10 @@
       flake = false;
     };
 
+    nix-monitored = {
+      url = "github:ners/nix-monitored";
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -110,6 +114,7 @@
     , nix-darwin
     , mac-app-util
     , home-manager
+    , nix-monitored
     , disko
     , deploy-rs
     , agenix

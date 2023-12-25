@@ -119,6 +119,9 @@ rec {
       (lib.path.append root "configuration.nix")
       inputs.home-manager.nixosModules.home-manager
       {
+        nixpkgs.overlays = builtins.attrValues outputs.overlays;
+      }
+      {
         home-manager = {
           useGlobalPkgs = false;
           useUserPackages = true;
@@ -155,6 +158,9 @@ rec {
       (lib.path.append root "configuration.nix")
       { nix.registry.nixpkgs.flake = nixpkgs; }
       {
+        nixpkgs.overlays = builtins.attrValues outputs.overlays;
+      }
+      {
         home-manager = {
           config = (lib.path.append root "home.nix");
           backupFileExtension = "hm-bak";
@@ -183,6 +189,12 @@ rec {
 
     modules = [
       (lib.path.append root "configuration.nix")
+      {
+        nixpkgs.hostPlatform = system;
+      }
+      {
+        nixpkgs.overlays = builtins.attrValues outputs.overlays;
+      }
       inputs.home-manager.darwinModules.home-manager
       {
         home-manager = {
@@ -200,9 +212,8 @@ rec {
       }
     ] ++ (builtins.attrValues nixDarwinModules);
 
-    inputs = {
+    specialArgs = {
       inherit inputs outputs;
-      inherit nixpkgs;
     };
   };
 
@@ -211,6 +222,9 @@ rec {
 
     modules = [
       (lib.path.append root "home.nix")
+      {
+        nixpkgs.overlays = builtins.attrValues outputs.overlays;
+      }
     ] ++ (builtins.attrValues homeManagerModules);
 
     extraSpecialArgs = {

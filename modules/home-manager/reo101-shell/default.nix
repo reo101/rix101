@@ -33,7 +33,7 @@ let
           if cfg.hostname != null
           then "${cfg.flakePath}#${cfg.hostname}"
           else "${cfg.flakePath}"
-        } ''$''\{1:-switch''\} "''$''\{@:2''\}" |& nix run nixpkgs#nix-output-monitor
+        } ''$''\{1:-switch''\} "''$''\{@:2''\}" # |& nix run nixpkgs#nix-output-monitor
       '';
     in
       "${rebuild_script}";
