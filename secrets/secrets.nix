@@ -21,8 +21,7 @@ let
   systems = [ jeeves_system limonka_system ];
 in
 {
-  "home/wifi.env.age".publicKeys = users ++ systems;
-  "home/jeeves_password.age".publicKeys = users ++ [ jeeves_system ];
-  "home/wireguard/server.private.age".publicKeys = users ++ [ jeeves_system ];
-  "home/wireguard/server.public.age".publicKeys = users ++ [ jeeves_system ];
+  "home/wifi/env.age".publicKeys = users ++ systems;
+  "home/jeeves/user/password.age".publicKeys = users ++ [ jeeves_system ];
+  "home/jeeves/wireguard/private.age".publicKeys = users ++ [ jeeves_system ];
 }

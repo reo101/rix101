@@ -1,4 +1,4 @@
-{ lib, pkgs, config, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 {
   environment.systemPackages = with pkgs; [
     wireguard-tools
@@ -10,12 +10,17 @@
   # wg pubkey < private > public
 
   # Server
-  age.secrets."wireguard/server.private" = {
-    file = ../../../../secrets/home/wireguard/server.private.age;
+  age.secrets."wireguard.private" = {
+    # file = ../../../../secrets/home/jeeves/wireguard/private.age;
+    # file = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
     mode = "077";
-  };
-  age.secrets."wireguard/server.public" = {
-    file = ../../../../secrets/home/wireguard/server.public.age;
+    # FIXME: agenix-rekey
+    rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
+    # generator = {lib, pkgs, file, ...}: ''
+    #   priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
+    #   ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
+    #   echo "$priv"
+    # '';
   };
 
   networking.firewall.allowedUDPPorts = [51820];
@@ -28,7 +33,7 @@
           MTUBytes = "1300";
         };
         wireguardConfig = {
-          PrivateKeyFile = config.age.secrets."wireguard/server.private".path;
+          PrivateKeyFile = config.age.secrets."wireguard.private".path;
           ListenPort = 51820;
         };
         wireguardPeers = [

@@ -1,12 +1,17 @@
-{ lib, pkgs, config, ... }:
+{ inputs, outputs, lib, pkgs, config, ... }:
 {
   environment.systemPackages = with pkgs; [
   ];
 
-  age.secrets."home/wifi.env".file = ../../../../secrets/home/wifi.env.age;
+  age.secrets."home.wifi.env" = {
+    # file = ../../../../secrets/home/wifi/env.age;
+    # file = "${inputs.self}/secrets/home/wifi/env.age";
+    # FIXME: agenix-rekey
+    rekeyFile = "${inputs.self}/secrets/home/wifi/env.age";
+  };
   networking.wireless = {
     iwd.enable = true;
-    environmentFile = config.age.secrets."home/wifi.env".path;
+    environmentFile = config.age.secrets."home.wifi.env".path;
     networks = {
       home = {
         ssid = "@HOME_WIFI_SSID@";

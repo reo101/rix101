@@ -3,13 +3,22 @@
   imports = [
     inputs.hardware.nixosModules.common-cpu-amd
     inputs.hardware.nixosModules.common-gpu-amd
-    (import ./disko.nix { inherit inputs outputs; })
+    ./disko.nix
     inputs.agenix.nixosModules.default
+    # FIXME: agenix-rekey
+    inputs.agenix-rekey.nixosModules.default
     ./network.nix
     ./wireguard.nix
     ./jellyfin.nix
     ./mindustry.nix
   ];
+
+  # FIXME: agenix-rekey
+  age.rekey = {
+    hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
+    masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
+    # forceRekeyOnSystem = "aarch64-darwin";
+  };
 
   nixpkgs = {
     hostPlatform = "x86_64-linux";
@@ -61,7 +70,15 @@
   ];
 
   # NOTE: made with `mkpasswd -m sha-516`
-  age.secrets."jeeves_password".file = ../../../../secrets/home/jeeves_password.age;
+  age.secrets."jeeves.user.password" = {
+    # file = ../../../../secrets/home/jeeves/user/password.age;
+    # file = "${inputs.self}/secrets/home/jeeves/user/password.age";
+    # FIXME: agenix-rekey
+    rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
+    # generator = {pkgs, ...}: ''
+    #   ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
+    # '';
+  };
 
   users = {
     mutableUsers = true;
@@ -69,7 +86,7 @@
       jeeves = {
         isNormalUser = true;
         shell = pkgs.zsh;
-        hashedPasswordFile = config.age.secrets."jeeves_password".path;
+        hashedPasswordFile = config.age.secrets."jeeves.user.password".path;
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBj8ZGcvI80WrJWV+dNy1a3L973ydSNqtwcVHzurDUaW (none)"
         ];
@@ -98,19 +115,26 @@
   #   ];
   # };
 
-  security.sudo.extraRules= [
-    {
-      users = [
-        "jeeves"
-      ];
-      commands = [
+  # security.sudo-rs = {
+  #   enable = !config.security.sudo.enable;
+  #   inherit (config.security.sudo) extraRules;
+  # };
+  security.sudo = {
+    enable = true;
+    extraRules= [
+      {
+        users = [
+          "jeeves"
+        ];
+        commands = [
         {
           command = "ALL" ;
           options= [ "NOPASSWD" ]; # "SETENV" # Adding the following could be a good idea
         }
-      ];
-    }
-  ];
+        ];
+      }
+    ];
+  };
 
   services.openssh = {
     enable = true;

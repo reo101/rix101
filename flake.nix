@@ -55,18 +55,14 @@
       };
     };
 
+    agenix-rekey = {
+      url = "github:oddlama/agenix-rekey";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     ragenix = {
       url = "github:yaxitech/ragenix";
     };
-
-    # sops-nix = {
-    #   url = "github:Mic92/sops-nix";
-    #   inputs = {
-    #     nixpkgs.follows = "nixpkgs";
-    #     darwin.follows = "nix-darwin";
-    #     home-manager.follows = "home-manager";
-    #   };
-    # };
 
     # Nix User Repository
     nur = {
@@ -117,6 +113,7 @@
     , disko
     , deploy-rs
     , agenix
+    , agenix-rekey
     , ragenix
     , nur
     , spicetify-nix
@@ -132,7 +129,9 @@
       inherit (self) outputs;
       util = import ./util { inherit inputs outputs; };
     in
-    rec {
+    {
+      inherit self;
+
       # Packages (`nix build`)
       packages = util.forEachPkgs (pkgs:
         import ./pkgs { inherit pkgs; }
@@ -183,6 +182,14 @@
       nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
       darwinConfigurations = util.autoDarwinConfigurations;
       homeConfigurations = util.autoHomeConfigurations;
+
+      # Secrets
+      agenix-rekey = agenix-rekey.configure {
+        userFlake = self;
+        nodes = {
+          inherit (self.nixosConfigurations) jeeves;
+        };
+      };
 
       # Deploy.rs nodes
       deploy.nodes = util.deploy.autoNodes;

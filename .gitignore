@@ -1,2 +1,3 @@
 /.direnv/
-/secrets/key
+/secrets/*key*
+!/secrets/*.age
