@@ -13,11 +13,13 @@
   age.secrets."wireguard.private" = {
     mode = "077";
     rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
-    generator = {lib, pkgs, file, ...}: ''
-      priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
-      ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
-      echo "$priv"
-    '';
+    generator = {
+      script = {lib, pkgs, file, ...}: ''
+        priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
+        ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
+        echo "$priv"
+      '';
+    };
   };
 
   networking.firewall.allowedUDPPorts = [51820];

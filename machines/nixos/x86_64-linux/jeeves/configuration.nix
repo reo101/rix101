@@ -5,7 +5,6 @@
     inputs.hardware.nixosModules.common-gpu-amd
     ./disko.nix
     inputs.agenix.nixosModules.default
-    # FIXME: agenix-rekey
     inputs.agenix-rekey.nixosModules.default
     ./network.nix
     ./wireguard.nix
@@ -13,7 +12,6 @@
     ./mindustry.nix
   ];
 
-  # FIXME: agenix-rekey
   age.rekey = {
     hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
     masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
@@ -57,6 +55,11 @@
         config.nix.registry;
 
     settings = {
+      trusted-users = [
+        "root"
+        "jeeves"
+      ];
+
       experimental-features = "nix-command flakes";
       auto-optimise-store = true;
     };
@@ -72,9 +75,11 @@
   # NOTE: made with `mkpasswd -m sha-516`
   age.secrets."jeeves.user.password" = {
     rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
-    generator = {pkgs, ...}: ''
-      ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
-    '';
+    generator = {
+      script = {pkgs, ...}: ''
+        ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
+      '';
+    };
   };
 
   users = {
