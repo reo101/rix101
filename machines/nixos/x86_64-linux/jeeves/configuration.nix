@@ -71,13 +71,10 @@
 
   # NOTE: made with `mkpasswd -m sha-516`
   age.secrets."jeeves.user.password" = {
-    # file = ../../../../secrets/home/jeeves/user/password.age;
-    # file = "${inputs.self}/secrets/home/jeeves/user/password.age";
-    # FIXME: agenix-rekey
     rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
-    # generator = {pkgs, ...}: ''
-    #   ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
-    # '';
+    generator = {pkgs, ...}: ''
+      ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
+    '';
   };
 
   users = {

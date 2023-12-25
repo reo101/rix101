@@ -4,9 +4,6 @@
   ];
 
   age.secrets."home.wifi.env" = {
-    # file = ../../../../secrets/home/wifi/env.age;
-    # file = "${inputs.self}/secrets/home/wifi/env.age";
-    # FIXME: agenix-rekey
     rekeyFile = "${inputs.self}/secrets/home/wifi/env.age";
   };
   networking.wireless = {

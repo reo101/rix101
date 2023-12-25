@@ -11,16 +11,13 @@
 
   # Server
   age.secrets."wireguard.private" = {
-    # file = ../../../../secrets/home/jeeves/wireguard/private.age;
-    # file = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
     mode = "077";
-    # FIXME: agenix-rekey
     rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
-    # generator = {lib, pkgs, file, ...}: ''
-    #   priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
-    #   ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
-    #   echo "$priv"
-    # '';
+    generator = {lib, pkgs, file, ...}: ''
+      priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
+      ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
+      echo "$priv"
+    '';
   };
 
   networking.firewall.allowedUDPPorts = [51820];
