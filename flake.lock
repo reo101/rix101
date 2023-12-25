@@ -591,6 +591,21 @@
         "type": "github"
       }
     },
+    "impermanence": {
+      "locked": {
+        "lastModified": 1702984171,
+        "narHash": "sha256-reIUBrUXibohXmvXRsgpvtlCE0QQSvWSA+qQCKohgR0=",
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "rev": "123e94200f63952639492796b8878e588a4a2851",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "type": "github"
+      }
+    },
     "langref": {
       "flake": false,
       "locked": {
@@ -601,6 +616,19 @@
       "original": {
         "type": "file",
         "url": "https://raw.githubusercontent.com/ziglang/zig/63bd2bff12992aef0ce23ae4b344e9cb5d65f05d/doc/langref.html.in"
+      }
+    },
+    "lib-net": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1596309860,
+        "narHash": "sha256-izAzepR/6cDvnRfaa2ceSolMLMwqzQB5x9q62aR5J2g=",
+        "type": "tarball",
+        "url": "https://gist.github.com/duairc/5c9bb3c922e5d501a1edb9e7b3b845ba/archive/3885f7cd9ed0a746a9d675da6f265d41e9fd6704.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://gist.github.com/duairc/5c9bb3c922e5d501a1edb9e7b3b845ba/archive/3885f7cd9ed0a746a9d675da6f265d41e9fd6704.tar.gz"
       }
     },
     "mac-app-util": {
@@ -1045,6 +1073,8 @@
         "flake-compat": "flake-compat_3",
         "hardware": "hardware",
         "home-manager": "home-manager",
+        "impermanence": "impermanence",
+        "lib-net": "lib-net",
         "mac-app-util": "mac-app-util",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-colors": "nix-colors",
