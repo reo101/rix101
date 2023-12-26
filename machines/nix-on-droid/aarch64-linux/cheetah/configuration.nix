@@ -18,7 +18,7 @@
   system.stateVersion = "22.11";
 
   nix.extraOptions = ''
-    experimental-features = nix-command flakes repl-flake
+    experimental-features = nix-command flakes repl-flake recursive-nix
     keep-outputs = true
     keep-derivations = true
   '';

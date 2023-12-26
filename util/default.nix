@@ -158,15 +158,16 @@ rec {
       (lib.path.append root "configuration.nix")
       { nix.registry.nixpkgs.flake = nixpkgs; }
       {
-        nixpkgs.overlays = builtins.attrValues outputs.overlays;
-      }
-      {
         home-manager = {
           config = (lib.path.append root "home.nix");
           backupFileExtension = "hm-bak";
           useGlobalPkgs = false;
           useUserPackages = true;
-          sharedModules = builtins.attrValues homeManagerModules;
+          sharedModules = builtins.attrValues homeManagerModules ++ [
+            {
+              nixpkgs.overlays = builtins.attrValues outputs.overlays;
+            }
+          ];
           extraSpecialArgs = {
             inherit inputs outputs;
             inherit hostname;

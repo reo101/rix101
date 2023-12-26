@@ -27,6 +27,7 @@
     # clang
     gcc
 
+    openssh
     diffutils
     findutils
     utillinux
@@ -72,7 +73,7 @@
     # emacs
 
     #
-    j
+    # j
   ];
 
   programs.neovim = {
@@ -104,6 +105,7 @@
     enable = true;
     username = "reo101";
     hostname = "cheetah";
+    atuin = true;
     direnv = true;
     zoxide = true;
   };
@@ -118,16 +120,18 @@
     enable = true;
     userName = "reo101";
     userEmail = "pavel.atanasov2001@gmail.com";
+    signing = {
+      signByDefault = true;
+      key = "675AA7EF13964ACB";
+    };
   };
 
   services.gpg-agent = {
     enable = true;
-    defaultCacheTtl = 1800;
+    defaultCacheTtl = 86400;
+    maxCacheTtl = 86400;
+    pinentryFlavor = "tty";
     enableSshSupport = true;
+    sshKeys = ["CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7"];
   };
-
-  # Using nix-direnv
-  # services.lorri = {
-  #   enable = true;
-  # };
 }
