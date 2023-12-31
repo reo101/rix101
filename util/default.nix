@@ -34,20 +34,6 @@ rec {
   # NOTE: Implying last argument is the output of `recurseDir`
   hasDirectories = allSatisfy lib.isAttrs;
 
-  # pkgs helpers
-  forEachSystem = lib.genAttrs [
-    "aarch64-linux"
-    "i686-linux"
-    "x86_64-linux"
-    "aarch64-darwin"
-    "x86_64-darwin"
-  ];
-
-  forEachPkgs = f:
-    forEachSystem
-      (system:
-        f nixpkgs.legacyPackages.${system});
-
   # Modules helpers
   createModules = baseDir: { passthru ? { inherit inputs outputs; }, ... }:
     lib.pipe baseDir [
@@ -103,6 +89,7 @@ rec {
   nixOnDroidModules  = createModules ../modules/nix-on-droid { };
   nixDarwinModules   = createModules ../modules/nix-darwin   { };
   homeManagerModules = createModules ../modules/home-manager { };
+  flakeModules       = createModules ../modules/flake        { };
 
   # Machines
   machines            = recurseDir ../machines;

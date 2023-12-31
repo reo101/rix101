@@ -7,6 +7,10 @@
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+    };
+
     # Nix on Droid
     nix-on-droid = {
       url = "github:t184256/nix-on-droid/release-23.05";
@@ -118,98 +122,81 @@
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nix-on-droid
-    , nix-darwin
-    , mac-app-util
-    , home-manager
-    , impermanence
-    , lib-net
-    , nix-monitored
-    , disko
-    , deploy-rs
-    , agenix
-    , ragenix
-    , agenix-rekey
-    , nur
-    , spicetify-nix
-    , hardware
-    , nix-colors
-    , neovim-nightly-overlay
-    , zig-overlay
-    , zls-overlay
-    , wired
-    , ...
-    } @ inputs:
+    inputs:
     let
+      inherit (inputs) self;
       inherit (self) outputs;
       util = import ./util { inherit inputs outputs; };
     in
-    {
-      inherit self;
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
+      systems = [
+        "aarch64-linux"
+        "i686-linux"
+        "x86_64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
 
-      # Packages (`nix build`)
-      packages = util.forEachPkgs (pkgs:
-        import ./pkgs { inherit pkgs; }
-      );
+      perSystem = { pkgs, ... }: {
+        # Packages (`nix build`)
+        packages = import ./pkgs { inherit pkgs; };
 
-      # Apps (`nix run`)
-      apps = util.forEachPkgs (pkgs:
-        import ./apps { inherit pkgs; }
-      );
+        # Apps (`nix run`)
+        apps = import ./apps { inherit pkgs; };
 
-      # Dev Shells (`nix develop`)
-      devShells = util.forEachPkgs (pkgs:
-        import ./shells { inherit pkgs inputs outputs; }
-      );
+        # Dev Shells (`nix develop`)
+        devShells = import ./shells { inherit pkgs inputs outputs; };
 
-      # Formatter
-      formatter = util.forEachPkgs (pkgs:
-        pkgs.nixpkgs-fmt
-      );
-
-      # Templates
-      templates = import ./templates {
-        inherit inputs outputs;
+        # Formatter (`nix fmt`)
+        formatter = pkgs.nixpkgs-fmt;
       };
 
-      # Overlays
-      overlays = import ./overlays {
-        inherit inputs outputs;
-      };
+      flake = {
+        inherit self;
 
-      # Machines
-      inherit (util)
-        machines
-        homeManagerMachines
-        nixDarwinMachines
-        nixOnDroidMachines
-        nixosMachines;
-
-      # Modules
-      inherit (util)
-        nixosModules
-        nixOnDroidModules
-        nixDarwinModules
-        homeManagerModules;
-
-      # Configurations
-      nixosConfigurations = util.autoNixosConfigurations;
-      nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
-      darwinConfigurations = util.autoDarwinConfigurations;
-      homeConfigurations = util.autoHomeConfigurations;
-
-      # Secrets
-      agenix-rekey = agenix-rekey.configure {
-        userFlake = self;
-        nodes = {
-          inherit (self.nixosConfigurations) jeeves;
+        # Templates
+        templates = import ./templates {
+          inherit inputs outputs;
         };
-      };
 
-      # Deploy.rs nodes
-      deploy.nodes = util.deploy.autoNodes;
-      checks = util.autoChecks;
-    };
+        # Overlays
+        overlays = import ./overlays {
+          inherit inputs outputs;
+        };
+
+        # Machines
+        inherit (util)
+          machines
+          homeManagerMachines
+          nixDarwinMachines
+          nixOnDroidMachines
+          nixosMachines;
+
+        # Modules
+        inherit (util)
+          nixosModules
+          nixOnDroidModules
+          nixDarwinModules
+          homeManagerModules
+          flakeModules;
+
+        # Configurations
+        nixosConfigurations = util.autoNixosConfigurations;
+        nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
+        darwinConfigurations = util.autoDarwinConfigurations;
+        homeConfigurations = util.autoHomeConfigurations;
+
+        # Secrets
+        agenix-rekey = inputs.agenix-rekey.configure {
+          userFlake = self;
+          nodes = {
+            inherit (self.nixosConfigurations) jeeves;
+          };
+        };
+
+        # Deploy.rs nodes
+        deploy.nodes = util.deploy.autoNodes;
+        checks = util.autoChecks;
+      };
+    });
 }
