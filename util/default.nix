@@ -136,7 +136,7 @@ rec {
     pkgs = import nixpkgs {
       inherit system;
 
-      overlays = [
+      overlays = builtins.attrValues outputs.overlays ++ [
         inputs.nix-on-droid.overlays.default
       ];
     };

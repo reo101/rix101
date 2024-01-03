@@ -23,6 +23,8 @@
     keep-derivations = true
   '';
 
+  nix.package = pkgs.nixUnstable;
+
   time.timeZone = "Europe/Sofia";
 
   terminal.font =
@@ -30,7 +32,7 @@
       firacode = pkgs.nerdfonts.override {
         fonts = [ "FiraCode" ];
       };
-      fontPath = "share/fonts/truetype/NerdFonts/Fira Code Regular Nerd Font Complete Mono.ttf";
+      fontPath = "share/fonts/truetype/NerdFonts/FiraCodeNerdFontMono-Regular.ttf";
     in
     "${firacode}/${fontPath}";
 }
