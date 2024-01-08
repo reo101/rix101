@@ -6,13 +6,13 @@
 
   # NOTE: key generation
   # umask 077
-  # wg genkey > private
-  # wg pubkey < private > public
+  # wg genkey > key
+  # wg pubkey < key > key.pub
 
   # Server
-  age.secrets."wireguard.private" = {
+  age.secrets."wireguard.privateKey" = {
     mode = "077";
-    rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/private.age";
+    rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/key.age";
     generator = {
       script = {lib, pkgs, file, ...}: ''
         priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
@@ -32,40 +32,46 @@
           MTUBytes = "1300";
         };
         wireguardConfig = {
-          PrivateKeyFile = config.age.secrets."wireguard.private".path;
+          PrivateKeyFile = config.age.secrets."wireguard.privateKey".path;
           ListenPort = 51820;
         };
-        wireguardPeers = [
-          {
-            # cheetah
-            wireguardPeerConfig = {
-              PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
-              AllowedIPs = [
-                "0.0.0.0/0"
-                # "::/0"
-              ];
+        wireguardPeers =
+          lib.mapAttrsToList
+            (host: peerConfig: {
+              wireguardPeerConfig = peerConfig;
+            })
+            {
+              cheetah = {
+                PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
+                AllowedIPs = [
+                  "10.100.0.2/32"
+                  "0.0.0.0/0"
+                  # "::/0"
+                ];
+              };
+              limonka = {
+                PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
+                AllowedIPs = [
+                  "10.100.0.3/32"
+                  "192.168.1.123/32"
+                  "0.0.0.0/0"
+                ];
+              };
+              peshoDjam = {
+                PublicKey = "37QEe3Lsq5BTIzxqAh9z7clHYeaOaMH31oqi5YvAPBY=";
+                AllowedIPs = [
+                  "10.100.0.4/32"
+                  "192.168.1.134/32"
+                ];
+              };
+              s42 = {
+                PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
+                AllowedIPs = [
+                  "10.100.0.5/32"
+                  "0.0.0.0/0"
+                ];
+              };
             };
-          }
-          {
-            # limonka
-            wireguardPeerConfig = {
-              PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
-              AllowedIPs = [
-                "0.0.0.0/0"
-                # "192.168.1.0/24"
-              ];
-            };
-          }
-          {
-            # s42
-            wireguardPeerConfig = {
-              PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
-              AllowedIPs = [
-                "0.0.0.0/0"
-              ];
-            };
-          }
-        ];
       };
     };
     networks.wg0 = {
