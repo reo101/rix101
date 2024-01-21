@@ -9,7 +9,7 @@
 
   # Add custom overlays
   nixpkgs = {
-    overlays = [
+    overlays = builtins.attrValues outputs.overlays ++ [
       inputs.neovim-nightly-overlay.overlay
       inputs.zig-overlay.overlays.default
       (final: prev: {
@@ -156,6 +156,9 @@
       signByDefault = true;
       key = "675AA7EF13964ACB";
     };
+    lfs = {
+      enable = true;
+    };
   };
 
   home.file.".gnupg/gpg-agent.conf" = {
@@ -164,7 +167,7 @@
       max-cache-ttl 86400
       default-cache-ttl 86400
       enable-ssh-support
-      # pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
+      pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
       # pinentry-program /usr/local/opt/pinentry-touchid/bin/pinentry-touchid
     '';
   };
