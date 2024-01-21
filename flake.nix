@@ -150,6 +150,8 @@
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
+
+        # TODO: reseach `agenix-shell` <https://flake.parts/options/agenix-shell>
       };
 
       flake = {
