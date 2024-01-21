@@ -15,7 +15,13 @@ in
   };
 
   config = mkIf cfg.enable {
-    services= {
+    environment.systemPackages = [
+      (pkgs.callPackage ./setbg {
+        yabai = config.services.yabai.package;
+      })
+    ];
+
+    services = {
       yabai = {
         enable = true;
         package = pkgs.yabai;
