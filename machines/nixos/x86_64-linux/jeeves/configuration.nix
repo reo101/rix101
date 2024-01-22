@@ -10,6 +10,7 @@
     ./wireguard.nix
     ./jellyfin.nix
     ./mindustry.nix
+    ./samba.nix
   ];
 
   age.rekey = {
