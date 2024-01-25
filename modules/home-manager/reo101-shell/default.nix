@@ -11,31 +11,32 @@ let
   shellAliases = {
     cp = "${pkgs.advcpmv}/bin/advcp -rvi";
     mv = "${pkgs.advcpmv}/bin/advmv -vi";
-    rebuild = let
-      rebuild_script = pkgs.writeShellScript "rebuild" ''
-        ${
-          let
-            inherit (lib.strings)
-              hasInfix;
-            inherit (pkgs.hostPlatform)
-              isx86_64 isAarch64
-              isLinux isDarwin;
-          in
-          if isx86_64 && isLinux then
-            "sudo --validate && sudo nixos-rebuild"
-          else if isDarwin then
-            "darwin-rebuild"
-          else if isAarch64 then
-            "nix-on-droid"
-          else
-            "home-manager"
-        } --flake ${
-          if cfg.hostname != null
-          then "${cfg.flakePath}#${cfg.hostname}"
-          else "${cfg.flakePath}"
-        } ''$''\{1:-switch''\} "''$''\{@:2''\}" # |& nix run nixpkgs#nix-output-monitor
-      '';
-    in
+    rebuild =
+      let
+        rebuild_script = pkgs.writeShellScript "rebuild" ''
+          ${
+            let
+              inherit (lib.strings)
+                hasInfix;
+              inherit (pkgs.hostPlatform)
+                isx86_64 isAarch64
+                isLinux isDarwin;
+            in
+            if isx86_64 && isLinux then
+              "sudo --validate && sudo nixos-rebuild"
+            else if isDarwin then
+              "darwin-rebuild"
+            else if isAarch64 then
+              "nix-on-droid"
+            else
+              "home-manager"
+          } --flake ${
+            if cfg.hostname != null
+            then "${cfg.flakePath}#${cfg.hostname}"
+            else "${cfg.flakePath}"
+          } ''$''\{1:-switch''\} "''$''\{@:2''\}" # |& nix run nixpkgs#nix-output-monitor
+        '';
+      in
       "${rebuild_script}";
   };
 in
@@ -168,7 +169,7 @@ in
           let
             shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
           in
-            "${shellPackage}/${shellPackage.shellPath}";
+          "${shellPackage}/${shellPackage.shellPath}";
       };
 
       # Nushell
@@ -184,7 +185,7 @@ in
 
           inherit shellAliases;
 
-          environmentVariables = {};
+          environmentVariables = { };
         })
         (mkIf cfg.atuin {
           extraEnv = ''

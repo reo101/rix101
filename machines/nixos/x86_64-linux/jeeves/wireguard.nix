@@ -14,7 +14,7 @@
     mode = "077";
     rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/key.age";
     generator = {
-      script = {lib, pkgs, file, ...}: ''
+      script = { lib, pkgs, file, ... }: ''
         priv=$(${pkgs.wireguard-tools}/bin/wg genkey)
         ${pkgs.wireguard-tools}/bin/wg pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
         echo "$priv"
@@ -22,7 +22,7 @@
     };
   };
 
-  networking.firewall.allowedUDPPorts = [51820];
+  networking.firewall.allowedUDPPorts = [ 51820 ];
   systemd.network = {
     netdevs = {
       "50-wg0" = {
@@ -76,7 +76,7 @@
     };
     networks.wg0 = {
       matchConfig.Name = "wg0";
-      address = ["10.100.0.1/24"];
+      address = [ "10.100.0.1/24" ];
       networkConfig = {
         IPMasquerade = "ipv4";
         IPForward = true;

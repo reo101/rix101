@@ -51,7 +51,7 @@ in
       port = mkOption {
         type = types.port;
         default = 6567;
-        description =''
+        description = ''
           Port to run the game server on
         '';
       };
@@ -65,7 +65,8 @@ in
     };
   };
 
-  config = mkIf cfg.enable ( let
+  config = mkIf cfg.enable (
+    let
       # mindustryJar = builtins.fetchurl {
       #   url = cfg.jarUrl;
       #   sha256 = cfg.jarSha256;
@@ -103,13 +104,13 @@ in
 
       networking.firewall =
         lib.pipe
-          ["TCP" "UDP"]
+          [ "TCP" "UDP" ]
           [
             (builtins.map
               (protocol:
                 lib.nameValuePair
                   "allowed${protocol}Ports"
-                  [cfg.port]))
+                  [ cfg.port ]))
             builtins.listToAttrs
           ];
 

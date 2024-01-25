@@ -100,7 +100,7 @@ in
 
         CustomUserPreferences = {
           "NSGlobalDomain" = {
-            "AppleSpacesSwitchOnActivate"= 0;
+            "AppleSpacesSwitchOnActivate" = 0;
           };
         };
 
@@ -297,19 +297,19 @@ in
         defaults write com.apple.dock persistent-apps -array \
             "$(__dock_item "/System/Applications/System Settings.app")"
       '';
-        # defaults write com.apple.dock persistent-apps -array \
-        #     "$(__dock_item /Applications/1Password.app)" \
-        #     "$(__dock_item ${pkgs.slack}/Applications/Slack.app)" \
-        #     "$(__dock_item /System/Applications/Calendar.app)" \
-        #     "$(__dock_item ${pkgs.firefox-bin}/Applications/Firefox.app)" \
-        #     "$(__dock_item /System/Applications/Messages.app)" \
-        #     "$(__dock_item /System/Applications/Mail.app)" \
-        #     "$(__dock_item /Applications/Mimestream.app)" \
-        #     "$(__dock_item /Applications/zoom.us.app)" \
-        #     "$(__dock_item ${pkgs.discord}/Applications/Discord.app)" \
-        #     "$(__dock_item /Applications/Obsidian.app)" \
-        #     "$(__dock_item ${pkgs.kitty}/Applications/kitty.app)" \
-        #     "$(__dock_item /System/Applications/System\ Settings.app)"
+      # defaults write com.apple.dock persistent-apps -array \
+      #     "$(__dock_item /Applications/1Password.app)" \
+      #     "$(__dock_item ${pkgs.slack}/Applications/Slack.app)" \
+      #     "$(__dock_item /System/Applications/Calendar.app)" \
+      #     "$(__dock_item ${pkgs.firefox-bin}/Applications/Firefox.app)" \
+      #     "$(__dock_item /System/Applications/Messages.app)" \
+      #     "$(__dock_item /System/Applications/Mail.app)" \
+      #     "$(__dock_item /Applications/Mimestream.app)" \
+      #     "$(__dock_item /Applications/zoom.us.app)" \
+      #     "$(__dock_item ${pkgs.discord}/Applications/Discord.app)" \
+      #     "$(__dock_item /Applications/Obsidian.app)" \
+      #     "$(__dock_item ${pkgs.kitty}/Applications/kitty.app)" \
+      #     "$(__dock_item /System/Applications/System\ Settings.app)"
     };
   };
 

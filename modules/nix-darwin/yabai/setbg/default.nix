@@ -13,15 +13,15 @@ let
       osascript ${./setbg.scpt} "''${1}"
     '';
 in
-  symlinkJoin {
-    name = "setbg";
-    paths = [ setWallpaperUnwrapped ];
-    buildInputs = [ makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/setbg \
-        --prefix PATH : ${lib.makeBinPath [
-          jq
-          yabai
-        ]}
-    '';
-  }
+symlinkJoin {
+  name = "setbg";
+  paths = [ setWallpaperUnwrapped ];
+  buildInputs = [ makeWrapper ];
+  postBuild = ''
+    wrapProgram $out/bin/setbg \
+      --prefix PATH : ${lib.makeBinPath [
+        jq
+        yabai
+      ]}
+  '';
+}

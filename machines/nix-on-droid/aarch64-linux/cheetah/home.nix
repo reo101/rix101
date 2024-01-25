@@ -132,7 +132,7 @@
     maxCacheTtl = 86400;
     pinentryFlavor = "tty";
     enableSshSupport = true;
-    sshKeys = ["CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7"];
+    sshKeys = [ "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7" ];
   };
 
   home.sessionVariables."PASSWORD_STORE_DIR" = "${config.xdg.dataHome}/password-store";

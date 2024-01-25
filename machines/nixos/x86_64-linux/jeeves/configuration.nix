@@ -77,7 +77,7 @@
   age.secrets."jeeves.user.password" = {
     rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
     generator = {
-      script = {pkgs, ...}: ''
+      script = { pkgs, ... }: ''
         ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
       '';
     };
@@ -124,16 +124,16 @@
   # };
   security.sudo = {
     enable = true;
-    extraRules= [
+    extraRules = [
       {
         users = [
           "jeeves"
         ];
         commands = [
-        {
-          command = "ALL" ;
-          options= [ "NOPASSWD" ]; # "SETENV" # Adding the following could be a good idea
-        }
+          {
+            command = "ALL";
+            options = [ "NOPASSWD" ]; # "SETENV" # Adding the following could be a good idea
+          }
         ];
       }
     ];
