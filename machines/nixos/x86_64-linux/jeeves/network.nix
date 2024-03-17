@@ -3,6 +3,8 @@
   environment.systemPackages = with pkgs; [
   ];
 
+  # networking.nftables.enable = true;
+
   age.secrets."home.wifi.env" = {
     rekeyFile = "${inputs.self}/secrets/home/wifi/env.age";
   };
@@ -31,6 +33,7 @@
     networks."10-eth0" = {
       matchConfig.Name = "eth0";
       networkConfig.DHCP = "yes";
+      networkConfig.DHCPServer = "yes";
     };
     links."10-eth0" = {
       matchConfig.PermanentMACAddress = "04:7c:16:80:3c:2c";

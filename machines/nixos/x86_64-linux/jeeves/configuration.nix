@@ -10,6 +10,7 @@
     ./wireguard.nix
     ./jellyfin.nix
     ./mindustry.nix
+    ./home-assistant.nix
     ./samba.nix
   ];
 

@@ -8,6 +8,11 @@
     127.0.0.1 jeeves
   '';
 
+  hardware.opengl.extraPackages = with pkgs; [
+    vaapiVdpau
+    libva1
+  ];
+
   services = {
     transmission = {
       enable = true;

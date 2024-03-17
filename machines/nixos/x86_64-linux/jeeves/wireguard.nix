@@ -53,7 +53,6 @@
                 PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
                 AllowedIPs = [
                   "10.100.0.3/32"
-                  "192.168.1.123/32"
                   "0.0.0.0/0"
                 ];
               };
@@ -68,6 +67,20 @@
                 PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
                 AllowedIPs = [
                   "10.100.0.5/32"
+                  "0.0.0.0/0"
+                ];
+              };
+              a41 = {
+                PublicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0=";
+                AllowedIPs = [
+                  "10.100.0.6/32"
+                  "0.0.0.0/0"
+                ];
+              };
+              t410 = {
+                PublicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0=";
+                AllowedIPs = [
+                  "10.100.0.7/32"
                   "0.0.0.0/0"
                 ];
               };

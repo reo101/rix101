@@ -19,8 +19,8 @@
     extraConfig = ''
       # Files
       workgroup = WORKGROUP
-      server string = smbnix
-      netbios name = smbnix
+      server string = Jeeves
+      netbios name = jeeves
       security = user
       #use sendfile = yes
       #max protocol = smb2
@@ -29,6 +29,9 @@
       hosts deny = 0.0.0.0/0
       guest account = nobody
       map to guest = bad user
+
+      # Symlinks
+      allow insecure wide links = yes
 
       # Printers
       load printers = yes
@@ -55,6 +58,8 @@
         "directory mask" = "0755";
         "force user" = "jeeves";
         "force group" = "users";
+        "follow symlinks" = "yes";
+        "wide links" = "yes";
       };
     };
   };
