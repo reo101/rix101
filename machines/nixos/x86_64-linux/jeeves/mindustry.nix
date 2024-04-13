@@ -1,6 +1,6 @@
 { lib, pkgs, config, ... }:
 {
   reo101.mindustry = {
-    enable = true;
+    enable = false;
   };
 }

@@ -10,14 +10,15 @@
     ./wireguard.nix
     ./jellyfin.nix
     ./mindustry.nix
-    ./home-assistant.nix
+    ./home-assistant
     ./samba.nix
   ];
 
   age.rekey = {
     hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
     masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
-    # forceRekeyOnSystem = "aarch64-darwin";
+    storageMode = "derivation";
+    # forceRekeyOnSystem = "aarch64-linux";
   };
 
   nixpkgs = {
@@ -34,9 +35,15 @@
   boot = {
     loader.systemd-boot.enable = true;
     kernelPackages = pkgs.linuxPackages_latest;
-    initrd.availableKernelModules = [
-      "nvme"
-    ];
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
+    initrd = {
+      availableKernelModules = [
+        "nvme"
+      ];
+      # kernelModules = [
+      #   "amdgpu"
+      # ];
+    };
   };
 
   hardware.enableRedistributableFirmware = true;
