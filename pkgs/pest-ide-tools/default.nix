@@ -8,7 +8,7 @@ rustPlatform.buildRustPackage rec {
     owner = "pest-parser";
     repo = pname;
     rev = "${version}";
-    sha256 = "sha256-PSYbmFEYGGDPvHl9AjDSoedRx1Y7A5HT1gqPcGeVkv4=";
+    hash = "sha256-PSYbmFEYGGDPvHl9AjDSoedRx1Y7A5HT1gqPcGeVkv4=";
   };
 
   cargoSha256 = "sha256-wvMAo+XgnSfUb36nJWSAL3TAcnWzPOpaCdvJnpcyol0=";
