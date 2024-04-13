@@ -93,7 +93,8 @@
 
     extraPackages = with pkgs; [
       tree-sitter
-      rnix-lsp
+      luajitPackages.lua
+      # rnix-lsp
       # sumneko-lua-language-server
       # stylua
       # texlab
@@ -130,7 +131,7 @@
     enable = true;
     defaultCacheTtl = 86400;
     maxCacheTtl = 86400;
-    pinentryFlavor = "tty";
+    pinentryPackage = pkgs.pinentry-tty;
     enableSshSupport = true;
     sshKeys = [ "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7" ];
   };
