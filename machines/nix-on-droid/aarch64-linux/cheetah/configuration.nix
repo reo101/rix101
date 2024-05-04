@@ -18,12 +18,12 @@
   system.stateVersion = "22.11";
 
   nix.extraOptions = ''
-    experimental-features = nix-command flakes repl-flake recursive-nix
+    experimental-features = nix-command flakes recursive-nix
     keep-outputs = true
     keep-derivations = true
   '';
 
-  nix.package = pkgs.nixUnstable;
+  nix.package = pkgs.nixVersions.latest;
 
   time.timeZone = "Europe/Sofia";
 

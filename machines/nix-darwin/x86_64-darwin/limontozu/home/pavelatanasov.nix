@@ -49,7 +49,6 @@
     circom-lsp
 
     # Nix
-    rnix-lsp
     nil
 
     # SSH and GPG

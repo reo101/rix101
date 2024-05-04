@@ -64,7 +64,6 @@
     # dhall-lsp-server
 
     ## Nix
-    rnix-lsp
     nil
     direnv
 

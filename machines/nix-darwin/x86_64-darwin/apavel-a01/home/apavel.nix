@@ -16,7 +16,6 @@
     # dhall-lsp-server
 
     # Nix
-    rnix-lsp
     nil
 
     # Zig

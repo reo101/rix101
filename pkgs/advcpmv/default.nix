@@ -5,7 +5,7 @@ let
   advcpmv_version = "0.9";
   coreutils_version = "9.1";
   coreutils_upstream = "coreutils";
-  patch_rev = "69d2f9d3c72ec149fc7e06f5154af27db857ebb5";
+  patch_rev = "1e2b1c6b74fa0974896bf94604279a3f74b37a63";
 in
 stdenv.mkDerivation rec {
   name = "advcpmv";
@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
   patches = [
     (fetchpatch {
       url = "https://raw.githubusercontent.com/${advcpmv_owner}/${name}/${patch_rev}/${name}-${advcpmv_version}-${coreutils_version}.patch";
-      hash = "sha256-l7kf2vz/heW3lgT89yDs5Wdfzw3Xbb3QhPGct7SCruQ=";
+      hash = "sha256-d+SRT/R4xmfHLAdOr7m4R3WFiW64P5ZH6iqDvErYCyg=";
     })
   ];
 

@@ -61,11 +61,11 @@
   # };
 
   nix = {
-    package = pkgs.nixUnstable;
+    package = pkgs.nixVersions.latest;
 
     # Enable flakes, the new `nix` commands and better support for flakes in it
     extraOptions = ''
-      experimental-features = nix-command flakes repl-flake
+      experimental-features = nix-command flakes
     '';
 
     # This will add each flake input as a registry

@@ -104,7 +104,6 @@
     circom-lsp
 
     # Nix
-    rnix-lsp
     nil
     nixd
 

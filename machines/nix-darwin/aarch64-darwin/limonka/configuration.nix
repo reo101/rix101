@@ -10,14 +10,13 @@
 
   nix = {
     # Ensure we can work with flakes
-    package = pkgs.nixUnstable;
+    package = pkgs.nixVersions.latest-monitored;
 
     settings = {
       # Enable flakes and new 'nix' command
       experimental-features = [
         # "nix-command"
         # "flakes"
-        # "repl-flake"
 
         # "no-url-literals"       # Disabling URL literals
         "ca-derivations"        # Content-Addressable Derivations
@@ -31,7 +30,6 @@
         # "discard-references"    # Discarding build output references
         "fetch-closure"         # builtins.fetchClosure
         "impure-derivations"    # Impure derivations
-        "repl-flake"            # Passing installables to nix repl
       ];
 
       # Allow building multiple derivations in parallel

@@ -22,7 +22,7 @@
   #
   #   settings = {
   #     # Enable flakes and new 'nix' command
-  #     experimental-features = "nix-command flakes repl-flake";
+  #     experimental-features = "nix-command flakes";
   #     # Deduplicate and optimize nix store
   #     auto-optimise-store = true;
   #     # Keep outputs and derivations
@@ -33,11 +33,11 @@
 
   nix = {
     # Ensure we can work with flakes
-    package = pkgs.nixUnstable;
+    package = pkgs.nixVersions.latest;
 
     # extraOptions = ''
     #   # Enable flakes and new 'nix' command
-    #   experimental-features = nix-command flakes repl-flake
+    #   experimental-features = nix-command flakes
     #   # Allow building multiple derivations in parallel
     #   max-jobs = auto
     #   # Deduplicate and optimize nix store
@@ -62,7 +62,6 @@
       experimental-features = [
         # "nix-command"
         # "flakes"
-        # "repl-flake"
 
         # "no-url-literals"       # Disabling URL literals
         "ca-derivations"        # Content-Addressable Derivations
@@ -76,7 +75,7 @@
         # "discard-references"    # Discarding build output references
         "fetch-closure"         # builtins.fetchClosure
         "impure-derivations"    # Impure derivations
-        "repl-flake"            # Passing installables to nix repl
+        "configurable-impure-env"
       ];
 
       # Allow building multiple derivations in parallel
