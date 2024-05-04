@@ -1,6 +1,6 @@
 (local wezterm (require :wezterm))
-(local config (or (and wezterm.config_builder
-                       (wezterm.config_builder))
+(local config (if wezterm.config_builder
+                  (wezterm.config_builder)
                   {}))
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -11,32 +11,35 @@
      (wezterm.font "FiraCode Nerd Font Mono"))
 
 (set config.harfbuzz_features
-    [:liga
-     :cv02 :cv19 :cv25 :cv26 :cv28 :cv30 :cv32
-     :ss02 :ss03 :ss05 :ss07 :ss09
-     :zero])
+     [:liga
+      :cv02 :cv19 :cv25 :cv26 :cv28 :cv30 :cv32
+      :ss02 :ss03 :ss05 :ss07 :ss09
+      :zero])
 
-(set config.freetype_render_target                     :Light)
-(set config.window_background_opacity                  0.8)
-(set config.window_background_image                    "")
-(set config.window_decorations                         :RESIZE)
-(set config.window_close_confirmation                  :NeverPrompt)
-(set config.use_resize_increments                      false)
-(set config.enable_scroll_bar                          false)
-(set config.enable_tab_bar                             false)
-(set config.adjust_window_size_when_changing_font_size false)
-(set config.window_padding                             {:left   0
-                                                        :right  0
-                                                        :top    0
-                                                        :bottom 0})
+(doto config
+  (tset :freetype_render_target    :Light)
+  (tset :window_background_opacity 0.8)
+  (tset :window_background_image   "")
+  (tset :window_decorations        :RESIZE)
+  (tset :window_close_confirmation :NeverPrompt)
+  (tset :use_resize_increments     false)
+  (tset :enable_scroll_bar         false)
+  (tset :enable_tab_bar            false)
+  (tset :window_padding {:left   0
+                         :right  0
+                         :top    0
+                         :bottom 0})
+  (tset :adjust_window_size_when_changing_font_size false))
 
 ;;;;;;;;;;;;;;;;
 ;;; Keybinds ;;;
 ;;;;;;;;;;;;;;;;
 
 (fn keybind [mods key action]
-  (when (= (type action) :table)
-    (set action (wezterm.action action)))
+  (local action (if (= (type action) :table)
+                    (wezterm.action action)
+                    ;; else
+                    action))
   {: mods
    : key
    : action})
