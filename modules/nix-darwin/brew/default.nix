@@ -54,6 +54,7 @@ in
         "android-platform-tools"
         "docker"
         "firefox"
+        "flameshot"
         "font-fira-code-nerd-font"
         "karabiner-elements"
         "notion"

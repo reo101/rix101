@@ -273,6 +273,12 @@ in
               # (optionalString cfg.zoxide ''
               #   eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
               # '')
+              ''
+                # Prevent macOS updates from destroying nix
+                if [ -e "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]; then
+                  source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+                fi
+              ''
               # cfg.extraConfig
             ];
 

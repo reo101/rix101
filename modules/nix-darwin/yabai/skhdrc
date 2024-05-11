@@ -98,6 +98,9 @@ shift + cmd - space : \
     yabai -m window --toggle border; \
     sketchybar --trigger window_focus
 
+# Prepare (next spawned window) to swallow parent
+alt - s : yabai -m window --insert stack
+
 # Restart Yabai
 shift + lctrl + alt - r : \
     /usr/bin/env osascript <<< \

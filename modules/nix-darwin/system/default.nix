@@ -33,11 +33,18 @@ in
     security.pam.enableSudoTouchIdAuth = true;
 
     system = {
+      startup = {
+        chime = false;
+      };
 
       keyboard = {
         remapCapsLockToControl = true;
-        nonUS.remapTilde = true;
+        # nonUS.remapTilde = true;
         enableKeyMapping = true; # Allows for skhd
+        userKeyMapping = [
+          # { HIDKeyboardModifierMappingSrc = 30064771172; HIDKeyboardModifierMappingDst = 30064771125; }
+          { HIDKeyboardModifierMappingSrc = 30064771125; HIDKeyboardModifierMappingDst = 30064771172; }
+        ];
       };
 
       defaults = {

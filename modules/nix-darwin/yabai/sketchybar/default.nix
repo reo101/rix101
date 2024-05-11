@@ -1,4 +1,5 @@
 # TODO: AppleSelectedInputSourcesChangedNotification
+# TODO: no `PLUGIN_DIR` and `UTIL_DIR`, directly reference scripts
 { lib, darwin, ... }:
 
 let
