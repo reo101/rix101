@@ -10,7 +10,29 @@
 
   nix = {
     # Ensure we can work with flakes
-    package = pkgs.nixVersions.latest-monitored;
+    package = pkgs.nixVersions.stable-monitored;
+
+    # extraOptions = ''
+    #   # Enable flakes and new 'nix' command
+    #   experimental-features = nix-command flakes
+    #   # Allow building multiple derivations in parallel
+    #   max-jobs = auto
+    #   # Deduplicate and optimize nix store
+    #   auto-optimise-store = true
+    #   # Keep outputs and derivations
+    #   keep-outputs = true
+    #   keep-derivations = true
+    # '';
+
+    # registry.nixpkgs.flake = inputs.nixpkgs;
+    # registry =
+    #   lib.mapAttrs'
+    #     (name: value:
+    #       {
+    #         name = name;
+    #         value = { flake = value; };
+    #       })
+    #     inputs;
 
     settings = {
       # Enable flakes and new 'nix' command

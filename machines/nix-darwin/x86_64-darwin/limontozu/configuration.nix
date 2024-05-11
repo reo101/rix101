@@ -33,7 +33,7 @@
 
   nix = {
     # Ensure we can work with flakes
-    package = pkgs.nixVersions.latest;
+    package = pkgs.nixVersions.stable;
 
     # extraOptions = ''
     #   # Enable flakes and new 'nix' command

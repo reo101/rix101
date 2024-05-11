@@ -61,7 +61,7 @@
   # };
 
   nix = {
-    package = pkgs.nixVersions.latest;
+    package = pkgs.nixVersions.stable;
 
     # Enable flakes, the new `nix` commands and better support for flakes in it
     extraOptions = ''

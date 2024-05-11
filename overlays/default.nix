@@ -36,8 +36,12 @@
     };
 
     nixVersions = prev.nixVersions // {
-      latest-monitored = inputs.nix-monitored.packages.${final.system}.default.override {
-        nix = prev.nixVersions.latest;
+      stable-monitored = inputs.nix-monitored.packages.${final.system}.default.override {
+        nix = prev.nixVersions.stable;
+        nix-output-monitor = prev.nix-output-monitor;
+      };
+      unstable-monitored = inputs.nix-monitored.packages.${final.system}.default.override {
+        nix = prev.nixVersions.unstable;
         nix-output-monitor = prev.nix-output-monitor;
       };
     };
