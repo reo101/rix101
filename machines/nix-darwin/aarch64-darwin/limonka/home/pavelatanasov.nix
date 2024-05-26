@@ -12,58 +12,6 @@
     overlays = builtins.attrValues outputs.overlays ++ [
       inputs.neovim-nightly-overlay.overlays.default
       inputs.zig-overlay.overlays.default
-      (final: prev: {
-        neovim-unwrapped =
-          let
-            liblpeg = final.stdenv.mkDerivation {
-              pname = "liblpeg";
-
-              inherit (final.luajitPackages.lpeg)
-                version meta src;
-
-              buildInputs = [
-                final.luajit
-              ];
-
-              buildPhase = ''
-                sed -i makefile -e "s/CC = gcc/CC = clang/"
-                sed -i makefile -e "s/-bundle/-dynamiclib/"
-
-                make macosx
-              '';
-
-              installPhase = ''
-                mkdir -p $out/lib
-                mv lpeg.so $out/lib/lpeg.dylib
-              '';
-
-              nativeBuildInputs = [
-                final.fixDarwinDylibNames
-              ];
-            };
-          in
-          prev.neovim-unwrapped.overrideAttrs (oldAttrs: rec {
-            # version = self.shortRev or "dirty";
-            version = oldAttrs.version or "dirty";
-            patches =
-              builtins.filter
-                (patch:
-                  (
-                    if builtins.typeOf patch == "set"
-                    then baseNameOf patch.name
-                    else baseNameOf
-                  )
-                  != "use-the-correct-replacement-args-for-gsub-directive.patch")
-                (oldAttrs.patches or [ ]);
-            preConfigure = ''
-              sed -i cmake.config/versiondef.h.in -e 's/@NVIM_VERSION_PRERELEASE@/-dev-${version}/'
-            '';
-            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
-              liblpeg
-              final.libiconv
-            ];
-          });
-      })
     ];
   };
 
@@ -94,6 +42,8 @@
     neovim
     fennel
     fennel-language-server
+    git
+    gh
 
     # Dhall
     dhall
@@ -105,7 +55,8 @@
 
     # Nix
     nil
-    nixd
+    # nixd
+    nurl
 
     # Mail
     # himalaya
