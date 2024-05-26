@@ -7,7 +7,7 @@
 
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays ++ [
-      inputs.neovim-nightly-overlay.overlay
+      inputs.neovim-nightly-overlay.overlays.default
       inputs.zig-overlay.overlays.default
       inputs.wired.overlays.default
     ];

@@ -275,7 +275,7 @@ in
               # '')
               ''
                 # Prevent macOS updates from destroying nix
-                if [ -e "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]; then
+                if [ -e "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ] && [ "''$''\{SHLVL''\}" -eq 1 ]; then
                   source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
                 fi
               ''
@@ -290,7 +290,7 @@ in
               owner = "chisui";
               repo = "zsh-nix-shell";
               rev = "v0.7.0";
-              sha256 = "sha256-oQpYKBt0gmOSBgay2HgbXiDoZo5FoUKwyHSlUrOAP5E=";
+              hash = "sha256-oQpYKBt0gmOSBgay2HgbXiDoZo5FoUKwyHSlUrOAP5E=";
             };
           }
           {
@@ -300,7 +300,7 @@ in
               owner = "zdharma-continuum";
               repo = "fast-syntax-highlighting";
               rev = "cf318e06a9b7c9f2219d78f41b46fa6e06011fd9";
-              sha256 = "sha256-RVX9ZSzjBW3LpFs2W86lKI6vtcvDWP6EPxzeTcRZua4=";
+              hash = "sha256-RVX9ZSzjBW3LpFs2W86lKI6vtcvDWP6EPxzeTcRZua4=";
             };
           }
           {
@@ -310,7 +310,7 @@ in
               owner = "zsh-users";
               repo = "zsh-autosuggestions";
               rev = "a411ef3e0992d4839f0732ebeb9823024afaaaa8";
-              sha256 = "sha256-KLUYpUu4DHRumQZ3w59m9aTW6TBKMCXl2UcKi4uMd7w=";
+              hash = "sha256-KLUYpUu4DHRumQZ3w59m9aTW6TBKMCXl2UcKi4uMd7w=";
             };
           }
           {
@@ -320,7 +320,7 @@ in
               owner = "jeffreytse";
               repo = "zsh-vi-mode";
               rev = "1bda23100e8d140a19be0eed67395c64f6a6074c";
-              sha256 = "sha256-3arAa5EBG+U9cCauChX9K0KF3hkd+t04/trlWKk/gOw=";
+              hash = "sha256-3arAa5EBG+U9cCauChX9K0KF3hkd+t04/trlWKk/gOw=";
             };
           }
         ];
