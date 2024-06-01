@@ -52,6 +52,7 @@
 
     nix-monitored = {
       url = "github:ners/nix-monitored";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     disko = {
@@ -143,7 +144,13 @@
         "x86_64-darwin"
       ];
 
-      perSystem = { pkgs, ... }: {
+      perSystem = { pkgs, lib, system, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = lib.attrValues outputs.overlays;
+          config = { };
+        };
+
         # Packages (`nix build`)
         packages = import ./pkgs { inherit pkgs; };
 
