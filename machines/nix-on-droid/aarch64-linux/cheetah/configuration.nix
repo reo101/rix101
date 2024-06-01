@@ -23,7 +23,7 @@
     keep-derivations = true
   '';
 
-  nix.package = pkgs.nixVersions.stable;
+  nix.package = pkgs.nixVersions.monitored.latest;
 
   time.timeZone = "Europe/Sofia";
 
