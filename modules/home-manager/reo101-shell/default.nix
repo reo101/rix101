@@ -163,6 +163,12 @@ in
         enableZshIntegration = builtins.elem "zsh" cfg.shells;
       };
 
+      # GnuPG
+      services.gpg-agent = {
+        enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+        enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      };
+
       # Shell
       home.sessionVariables = {
         SHELL =
