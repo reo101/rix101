@@ -37,9 +37,7 @@
         };
         wireguardPeers =
           lib.mapAttrsToList
-            (host: peerConfig: {
-              wireguardPeerConfig = peerConfig;
-            })
+            (host: peerConfig: peerConfig)
             {
               cheetah = {
                 PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
