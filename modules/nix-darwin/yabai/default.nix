@@ -14,47 +14,58 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    environment.systemPackages = [
-      (pkgs.callPackage ./setbg {
+  config = mkIf cfg.enable (
+    let
+      borders = pkgs.callPackage ./borders { };
+      setbg = pkgs.callPackage ./setbg {
         yabai = config.services.yabai.package;
-      })
-    ];
+      };
+    in
+    {
+      environment.systemPackages = [
+        borders
+        setbg
+      ];
 
-    services = {
-      yabai = {
-        enable = true;
-        package = pkgs.yabai;
-        enableScriptingAddition = true;
-        extraConfig = (builtins.readFile ./yabairc);
+      services = {
+        yabai = {
+          enable = true;
+          package = pkgs.yabai;
+          enableScriptingAddition = true;
+          extraConfig = /* bash */ ''
+            ${builtins.readFile ./yabairc}
+
+            # Load JankyBorders
+            ${borders}/bin/borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0 &
+          '';
+        };
+
+        skhd = {
+          enable = true;
+          package = pkgs.skhd;
+          skhdConfig = (builtins.readFile ./skhdrc);
+        };
+
+        sketchybar = {
+          enable = true;
+          package = pkgs.sketchybar;
+          extraPackages = with pkgs; [
+            jq
+          ];
+          config = import ./sketchybar pkgs;
+        };
       };
 
-      skhd = {
-        enable = true;
-        package = pkgs.skhd;
-        skhdConfig = (builtins.readFile ./skhdrc);
-      };
-
-      sketchybar = {
-        enable = true;
-        package = pkgs.sketchybar;
-        extraPackages = with pkgs; [
-          jq
+      # For sketchybar
+      homebrew = {
+        taps = [
+          "shaunsingh/SFMono-Nerd-Font-Ligaturized"
         ];
-        config = import ./sketchybar pkgs;
+        casks = [
+          "font-sf-mono-nerd-font-ligaturized"
+        ];
       };
-    };
-
-    # For sketchybar
-    homebrew = {
-      taps = [
-        "shaunsingh/SFMono-Nerd-Font-Ligaturized"
-      ];
-      casks = [
-        "font-sf-mono-nerd-font-ligaturized"
-      ];
-    };
-  };
+    });
 
   meta = {
     maintainers = with lib.maintainers; [ reo101 ];
