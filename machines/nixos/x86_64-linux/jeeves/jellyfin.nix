@@ -17,6 +17,7 @@
     transmission = {
       enable = true;
       openRPCPort = true;
+      webHome = pkgs.flood-for-transmission;
       # TODO: `credentialsFile` for RPC password with agenix
       settings = {
         download-dir = "/data/torrents/download";
