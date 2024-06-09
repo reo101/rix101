@@ -12,6 +12,7 @@
     ./mindustry.nix
     ./home-assistant
     ./samba.nix
+    ./ollama.nix
   ];
 
   age.rekey = {
