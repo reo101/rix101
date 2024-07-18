@@ -92,21 +92,11 @@
       direnv = true;
       zoxide = true;
     };
+    scm = {
+      git.enable = true;
+      jj.enable = true;
+    };
     wezterm = {
-      enable = true;
-    };
-  };
-
-  programs.git = {
-    enable = true;
-    userName = "reo101";
-    # userEmail = "pavel.atanasov@limechain.tech";
-    userEmail = "pavel.atanasov2001@gmail.com";
-    signing = {
-      signByDefault = true;
-      key = "675AA7EF13964ACB";
-    };
-    lfs = {
       enable = true;
     };
   };
