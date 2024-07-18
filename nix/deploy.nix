@@ -3,7 +3,7 @@
 let
   inherit (import ./utils.nix { inherit lib self; })
     accumulateMachines
-    config-type-to-deploy-type;
+    configuration-type-to-deploy-type;
 in
 {
   flake = {
@@ -11,10 +11,10 @@ in
       accumulateMachines
         # TODO: nix-on-droid
         ["nixos" "nix-darwin"]
-        ({ host, system, config-type, config }:
+        ({ host, system, configuration-type, configuration }:
           let
             deploy-config-path =
-              ../machines/${config-type}/${system}/${host}/deploy.nix;
+              ../machines/${configuration-type}/${system}/${host}/deploy.nix;
             deploy-config =
               import deploy-config-path;
           in
@@ -27,9 +27,9 @@ in
                   profiles.system = deploy-config // {
                     path =
                       let
-                        deploy-type = config-type-to-deploy-type config-type;
+                        deploy-type = configuration-type-to-deploy-type configuration-type;
                       in
-                        inputs.deploy-rs.lib.${system}.activate.${deploy-type} config;
+                        inputs.deploy-rs.lib.${system}.activate.${deploy-type} configuration;
                   };
                 };
               }

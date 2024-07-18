@@ -142,14 +142,14 @@ let
         (builtins.mapAttrs
           (system: hosts:
             lib.concatMapAttrs
-              (host: config:
+              (host: configuration:
                 lib.optionalAttrs
                   (and [
                     (host != "__template__")
-                    (pred system host config)
+                    (pred system host configuration)
                   ])
                   {
-                    ${host} = mkHost system host config;
+                    ${host} = mkHost system host configuration;
                   })
               hosts)
           machines));
@@ -160,36 +160,36 @@ in
     # Configurations
     nixosConfigurations =
       createConfigurations
-        (system: host: config:
+        (system: host: configuration:
           and
             [
               (hasFiles
                 [ "configuration.nix" ]
-                config)
+                configuration)
               # (hasDirectories
               #   [ "home" ]
               #   config)
             ])
-        (system: host: config:
+        (system: host: configuration:
           mkNixosHost
             ../machines/nixos/${system}/${host}
             system
             host
             (builtins.map
               (lib.strings.removeSuffix ".nix")
-              (builtins.attrNames (config."home" or { }))))
+              (builtins.attrNames (configuration."home" or { }))))
         config.flake.nixosMachines;
 
     nixOnDroidConfigurations =
       createConfigurations
-        (system: host: config:
+        (system: host: configuration:
           and
             [
               (hasFiles
                 [ "configuration.nix" "home.nix" ]
-                config)
+                configuration)
             ])
-        (system: host: config:
+        (system: host: configuration:
           mkNixOnDroidHost
             ../machines/nix-on-droid/${system}/${host}
             system
@@ -198,36 +198,36 @@ in
 
     darwinConfigurations =
       createConfigurations
-        (system: host: config:
+        (system: host: configuration:
           and
             [
               (hasFiles
                 [ "configuration.nix" ]
-                config)
+                configuration)
               (hasDirectories
                 [ "home" ]
-                config)
+                configuration)
             ])
-        (system: host: config:
+        (system: host: configuration:
           mkNixDarwinHost
             ../machines/nix-darwin/${system}/${host}
             system
             host
             (builtins.map
               (lib.strings.removeSuffix ".nix")
-              (builtins.attrNames (config."home" or { }))))
+              (builtins.attrNames (configuration."home" or { }))))
         config.flake.nixDarwinMachines;
 
     homeConfigurations =
       createConfigurations
-        (system: host: config:
+        (system: host: configuration:
           and
             [
               (hasFiles
                 [ "home.nix" ]
-                config)
+                configuration)
             ])
-        (system: host: config:
+        (system: host: configuration:
           mkHomeManagerHost
             ../machines/home-manager/${system}/${host}
             system

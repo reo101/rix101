@@ -30,83 +30,83 @@ rec {
   # NOTE: Implying last argument is the output of `recurseDir`
   hasDirectories = allSatisfy lib.isAttrs;
 
-  gen-config-type-to = mappings: mkError: config-type:
-    mappings.${config-type} or
+  gen-configuration-type-to = mappings: mkError: configuration-type:
+    mappings.${configuration-type} or
       (builtins.throw
-        (mkError config-type));
+        (mkError configuration-type));
 
-  config-type-to-outputs-machines =
-    gen-config-type-to
+  configuration-type-to-outputs-machines =
+    gen-configuration-type-to
       {
         nixos = "nixosMachines";
         nix-on-droid = "nixOnDroidMachines";
         nix-darwin = "nixDarwinMachines";
         home-manager = "homeMachines";
       }
-      (config-type:
+      (configuration-type:
         builtins.throw
-          "Invaild config-type \"${config-type}\" for flake outputs' machines");
+          "Invaild configuration-type \"${configuration-type}\" for flake outputs' machines");
 
-  config-type-to-outputs-configurations =
-    gen-config-type-to
+  configuration-type-to-outputs-configurations =
+    gen-configuration-type-to
       {
         nixos = "nixosConfigurations";
         nix-on-droid = "nixOnDroidConfigurations";
         nix-darwin = "darwinConfigurations";
         home-manager = "homeConfigurations";
       }
-      (config-type:
+      (configuration-type:
         builtins.throw
-          "Invaild config-type \"${config-type}\" for flake outputs' configurations");
+          "Invaild configuration-type \"${configuration-type}\" for flake outputs' configurations");
 
-  config-type-to-deploy-type =
-    gen-config-type-to
+  configuration-type-to-deploy-type =
+    gen-configuration-type-to
       {
         nixos = "nixos";
         nix-darwin = "darwin";
       }
-      (config-type:
+      (configuration-type:
         builtins.throw
-          "Invaild config-type \"${config-type}\" for deploy-rs deployment");
+          "Invaild configuration-type \"${configuration-type}\" for deploy-rs deployment");
 
-  accumulateMachines = config-types: host-system-config-type-config-fn:
+  accumulateMachines = configuration-types: host-system-configuration-type-configuration-fn:
     lib.flip lib.concatMapAttrs
       (lib.genAttrs
-        config-types
-        (config-type:
+        configuration-types
+        (configuration-type:
           let
-            machines = config-type-to-outputs-machines config-type;
+            machines = configuration-type-to-outputs-machines configuration-type;
           in
             self.${machines}))
-      (config-type: machines:
+      (configuration-type: machines:
         lib.pipe
           machines
           [
             # Filter out nondirectories
             (lib.filterAttrs
-              (system: configs:
-                builtins.isAttrs configs))
+              (system: configurations:
+                builtins.isAttrs configurations))
             # Convert non-template configs into `system-and-config` pairs
             (lib.concatMapAttrs
-              (system: configs:
+              (system: configurations:
                 (lib.concatMapAttrs
-                  (host: config:
+                  (host: configuration:
                     lib.optionalAttrs
                       (host != "__template__")
                       {
                         ${host} = {
                           inherit system;
-                          config =
+                          configuration =
                             let
-                              configurations = config-type-to-outputs-configurations config-type;
+                              configurations = configuration-type-to-outputs-configurations configuration-type;
                             in
                               self.${configurations}.${host};
                         };
                       })
-                  configs)))
-            # Convert each `system-and-config` pair into a deploy-rs node
+                  configurations)))
+            # Convert each `system-and-config` pair into a *whatever*
             (lib.concatMapAttrs
-              (host: { system, config }:
-                host-system-config-type-config-fn { inherit host system config-type config; }))
+              (host: { system, configuration }:
+                host-system-configuration-type-configuration-fn { inherit host system configuration-type configuration; }))
           ]);
 }
