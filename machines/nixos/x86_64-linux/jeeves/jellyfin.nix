@@ -4,18 +4,26 @@
     tremc
   ];
 
-  networking.extraHosts = ''
-    127.0.0.1 jeeves
-  '';
+  # networking.extraHosts = ''
+  #   127.0.0.1 jeeves
+  # '';
 
-  hardware.opengl.extraPackages = with pkgs; [
-    vaapiVdpau
-    libva1
-  ];
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+    extraPackages = with pkgs; [
+      vaapiVdpau
+      libva1
+      vulkan-loader
+      vulkan-validation-layers
+      vulkan-extension-layer
+    ];
+  };
 
   services = {
     transmission = {
       enable = true;
+      package = pkgs.transmission_4;
       openRPCPort = true;
       webHome = pkgs.flood-for-transmission;
       # TODO: `credentialsFile` for RPC password with agenix

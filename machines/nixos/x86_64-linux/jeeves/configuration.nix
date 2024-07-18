@@ -10,9 +10,9 @@
     ./wireguard.nix
     ./jellyfin.nix
     ./mindustry.nix
-    ./home-assistant
+    # ./home-assistant
     ./samba.nix
-    ./ollama.nix
+    # ./ollama.nix
   ];
 
   age.rekey = {
@@ -79,12 +79,12 @@
     neovim
   ];
 
-  # NOTE: made with `mkpasswd -m sha-516`
+  # NOTE: made with `mkpasswd -m sha-512`
   age.secrets."jeeves.user.password" = {
     rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
     generator = {
       script = { pkgs, ... }: ''
-        ${pkgs.mkpasswd}/bin/mkpasswd -m sha-516
+        ${pkgs.mkpasswd}/bin/mkpasswd -m sha-512
       '';
     };
   };
@@ -105,6 +105,7 @@
           "audio"
           "docker"
           "transmission"
+          "input"
         ];
       };
     };
