@@ -10,6 +10,7 @@
   circom-lsp = pkgs.callPackage ./circom-lsp { };
   envsub = pkgs.callPackage ./envsub { };
   fennel-language-server = pkgs.callPackage ./fennel-language-server { };
+  flamelens = pkgs.callPackage ./flamelens { };
   parinfer-rust = pkgs.callPackage ./parinfer-rust { };
   pest-ide-tools = pkgs.callPackage ./pest-ide-tools { };
   # FIXME: only buildable on darwin
