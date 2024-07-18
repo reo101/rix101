@@ -1,3 +1,4 @@
 /.direnv/
 /secrets/*key*
 !/secrets/*.age
+!/secrets/rekeyed

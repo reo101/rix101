@@ -133,7 +133,6 @@
     let
       inherit (inputs) self;
       inherit (self) outputs;
-      util = import ./util { inherit inputs outputs; };
     in
     inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
       systems = [
@@ -144,7 +143,15 @@
         "x86_64-darwin"
       ];
 
-      perSystem = { pkgs, lib, system, ... }: {
+      imports = [
+        inputs.agenix-rekey.flakeModule
+        ./nix/machines.nix
+        ./nix/modules.nix
+        ./nix/configurations.nix
+        ./nix/deploy.nix
+      ];
+
+      perSystem = { lib, pkgs, system, ... }: {
         _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
           overlays = lib.attrValues outputs.overlays;
@@ -163,7 +170,11 @@
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
 
-        # TODO: reseach `agenix-shell` <https://flake.parts/options/agenix-shell>
+        agenix-rekey = {
+          nodes = {
+            inherit (self.nixosConfigurations) jeeves;
+          };
+        };
       };
 
       flake = {
@@ -178,40 +189,6 @@
         overlays = import ./overlays {
           inherit inputs outputs;
         };
-
-        # Machines
-        inherit (util)
-          machines
-          homeManagerMachines
-          nixDarwinMachines
-          nixOnDroidMachines
-          nixosMachines;
-
-        # Modules
-        inherit (util)
-          nixosModules
-          nixOnDroidModules
-          nixDarwinModules
-          homeManagerModules
-          flakeModules;
-
-        # Configurations
-        nixosConfigurations = util.autoNixosConfigurations;
-        nixOnDroidConfigurations = util.autoNixOnDroidConfigurations;
-        darwinConfigurations = util.autoDarwinConfigurations;
-        homeConfigurations = util.autoHomeConfigurations;
-
-        # Secrets
-        agenix-rekey = inputs.agenix-rekey.configure {
-          userFlake = self;
-          nodes = {
-            inherit (self.nixosConfigurations) jeeves;
-          };
-        };
-
-        # Deploy.rs nodes
-        deploy.nodes = util.deploy.autoNodes;
-        checks = util.autoChecks;
       };
     });
 }
