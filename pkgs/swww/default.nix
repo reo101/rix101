@@ -2,13 +2,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "swww";
-  version = "v0.8.0";
+  version = "v0.9.5";
 
   src = fetchFromGitHub {
     owner = "Horus645";
     repo = pname;
     rev = version;
-    hash = "sha256-0QJlZ8ht6niO+D+G6jO+Ggdgt/0VeO6gquCGL5lS6nM=";
+    hash = "sha256-ldy9HhIsWdtTdvtRLV3qDT80oX646BI4Q+YX5wJXbsc=";
   };
 
   cargoSha256 = "sha256-ZjFeKh9/kGI8EBVe99jGdLoeA1Pun4aYWwLyMwOJCrU=";
