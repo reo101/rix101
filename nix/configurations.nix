@@ -18,6 +18,7 @@ let
     modules = [
       (lib.path.append root "configuration.nix")
       inputs.home-manager.nixosModules.home-manager
+      inputs.nix-topology.nixosModules.default
       {
         nixpkgs.overlays = builtins.attrValues self.overlays;
       }

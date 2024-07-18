@@ -45,6 +45,11 @@
       url = "github:nix-community/impermanence";
     };
 
+    nix-topology = {
+      url = "github:oddlama/nix-topology";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     lib-net = {
       url = "https://gist.github.com/duairc/5c9bb3c922e5d501a1edb9e7b3b845ba/archive/3885f7cd9ed0a746a9d675da6f265d41e9fd6704.tar.gz";
       flake = false;
@@ -128,12 +133,10 @@
     };
   };
 
-  outputs =
-    inputs:
-    let
-      inherit (inputs) self;
-      inherit (self) outputs;
-    in
+  outputs = inputs: let
+    inherit (inputs) self;
+    inherit (self) outputs;
+  in
     inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
       systems = [
         "aarch64-linux"
@@ -145,6 +148,8 @@
 
       imports = [
         inputs.agenix-rekey.flakeModule
+        inputs.nix-topology.flakeModule
+      ] ++ [
         ./nix/machines.nix
         ./nix/modules.nix
         ./nix/configurations.nix
@@ -154,7 +159,9 @@
       perSystem = { lib, pkgs, system, ... }: {
         _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
-          overlays = lib.attrValues outputs.overlays;
+          overlays = lib.attrValues outputs.overlays ++ [
+            inputs.nix-topology.overlays.default
+          ];
           config = { };
         };
 
@@ -169,6 +176,15 @@
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
+
+        topology = {
+          modules = [
+          ];
+          nixosConfigurations = {
+            inherit (self.nixosConfigurations)
+              jeeves;
+          };
+        };
 
         agenix-rekey = {
           nodes = {
