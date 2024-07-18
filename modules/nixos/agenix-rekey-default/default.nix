@@ -6,9 +6,9 @@ in {
   # TODO: cleaner deep check
   config = lib.mkIf (lib.all lib.id [(builtins.hasAttr "age" options) (builtins.hasAttr "rekey" options.age)]) {
     age.rekey = lib.mkIf (config.age.rekey.hostPubkey != dummyPubkey) {
-      masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
-      storageMode = "local";
-      localStorageDir = "${inputs.self}/secrets/rekeyed/${config.networking.hostName}";
+      masterIdentities = lib.mkDefault [ "${inputs.self}/secrets/privkey.age" ];
+      storageMode      = lib.mkDefault "local";
+      localStorageDir  = lib.mkDefault "${inputs.self}/secrets/rekeyed/${config.networking.hostName}";
     };
   };
 }
