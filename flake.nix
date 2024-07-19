@@ -147,24 +147,16 @@
       ];
 
       imports = [
-        inputs.agenix-rekey.flakeModule
-        inputs.nix-topology.flakeModule
-      ] ++ [
+        ./nix/pkgs.nix
         ./nix/machines.nix
         ./nix/modules.nix
         ./nix/configurations.nix
+        ./nix/agenix.nix
         ./nix/deploy.nix
+        ./nix/topology.nix
       ];
 
       perSystem = { lib, pkgs, system, ... }: {
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = lib.attrValues outputs.overlays ++ [
-            inputs.nix-topology.overlays.default
-          ];
-          config = { };
-        };
-
         # Packages (`nix build`)
         packages = import ./pkgs { inherit pkgs; };
 
@@ -176,21 +168,6 @@
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
-
-        topology = {
-          modules = [
-          ];
-          nixosConfigurations = {
-            inherit (self.nixosConfigurations)
-              jeeves;
-          };
-        };
-
-        agenix-rekey = {
-          nodes = {
-            inherit (self.nixosConfigurations) jeeves;
-          };
-        };
       };
 
       flake = {
