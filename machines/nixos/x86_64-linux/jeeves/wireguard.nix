@@ -22,7 +22,20 @@
     };
   };
 
-  networking.firewall.allowedUDPPorts = [ 51820 ];
+  # Enable NAT
+  networking.nat = {
+    enable = true;
+    enableIPv6 = true;
+    externalInterface = "eth0";
+    internalInterfaces = [ "wg0" ];
+  };
+
+  # Open ports in the firewall
+  networking.firewall = {
+    allowedTCPPorts = [ 53 ];
+    allowedUDPPorts = [ 53 51820 ];
+  };
+
   systemd.network = {
     netdevs = {
       "50-wg0" = {
@@ -85,6 +98,7 @@
             };
       };
     };
+
     networks.wg0 = {
       matchConfig.Name = "wg0";
       address = [ "10.100.0.1/24" ];
