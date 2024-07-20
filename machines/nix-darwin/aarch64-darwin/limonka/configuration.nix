@@ -8,9 +8,20 @@
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
 
-  nix = {
+  nix = let
+    flakeInputs = lib.filterAttrs (lib.const (lib.isType "flake")) inputs;
+  in {
     # Ensure we can work with flakes
+    # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
     package = pkgs.nixVersions.monitored.latest;
+
+    # This will add each flake input as a registry
+    # To make nix3 commands consistent with your flake
+    registry = lib.mapAttrs (_: value: { flake = value; }) flakeInputs;
+
+    # This will additionally add your inputs to the system's legacy channels
+    # Making legacy nix commands consistent as well, awesome!
+    nixPath = lib.mapAttrsToList (key: value: "${key}=flake:${key}") flakeInputs;
 
     # extraOptions = ''
     #   # Enable flakes and new 'nix' command
@@ -24,15 +35,6 @@
     #   keep-derivations = true
     # '';
 
-    # registry.nixpkgs.flake = inputs.nixpkgs;
-    # registry =
-    #   lib.mapAttrs'
-    #     (name: value:
-    #       {
-    #         name = name;
-    #         value = { flake = value; };
-    #       })
-    #     inputs;
 
     settings = {
       # Enable flakes and new 'nix' command
@@ -89,8 +91,7 @@
   programs.zsh.enable = true; # default shell on catalina
 
   # Fonts
-  fonts.fontDir.enable = true;
-  fonts.fonts = with pkgs; [
+  fonts.packages = with pkgs; [
     (nerdfonts.override { fonts = [ "FiraCode" ]; })
   ];
 

@@ -23,14 +23,6 @@
     inputs.zls-overlay.packages.x86_64-darwin.default
   ];
 
-  nixpkgs = {
-    overlays = [
-      inputs.zig-overlay.overlays.default
-    ];
-
-    config.allowUnfree = true;
-  };
-
   programs.git = {
     enable = true;
     userName = "apavel";

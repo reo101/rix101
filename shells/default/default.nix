@@ -1,9 +1,8 @@
 # Shell for bootstrapping flake-enabled nix and other tooling
 { pkgs
 , inputs
-, outputs
 , ...
-}: pkgs.mkShell {
+}: pkgs.mkShellNoCC {
   NIX_CONFIG = ''
     extra-experimental-features = nix-command flakes
   '';

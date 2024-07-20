@@ -1,8 +1,6 @@
-{ lib, config, self, inputs, ... }:
+{ lib, config, self, inputs, withSystem, ... }:
 
 let
-  inherit (inputs)
-    nixpkgs;
   # TODO: works?
   outputs = self;
   inherit (import ./utils.nix { inherit lib self; })
@@ -11,31 +9,45 @@ let
     hasDirectories;
 in
 let
+  homeManagerModule = { root, system, hostname, users ? null }: {
+    home-manager = {
+      # Use same `pkgs` instance as system (i.e. carry over overlays)
+      useGlobalPkgs = true;
+      # Do not keep packages in ${HOME}
+      useUserPackages = true;
+      # Default import all of our exported homeManagerModules
+      sharedModules = builtins.attrValues config.flake.homeManagerModules;
+      # Pass in `inputs`, `outputs` and maybe `meta`
+      extraSpecialArgs = {
+        inherit inputs outputs;
+        # TODO: meta?
+        inherit hostname;
+      };
+    } // (if users == null then {
+      # nixOnDroid
+      config = (lib.path.append root "home.nix");
+    } else {
+      # Not nixOnDroid
+      users = lib.attrsets.genAttrs
+        users
+          (user: import (lib.path.append root "home/${user}.nix"));
+    });
+  };
+
   # Configuration helpers
-  mkNixosHost = root: system: hostname: users: lib.nixosSystem {
+  mkNixosHost = args @ { root, system, hostname, users }: lib.nixosSystem {
     inherit system;
+    pkgs = withSystem system ({ pkgs, ... }: pkgs);
 
     modules = [
+      # Main configuration
       (lib.path.append root "configuration.nix")
+      # Home Manager
       inputs.home-manager.nixosModules.home-manager
+      (homeManagerModule args)
+      # nix-topology
       inputs.nix-topology.nixosModules.default
-      {
-        nixpkgs.overlays = builtins.attrValues self.overlays;
-      }
-      {
-        home-manager = {
-          useGlobalPkgs = false;
-          useUserPackages = true;
-          users = lib.attrsets.genAttrs
-            users
-            (user: import (lib.path.append root "home/${user}.nix"));
-          sharedModules = builtins.attrValues config.flake.homeManagerModules;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            inherit hostname;
-          };
-        };
-      }
+      # Sane default `networking.hostName`
       {
         networking.hostName = lib.mkDefault hostname;
       }
@@ -46,71 +58,39 @@ let
     };
   };
 
-  mkNixOnDroidHost = root: system: hostname: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
-    pkgs = import nixpkgs {
-      inherit system;
-
-      overlays = builtins.attrValues self.overlays ++ [
-        inputs.nix-on-droid.overlays.default
-      ];
-    };
+  mkNixOnDroidHost = args @ { root, system, hostname }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
+    # NOTE: inferred by `pkgs.system`
+    # inherit system;
+    pkgs = withSystem system ({ pkgs, ... }: pkgs);
 
     modules = [
+      # Main configuration
       (lib.path.append root "configuration.nix")
-      {
-        home-manager = {
-          config = (lib.path.append root "home.nix");
-          backupFileExtension = "hm-bak";
-          useGlobalPkgs = false;
-          useUserPackages = true;
-          sharedModules = builtins.attrValues config.flake.homeManagerModules ++ [
-            {
-              nixpkgs.overlays = builtins.attrValues self.overlays;
-            }
-          ];
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            inherit hostname;
-          };
-        };
-      }
+      # Home Manager
+      (homeManagerModule args)
     ] ++ (builtins.attrValues config.flake.nixOnDroidModules);
 
     extraSpecialArgs = {
       inherit inputs outputs;
-      inherit hostname;
-      # rootPath = ./.;
     };
 
     home-manager-path = inputs.home-manager.outPath;
   };
 
-  mkNixDarwinHost = root: system: hostname: users: inputs.nix-darwin.lib.darwinSystem {
+  mkNixDarwinHost = args @ { root, system, hostname, users }: inputs.nix-darwin.lib.darwinSystem {
     inherit system;
+    pkgs = withSystem system ({ pkgs, ... }: pkgs);
 
     modules = [
+      # Main configuration
       (lib.path.append root "configuration.nix")
-      {
-        nixpkgs.hostPlatform = system;
-      }
-      {
-        nixpkgs.overlays = builtins.attrValues self.overlays;
-      }
+      # Home Manager
       inputs.home-manager.darwinModules.home-manager
-      {
-        home-manager = {
-          useGlobalPkgs = false;
-          useUserPackages = true;
-          users = lib.attrsets.genAttrs
-            users
-            (user: import (lib.path.append root "home/${user}.nix"));
-          sharedModules = builtins.attrValues config.flake.homeManagerModules;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            inherit hostname;
-          };
-        };
-      }
+      (homeManagerModule args)
+      # # Set `nixpkgs.hostPlatform`
+      # {
+      #   nixpkgs.hostPlatform = system;
+      # }
     ] ++ (builtins.attrValues config.flake.nixDarwinModules);
 
     specialArgs = {
@@ -118,14 +98,12 @@ let
     };
   };
 
-  mkHomeManagerHost = root: system: hostname: inputs.home-manager.lib.homeManagerConfiguration {
-    pkgs = nixpkgs.legacyPackages.${system};
+  mkHomeManagerHost = args @ { root, system, hostname }: inputs.home-manager.lib.homeManagerConfiguration {
+    inherit system;
+    pkgs = withSystem system ({ pkgs, ... }: pkgs);
 
     modules = [
       (lib.path.append root "home.nix")
-      {
-        nixpkgs.overlays = builtins.attrValues self.overlays;
-      }
     ] ++ (builtins.attrValues config.flake.homeManagerModules);
 
     extraSpecialArgs = {
@@ -154,7 +132,6 @@ let
                   })
               hosts)
           machines));
-
 in
 {
   flake = {
@@ -172,13 +149,14 @@ in
               #   config)
             ])
         (system: host: configuration:
-          mkNixosHost
-            ../machines/nixos/${system}/${host}
-            system
-            host
-            (builtins.map
+          mkNixosHost {
+            root = ../machines/nixos/${system}/${host};
+            inherit system;
+            hostname = host;
+            users = (builtins.map
               (lib.strings.removeSuffix ".nix")
-              (builtins.attrNames (configuration."home" or { }))))
+              (builtins.attrNames (configuration."home" or { })));
+          })
         config.flake.nixosMachines;
 
     nixOnDroidConfigurations =
@@ -191,10 +169,11 @@ in
                 configuration)
             ])
         (system: host: configuration:
-          mkNixOnDroidHost
-            ../machines/nix-on-droid/${system}/${host}
-            system
-            host)
+          mkNixOnDroidHost {
+            root = ../machines/nix-on-droid/${system}/${host};
+            inherit system;
+            hostname = host;
+          })
         config.flake.nixOnDroidMachines;
 
     darwinConfigurations =
@@ -210,13 +189,14 @@ in
                 configuration)
             ])
         (system: host: configuration:
-          mkNixDarwinHost
-            ../machines/nix-darwin/${system}/${host}
-            system
-            host
-            (builtins.map
+          mkNixDarwinHost {
+            root = ../machines/nix-darwin/${system}/${host};
+            inherit system;
+            hostname = host;
+            users = (builtins.map
               (lib.strings.removeSuffix ".nix")
-              (builtins.attrNames (configuration."home" or { }))))
+              (builtins.attrNames (configuration."home" or { })));
+          })
         config.flake.nixDarwinMachines;
 
     homeConfigurations =
@@ -229,10 +209,11 @@ in
                 configuration)
             ])
         (system: host: configuration:
-          mkHomeManagerHost
-            ../machines/home-manager/${system}/${host}
-            system
-            host)
+          mkHomeManagerHost {
+            root = ../machines/home-manager/${system}/${host};
+            inherit system;
+            hostname = host;
+          })
         config.flake.homeManagerMachines;
   };
 }

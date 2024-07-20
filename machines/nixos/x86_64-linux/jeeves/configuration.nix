@@ -22,15 +22,6 @@
     # localStorageDir = "${inputs.self}/secrets/rekeyed/${config.networking.hostName}";
   };
 
-  nixpkgs = {
-    hostPlatform = "x86_64-linux";
-    config = {
-      allowUnfree = true;
-    };
-    overlays = [
-    ];
-  };
-
   networking.hostName = "jeeves";
 
   boot = {

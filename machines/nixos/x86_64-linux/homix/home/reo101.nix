@@ -5,16 +5,6 @@
     inputs.wired.homeManagerModules.default
   ];
 
-  nixpkgs = {
-    overlays = builtins.attrValues outputs.overlays ++ [
-      inputs.neovim-nightly-overlay.overlays.default
-      inputs.zig-overlay.overlays.default
-      inputs.wired.overlays.default
-    ];
-
-    config.allowUnfree = true;
-  };
-
   home = {
     username = "reo101";
     homeDirectory = "/home/reo101";

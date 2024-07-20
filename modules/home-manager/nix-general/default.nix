@@ -18,11 +18,13 @@
     #         inputs);
     # };
 
-    # Use flake overlays by default
-    nixpkgs = {
-      overlays = lib.attrValues outputs.overlays;
-
-      config.allowUnfree = true;
-    };
+    # NOTE: now automatic, since we're doing `useGlobalPkgs = true`
+    #
+    # # Use flake overlays by default
+    # nixpkgs = {
+    #   overlays = lib.attrValues outputs.overlays;
+    #
+    #   config.allowUnfree = true;
+    # };
   };
 }

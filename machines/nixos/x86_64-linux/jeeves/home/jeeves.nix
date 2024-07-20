@@ -5,12 +5,6 @@
     inputs.wired.homeManagerModules.default
   ];
 
-  nixpkgs = {
-    overlays = builtins.attrValues outputs.overlays;
-
-    config.allowUnfree = true;
-  };
-
   home = {
     username = "jeeves";
     homeDirectory = "/home/jeeves";

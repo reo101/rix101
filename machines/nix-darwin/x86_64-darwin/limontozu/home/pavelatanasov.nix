@@ -7,14 +7,6 @@
     stateVersion = "23.05";
   };
 
-  # Add custom overlays
-  nixpkgs = {
-    overlays = [
-      inputs.neovim-nightly-overlay.overlays.default
-      inputs.zig-overlay.overlays.default
-    ];
-  };
-
   # Set env vars
   home.sessionVariables = {
     EDITOR = "nvim";

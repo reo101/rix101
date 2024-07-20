@@ -94,12 +94,6 @@
     };
   };
 
-  nixpkgs = {
-    config = {
-      allowUnfree = true;
-    };
-  };
-
   ### Fonts
   fonts.fontconfig.enable = true;
 

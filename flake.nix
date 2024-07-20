@@ -164,7 +164,7 @@
         apps = import ./apps { inherit pkgs; };
 
         # Dev Shells (`nix develop`)
-        devShells = import ./shells { inherit pkgs inputs outputs; };
+        devShells = import ./shells { inherit pkgs inputs; };
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
@@ -175,12 +175,12 @@
 
         # Templates
         templates = import ./templates {
-          inherit inputs outputs;
+          inherit inputs;
         };
 
         # Overlays
         overlays = import ./overlays {
-          inherit inputs outputs;
+          inherit inputs;
         };
       };
     });

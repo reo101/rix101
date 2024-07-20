@@ -7,14 +7,6 @@
     stateVersion = "23.05";
   };
 
-  # Add custom overlays
-  nixpkgs = {
-    overlays = builtins.attrValues outputs.overlays ++ [
-      inputs.neovim-nightly-overlay.overlays.default
-      inputs.zig-overlay.overlays.default
-    ];
-  };
-
   # Set env vars
   home.sessionVariables = {
     EDITOR = "nvim";
@@ -40,18 +32,33 @@
 
     # Neovim
     neovim
+    # (neovim.overrideAttrs (oldAttrs: {
+    #   lua = luajitcoroutineclone;
+    # }))
+    (pkgs.writeShellScriptBin "lua" "exec -a $0 ${luajitPackages.nlua}/bin/nlua $@")
+    # luajitPackages.nlua
     fennel
-    fennel-language-server
+    # fennel-language-server
+    fennel-ls
     git
     gh
 
+    # (gnumake.override { guileSupport = true; })
+    gnumake
+
+    # # Emacs
+    # (emacs-unstable.override {
+    #    withGTK3 = true;
+    #    :
+    #  })
+
     # Dhall
-    dhall
+    # dhall
     # dhall-lsp-server
 
     # Circom
-    circom
-    circom-lsp
+    # circom
+    # circom-lsp
 
     # Nix
     nil
@@ -60,6 +67,9 @@
 
     # Mail
     # himalaya
+
+    # Java
+    graalvm-ce
 
     # SSH and GPG
     openssh
@@ -99,7 +109,26 @@
     wezterm = {
       enable = true;
     };
+    spotify = {
+      enable = false;
+    };
   };
+
+  # programs.git = {
+  #   enable = true;
+  #   userName = "reo101";
+  #   # userEmail = "pavel.atanasov@limechain.tech";
+  #   userEmail = "pavel.atanasov2001@gmail.com";
+  #   signing = {
+  #     signByDefault = true;
+  #     key = "675AA7EF13964ACB";
+  #   };
+  #   # init.defaultBranch = "master";
+  #   lfs = {
+  #     enable = true;
+  #   };
+  # };
+
 
   home.file.".gnupg/gpg-agent.conf" = {
     text = ''

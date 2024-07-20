@@ -10,15 +10,6 @@
     stateVersion = "23.05";
   };
 
-  # Add custom overlays
-  nixpkgs = {
-    overlays = [
-      inputs.neovim-nightly-overlay.overlays.default
-      inputs.zig-overlay.overlays.default
-      # inputs.zls-overlay.???
-    ];
-  };
-
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
