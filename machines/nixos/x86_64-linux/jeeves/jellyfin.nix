@@ -1,13 +1,5 @@
 { lib, pkgs, config, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    tremc
-  ];
-
-  # networking.extraHosts = ''
-  #   127.0.0.1 jeeves
-  # '';
-
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
@@ -21,20 +13,14 @@
   };
 
   services = {
-    transmission = {
-      enable = true;
-      package = pkgs.transmission_4;
-      openRPCPort = true;
-      webHome = pkgs.flood-for-transmission;
-      # TODO: `credentialsFile` for RPC password with agenix
-      settings = {
-        download-dir = "/data/torrents/download";
-        incomplete-dir = "/data/torrents/incomplete";
-        incomplete-dir-enabled = true;
-        rpc-bind-address = "0.0.0.0";
-        rpc-whitelist = "127.0.0.1,192.168.*.*,10.100.0.*";
+    nginx = {
+      virtualHosts."jellyfin.jeeves.local" = {
+        enableACME = false;
+        forceSSL = false;
+        locations."/".proxyPass = "http://127.0.0.1:8096";
       };
     };
+
     jellyfin = {
       enable = true;
       openFirewall = true;

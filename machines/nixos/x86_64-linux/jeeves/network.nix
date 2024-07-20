@@ -3,6 +3,10 @@
   environment.systemPackages = with pkgs; [
   ];
 
+  networking.extraHosts = ''
+    127.0.0.1 jeeves.local
+  '';
+
   # networking.nftables.enable = true;
 
   age.secrets."home.wifi.env" = {

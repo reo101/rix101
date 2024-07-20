@@ -8,7 +8,9 @@
     inputs.agenix-rekey.nixosModules.default
     ./network.nix
     ./wireguard.nix
+    ./nginx.nix
     ./jellyfin.nix
+    ./transmission.nix
     ./mindustry.nix
     # ./home-assistant
     ./samba.nix
