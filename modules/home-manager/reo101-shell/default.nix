@@ -295,8 +295,8 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "chisui";
               repo = "zsh-nix-shell";
-              rev = "v0.7.0";
-              hash = "sha256-oQpYKBt0gmOSBgay2HgbXiDoZo5FoUKwyHSlUrOAP5E=";
+              rev = "v0.8.0";
+              hash = "sha256-Z6EYQdasvpl1P78poj9efnnLj7QQg13Me8x1Ryyw+dM=";
             };
           }
           {
@@ -315,8 +315,8 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "zsh-users";
               repo = "zsh-autosuggestions";
-              rev = "a411ef3e0992d4839f0732ebeb9823024afaaaa8";
-              hash = "sha256-KLUYpUu4DHRumQZ3w59m9aTW6TBKMCXl2UcKi4uMd7w=";
+              rev = "c3d4e576c9c86eac62884bd47c01f6faed043fc5";
+              hash = "sha256-B+Kz3B7d97CM/3ztpQyVkE6EfMipVF8Y4HJNfSRXHtU=";
             };
           }
           {
@@ -325,8 +325,8 @@ in
             src = pkgs.fetchFromGitHub {
               owner = "jeffreytse";
               repo = "zsh-vi-mode";
-              rev = "1bda23100e8d140a19be0eed67395c64f6a6074c";
-              hash = "sha256-3arAa5EBG+U9cCauChX9K0KF3hkd+t04/trlWKk/gOw=";
+              rev = "287efa19ec492b2f24bb93d1f4eaac3049743a63";
+              hash = "sha256-HMfC4s7KW4bO7H6RYzLnSARoFr1Ez89Z2VGONKMpGbw=";
             };
           }
         ];
