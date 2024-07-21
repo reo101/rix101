@@ -153,7 +153,7 @@
         ./nix/configurations.nix
         ./nix/agenix.nix
         ./nix/deploy.nix
-        ./nix/topology.nix
+        ./nix/topology
       ];
 
       perSystem = { lib, pkgs, system, ... }: {
