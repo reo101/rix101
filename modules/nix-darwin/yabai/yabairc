@@ -42,7 +42,7 @@ yabai -m signal --add event=display_resized action="launchctl stop org.nixos.ske
 #     sketchybar --trigger space_change --trigger windows_on_spaces
 # }
 
-yabai -m config "external_bar"               "all:49:0"     \
+yabai -m config "external_bar"               "all:32:0"     \
                 "window_border"              "on"           \
                 "mouse_follows_focus"        "off"          \
                 "focus_follows_mouse"        "off"          \
