@@ -55,6 +55,12 @@ M.window_padding = {
     bottom = 0,
 }
 
+-----------
+-- Bell ---
+-----------
+M.audible_bell = "Disabled"
+M.visual_bell = {}
+
 -------------
 -- Tab bar --
 -------------

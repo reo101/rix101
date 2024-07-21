@@ -16,6 +16,10 @@
       :ss02 :ss03 :ss05 :ss07 :ss09
       :zero])
 
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Window Options ;;;
+;;;;;;;;;;;;;;;;;;;;;;
+
 (doto config
   (tset :freetype_render_target    :Light)
   (tset :window_background_opacity 0.8)
@@ -30,6 +34,14 @@
                          :top    0
                          :bottom 0})
   (tset :adjust_window_size_when_changing_font_size false))
+
+;;;;;;;;;;;;
+;;; Bell ;;;
+;;;;;;;;;;;;
+
+(doto config
+  (tset :audible_bell :Disabled)
+  (tset :visual_bell {}))
 
 ;;;;;;;;;;;;;;;;
 ;;; Keybinds ;;;
