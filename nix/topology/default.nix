@@ -14,8 +14,7 @@
       } ''
         magick ${image} \
           -bordercolor white \
-          -border 1x1 miff:- | \
-        magick - \
+          -border 1x1 \
           -alpha set \
           -channel RGBA \
           -fuzz ${toString fuzz}% \
