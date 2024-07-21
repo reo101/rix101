@@ -4,8 +4,6 @@
     inputs.hardware.nixosModules.common-cpu-amd
     inputs.hardware.nixosModules.common-gpu-amd
     ./disko.nix
-    inputs.ragenix.nixosModules.default
-    inputs.agenix-rekey.nixosModules.default
     ./network.nix
     ./wireguard.nix
     ./nginx.nix

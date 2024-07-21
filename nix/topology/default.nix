@@ -50,10 +50,7 @@
     };
   in {
     topology = {
-      nixosConfigurations = {
-        inherit (self.nixosConfigurations)
-          jeeves;
-      };
+      nixosConfigurations = self.nixosConfigurations;
       modules = [
         ({ config, ... }: let
           inherit (config.lib.topology)

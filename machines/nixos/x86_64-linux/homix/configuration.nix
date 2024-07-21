@@ -205,14 +205,6 @@
     enable = true;
   };
 
-  home-manager = {
-    backupFileExtension = "hm-bak";
-    useUserPackages = true;
-    useGlobalPkgs = false;
-
-    extraSpecialArgs = { inherit inputs outputs; };
-  };
-
   ### Enable plymouth (bootscreen customizations)
   boot.plymouth = {
     enable = true;

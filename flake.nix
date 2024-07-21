@@ -148,7 +148,6 @@
 
       imports = [
         ./nix/pkgs.nix
-        ./nix/machines.nix
         ./nix/modules.nix
         ./nix/configurations.nix
         ./nix/agenix.nix

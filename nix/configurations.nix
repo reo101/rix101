@@ -1,7 +1,6 @@
 { lib, config, self, inputs, withSystem, ... }:
 
 let
-  # TODO: works?
   outputs = self;
   inherit (import ./utils.nix { inherit lib self; })
     and
@@ -45,6 +44,9 @@ let
       # Home Manager
       inputs.home-manager.nixosModules.home-manager
       (homeManagerModule args)
+      # (r)agenix && agenix-rekey
+      inputs.ragenix.nixosModules.default
+      inputs.agenix-rekey.nixosModules.default
       # nix-topology
       inputs.nix-topology.nixosModules.default
       # Sane default `networking.hostName`
@@ -134,6 +136,10 @@ let
           machines));
 in
 {
+  imports = [
+    ./machines.nix
+  ];
+
   flake = {
     # Configurations
     nixosConfigurations =

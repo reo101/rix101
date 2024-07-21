@@ -7,9 +7,7 @@
 
   perSystem = {
     agenix-rekey = {
-      nodes = {
-        inherit (self.nixosConfigurations) jeeves;
-      };
+      nodes = self.nixosConfigurations;
     };
   };
 }
