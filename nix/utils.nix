@@ -30,6 +30,26 @@ rec {
   # NOTE: Implying last argument is the output of `recurseDir`
   hasDirectories = allSatisfy lib.isAttrs;
 
+  camelToKebab =
+    lib.stringAsChars
+      (c: if c == lib.toUpper c then "-${lib.toLower c}" else c);
+
+  # NOTE: from  Tweag's Nix Hour 76 - <https://github.com/tweag/nix-hour/blob/c4fd0f2fc3059f057571bbfd74f3c5e4021f526c/code/76/default.nix#L4-L22>
+  mutFirstChar =
+    f: s:
+    let
+      firstChar = f (lib.substring 0 1 s);
+      rest = lib.substring 1 (-1) s;
+    in firstChar + rest;
+
+  kebabToCamel =
+    s:
+    mutFirstChar lib.toLower (
+      lib.concatMapStrings (mutFirstChar lib.toUpper) (
+        lib.splitString "-" s
+      )
+    );
+
   gen-configuration-type-to = mappings: mkError: configuration-type:
     mappings.${configuration-type} or
       (builtins.throw

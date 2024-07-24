@@ -172,6 +172,8 @@
       flake = {
         inherit self;
 
+        autoModules.enableAll = true;
+
         # Templates
         templates = import ./templates {
           inherit inputs;
