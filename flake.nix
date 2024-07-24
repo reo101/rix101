@@ -133,10 +133,7 @@
     };
   };
 
-  outputs = inputs: let
-    inherit (inputs) self;
-    inherit (self) outputs;
-  in
+  outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
       systems = [
         "aarch64-linux"
@@ -147,12 +144,12 @@
       ];
 
       imports = [
-        ./nix/pkgs.nix
-        ./nix/modules.nix
-        ./nix/configurations.nix
-        ./nix/agenix.nix
-        ./nix/deploy.nix
-        ./nix/topology
+        ./modules/flake/pkgs.nix
+        ./modules/flake/modules.nix
+        ./modules/flake/configurations.nix
+        ./modules/flake/agenix.nix
+        ./modules/flake/deploy.nix
+        ./modules/flake/topology
       ];
 
       perSystem = { lib, pkgs, system, ... }: {
@@ -170,9 +167,13 @@
       };
 
       flake = {
-        inherit self;
+        inherit (inputs) self;
 
+        # Automatic modules, see `./modules/flake/modules.nix`
         autoModules.enableAll = true;
+
+        # Automatic configurations, see `./modules/flake/configurations.nix`
+        autoConfigurations.enableAll = true;
 
         # Templates
         templates = import ./templates {

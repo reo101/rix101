@@ -2,15 +2,16 @@
 
 let
   outputs = self;
-  inherit (import ./utils.nix { inherit lib self; })
+  inherit (import ../../nix/utils.nix { inherit lib self; })
     eq
     and
     hasFiles
-    camelToKebab;
+    configuration-type-to-outputs-modules;
 in
 let
   # Modules helpers
-  moduleTypes = ["nixos" "nixOnDroid" "nixDarwin" "homeManager" "flake"];
+  moduleTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager" "flake"];
+
   createModules = baseDir: { passthru ? { inherit inputs outputs; }, ... }:
     lib.pipe baseDir [
       # Read given directory
@@ -68,7 +69,7 @@ in
   in {
     flake.autoModules = lib.mkOption {
       description = ''
-        Automagivally generate modules from walking directories with Nix files
+        Automagically generate modules from walking directories with Nix files
       '';
       type = types.submodule (submodule: {
         options = {
@@ -101,7 +102,7 @@ in
                       # (default global `baseDir` + `camelToKebab`-ed `moduleType`)
                       dir = lib.mkOption {
                         type = types.path;
-                        default = "${submodule.config.baseDir}/${camelToKebab moduleType}";
+                        default = "${submodule.config.baseDir}/${moduleType}";
                       };
                     };
                   };
@@ -123,7 +124,7 @@ in
             (builtins.map
               (moduleType:
                 lib.nameValuePair
-                "${moduleType}Modules"
+                "${configuration-type-to-outputs-modules moduleType}"
                 (if config.flake.autoModules.${moduleType}.enable
                   then createModules config.flake.autoModules.${moduleType}.dir { }
                   else { })))

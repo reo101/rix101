@@ -1,7 +1,7 @@
 { lib, config, self, inputs, ... }:
 
 let
-  inherit (import ./utils.nix { inherit lib self; })
+  inherit (import ../../nix/utils.nix { inherit lib self; })
     accumulateMachines
     configuration-type-to-deploy-type;
 in
@@ -14,7 +14,7 @@ in
         ({ host, system, configuration-type, configuration }:
           let
             deploy-config-path =
-              ../machines/${configuration-type}/${system}/${host}/deploy.nix;
+              "${config.flake.autoConfigurations.${configuration-type}.dir}/${system}/${host}/deploy.nix";
             deploy-config =
               import deploy-config-path;
           in

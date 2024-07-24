@@ -34,7 +34,7 @@ rec {
     lib.stringAsChars
       (c: if c == lib.toUpper c then "-${lib.toLower c}" else c);
 
-  # NOTE: from  Tweag's Nix Hour 76 - <https://github.com/tweag/nix-hour/blob/c4fd0f2fc3059f057571bbfd74f3c5e4021f526c/code/76/default.nix#L4-L22>
+  # NOTE: from Tweag's Nix Hour 76 - <https://github.com/tweag/nix-hour/blob/c4fd0f2fc3059f057571bbfd74f3c5e4021f526c/code/76/default.nix#L4-L22>
   mutFirstChar =
     f: s:
     let
@@ -55,17 +55,32 @@ rec {
       (builtins.throw
         (mkError configuration-type));
 
+  # TODO: abstract away `_Machines` and `_Modules`
+
   configuration-type-to-outputs-machines =
     gen-configuration-type-to
       {
         nixos = "nixosMachines";
         nix-on-droid = "nixOnDroidMachines";
         nix-darwin = "nixDarwinMachines";
-        home-manager = "homeMachines";
+        home-manager = "homeManagerMachines";
       }
       (configuration-type:
         builtins.throw
           "Invaild configuration-type \"${configuration-type}\" for flake outputs' machines");
+
+  configuration-type-to-outputs-modules =
+    gen-configuration-type-to
+      {
+        nixos = "nixosModules";
+        nix-on-droid = "nixOnDroidModules";
+        nix-darwin = "nixDarwinModules";
+        home-manager = "homeManagerModules";
+        flake = "flakeModules";
+      }
+      (configuration-type:
+        builtins.throw
+          "Invaild configuration-type \"${configuration-type}\" for flake outputs' modules");
 
   configuration-type-to-outputs-configurations =
     gen-configuration-type-to

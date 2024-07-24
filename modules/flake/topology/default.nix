@@ -23,32 +23,38 @@
           -shave 1x1 \
           $out
       '';
-    images.TL-WR740N = removebg {
-      image = pkgs.fetchurl {
-        name = "TL-WR740N.jpg";
-        url = "https://static.tp-link.com/res/images/products/TL-WR740N_un_V6_1068_large_2_20150807163606.jpg";
-        hash = "sha256-/NpnnDh2V015lc3TGzez9eS8rINFtzVbCdN7d85NOt4=";
+    images = {
+      TL-WR740N = removebg {
+        image = pkgs.fetchurl {
+          name = "TL-WR740N.jpg";
+          url = "https://static.tp-link.com/res/images/products/TL-WR740N_un_V6_1068_large_2_20150807163606.jpg";
+          hash = "sha256-/NpnnDh2V015lc3TGzez9eS8rINFtzVbCdN7d85NOt4=";
+        };
+        fuzz = 15;
       };
-      fuzz = 15;
-    };
-    images.ZBT-WR8305RT = removebg {
-      image = pkgs.fetchurl {
-        name = "ZBT-WR8305RT.jpg";
-        url = "https://vseplus.com/images/p/full/213140a.jpg";
-        hash = "sha256-ftTuXaBm99n+y+6fpRf0i63ykDx6xoJgwsQFpu2fNy4=";
+      ZBT-WR8305RT = removebg {
+        image = pkgs.fetchurl {
+          name = "ZBT-WR8305RT.jpg";
+          url = "https://vseplus.com/images/p/full/213140a.jpg";
+          hash = "sha256-ftTuXaBm99n+y+6fpRf0i63ykDx6xoJgwsQFpu2fNy4=";
+        };
+        fuzz = 2;
       };
-      fuzz = 2;
-    };
-    images.cheetah = removebg {
-      image = pkgs.fetchurl {
-        name = "cheetah.jpg";
-        url = "https://m.media-amazon.com/images/I/51OFxuD1GgL._AC_SL1000_.jpg";
-        hash = "sha256-Lvylh1geh81FZpqK1shj108M217zobWRgR4mEfbvKrc=";
+      cheetah = removebg {
+        image = pkgs.fetchurl {
+          name = "cheetah.jpg";
+          url = "https://m.media-amazon.com/images/I/51OFxuD1GgL._AC_SL1000_.jpg";
+          hash = "sha256-Lvylh1geh81FZpqK1shj108M217zobWRgR4mEfbvKrc=";
+        };
+        fuzz = 20;
       };
-      fuzz = 20;
     };
   in {
     topology = {
+      # nixosConfigurations = {
+      #   inherit (self.nixosConfigurations)
+      #     jeeves;
+      # };
       nixosConfigurations = self.nixosConfigurations;
       modules = [
         ({ config, ... }: let
