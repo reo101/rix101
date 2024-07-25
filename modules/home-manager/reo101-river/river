@@ -169,10 +169,10 @@ wireplumber &
 waybar &
 
 # Set wallpaper
-{
-    swww init
-    local last_bg = "${HOME}/Wallpapers/last"
-    [ -f "${last_bg}" ] && swww img "${last_bg}"
-}
+# {
+#     swww init
+#     local last_bg = "${HOME}/Wallpapers/last"
+#     [ -f "${last_bg}" ] && swww img "${last_bg}"
+# }
 
 exec rivertile -view-padding 6 -outer-padding 6

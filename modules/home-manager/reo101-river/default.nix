@@ -27,7 +27,8 @@ in
         builtins.concatLists [
           [
             river
-            swww # wallpaper deamon
+            # FIXME: does not build
+            # swww # wallpaper deamon
             waybar # status bar
             xwayland
             wl-clipboard
@@ -53,26 +54,26 @@ in
         source = ./style.css;
       };
 
-      systemd.user.services."swww" = {
-        Unit = {
-          Description = "swww Daemon";
-          PartOf = "graphical-session.target";
-        };
-        Service = {
-          ExecStart = "${pkgs.swww}/bin/swww init --no-daemon";
-          ExecStop = "${pkgs.swww}/bin/swww kill";
-          Type = "simple";
-          Restart = "always";
-          RestartSec = 5;
-        };
-        Install = {
-          WantedBy = [ "graphical-session.target" ];
-        };
-        # description = "Swww Deamon";
-        # wantedBy = [ "graphical-session.target" ];
-        # partOf = [ "graphical-session.target" ];
-        # script = "${pkgs.swww}/bin/swww init --no-daemon";
-      };
+      # systemd.user.services."swww" = {
+      #   Unit = {
+      #     Description = "swww Daemon";
+      #     PartOf = "graphical-session.target";
+      #   };
+      #   Service = {
+      #     ExecStart = "${pkgs.swww}/bin/swww init --no-daemon";
+      #     ExecStop = "${pkgs.swww}/bin/swww kill";
+      #     Type = "simple";
+      #     Restart = "always";
+      #     RestartSec = 5;
+      #   };
+      #   Install = {
+      #     WantedBy = [ "graphical-session.target" ];
+      #   };
+      #   # description = "Swww Deamon";
+      #   # wantedBy = [ "graphical-session.target" ];
+      #   # partOf = [ "graphical-session.target" ];
+      #   # script = "${pkgs.swww}/bin/swww init --no-daemon";
+      # };
 
       # services.swww = {
       #   enabled = true;

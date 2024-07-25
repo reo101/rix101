@@ -16,7 +16,8 @@
   # FIXME: only buildable on darwin
   # pngpaste = pkgs.callPackage ./pngpaste { };
   srtool-cli = pkgs.callPackage ./srtool-cli { };
-  swww = pkgs.callPackage ./swww { };
+  # FIXME: does not build
+  # swww = pkgs.callPackage ./swww { };
   vim-fmi-cli = pkgs.callPackage ./vim-fmi-cli { };
   win2xcur = pkgs.callPackage ./win2xcur { };
 }
