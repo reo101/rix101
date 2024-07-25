@@ -62,7 +62,7 @@ rec {
       {
         nixos = "nixosMachines";
         nix-on-droid = "nixOnDroidMachines";
-        nix-darwin = "nixDarwinMachines";
+        nix-darwin = "darwinMachines";
         home-manager = "homeManagerMachines";
       }
       (configuration-type:
@@ -74,7 +74,7 @@ rec {
       {
         nixos = "nixosModules";
         nix-on-droid = "nixOnDroidModules";
-        nix-darwin = "nixDarwinModules";
+        nix-darwin = "darwinModules";
         home-manager = "homeManagerModules";
         flake = "flakeModules";
       }

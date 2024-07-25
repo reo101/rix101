@@ -7,6 +7,7 @@ let
     hasFiles
     hasDirectories
     recurseDir
+    configuration-type-to-outputs-modules
     configuration-type-to-outputs-machines;
 in
 let
@@ -16,8 +17,8 @@ let
       useGlobalPkgs = true;
       # Do not keep packages in ${HOME}
       useUserPackages = true;
-      # Default import all of our exported homeManagerModules
-      sharedModules = builtins.attrValues config.flake.homeManagerModules;
+      # Default import all of our exported `home-manager` modules
+      sharedModules = builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"};
       # Pass in `inputs`, `outputs` and maybe `meta`
       extraSpecialArgs = {
         inherit inputs outputs;
@@ -57,7 +58,7 @@ let
       {
         networking.hostName = lib.mkDefault hostname;
       }
-    ] ++ (builtins.attrValues config.flake.nixosModules);
+    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nixos"});
 
     specialArgs = {
       inherit inputs outputs;
@@ -74,7 +75,7 @@ let
       "${root}/configuration.nix"
       # Home Manager
       (homeManagerModule args)
-    ] ++ (builtins.attrValues config.flake.nixOnDroidModules);
+    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-on-droid"});
 
     extraSpecialArgs = {
       inherit inputs outputs;
@@ -97,7 +98,7 @@ let
       # {
       #   nixpkgs.hostPlatform = system;
       # }
-    ] ++ (builtins.attrValues config.flake.nixDarwinModules);
+    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-darwin"});
 
     specialArgs = {
       inherit inputs outputs;
@@ -110,7 +111,7 @@ let
 
     modules = [
       "${root}/home.nix"
-    ] ++ (builtins.attrValues config.flake.homeManagerModules);
+    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"});
 
     extraSpecialArgs = {
       inherit inputs outputs;
@@ -208,9 +209,11 @@ in
           ];
     in {
       # Machines
+      # NOTE: manually inheriting generated machines to avoid recursion
+      #       (`autoMachines` depends on `config.flake` itself)
       inherit (autoMachines)
         nixosMachines
-        nixDarwinMachines
+        darwinMachines
         nixOnDroidMachines
         homeManagerMachines;
 
@@ -236,7 +239,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          config.flake.nixosMachines;
+          config.flake.${configuration-type-to-outputs-machines "nixos"};
 
       nixOnDroidConfigurations =
         createConfigurations
@@ -253,7 +256,7 @@ in
               inherit system;
               hostname = host;
             })
-          config.flake.nixOnDroidMachines;
+          config.flake.${configuration-type-to-outputs-machines "nix-on-droid"};
 
       darwinConfigurations =
         createConfigurations
@@ -276,7 +279,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          config.flake.nixDarwinMachines;
+          config.flake.${configuration-type-to-outputs-machines "nix-darwin"};
 
       homeConfigurations =
         createConfigurations
@@ -293,7 +296,7 @@ in
               inherit system;
               hostname = host;
             })
-          config.flake.homeManagerMachines;
+          config.flake.${configuration-type-to-outputs-machines "home-manager"};
     };
   };
 }

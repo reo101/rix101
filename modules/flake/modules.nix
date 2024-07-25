@@ -136,7 +136,7 @@ in
       inherit (autoModules)
         nixosModules
         nixOnDroidModules
-        nixDarwinModules
+        darwinModules
         homeManagerModules
         flakeModules;
     };
