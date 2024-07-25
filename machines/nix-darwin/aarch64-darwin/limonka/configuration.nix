@@ -12,6 +12,7 @@
     flakeInputs = lib.filterAttrs (lib.const (lib.isType "flake")) inputs;
   in {
     # Ensure we can work with flakes
+    # TODO: add to `README.md`
     # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
     package = pkgs.nixVersions.monitored.latest;
 
