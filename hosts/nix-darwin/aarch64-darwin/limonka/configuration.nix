@@ -36,7 +36,6 @@
     #   keep-derivations = true
     # '';
 
-
     settings = {
       # Enable flakes and new 'nix' command
       experimental-features = [

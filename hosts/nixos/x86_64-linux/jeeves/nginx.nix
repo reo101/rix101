@@ -1,6 +1,13 @@
 { inputs, outputs, lib, pkgs, config, ... }:
 
 {
+  # age.secrets."nextcloud.adminpass" = {
+  #   rekeyFile = "${inputs.self}/secrets/home/jeeves/nextcloud/adminpass.age";
+  #   mode = "770";
+  #   owner = "nextcloud";
+  #   group = "nextcloud";
+  # };
+
   environment.systemPackages = [
     # config.services.nextcloud.package
   ];
@@ -10,7 +17,7 @@
   services.nginx = {
     enable = true;
     package = pkgs.openresty;
-    # virtualHosts."_.jeeves.local" = {
+    # virtualHosts."_.${config.networking.hostName}.local" = {
     #   # listen = [
     #   #   {
     #   #     addr = "127.0.0.1";

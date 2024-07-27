@@ -8,9 +8,12 @@ let
     hasDirectories
     recurseDir
     configuration-type-to-outputs-modules
-    configuration-type-to-outputs-machines;
+    configuration-type-to-outputs-hosts;
 in
 let
+  # Configuration helpers
+  configurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
+
   homeManagerModule = { root, system, hostname, users ? null }: {
     home-manager = {
       # Use same `pkgs` instance as system (i.e. carry over overlays)
@@ -30,14 +33,12 @@ let
       config = "${root}/home.nix";
     } else {
       # Not nixOnDroid
-      users = lib.attrsets.genAttrs
-        users
+      users =
+        lib.attrsets.genAttrs
+          users
           (user: import "${root}/home/${user}.nix");
     });
   };
-
-  # Configuration helpers
-  configurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
 
   mkNixosHost = args @ { root, system, hostname, users }: lib.nixosSystem {
     inherit system;
@@ -120,7 +121,7 @@ let
   };
 
   createConfigurations =
-    pred: mkHost: machines:
+    pred: mkHost: hosts:
     lib.foldAttrs
       lib.const
       [ ]
@@ -138,7 +139,7 @@ let
                     ${host} = mkHost { inherit system host configurationFiles; };
                   })
               hosts)
-          machines));
+          hosts));
 in
 {
   options = let
@@ -156,8 +157,8 @@ in
               Base directory of the contained configurations, used as a base for the rest of the options
             '';
             type = types.path;
-            default = "${self}/machines";
-            defaultText = ''''${self}/machines'';
+            default = "${self}/hosts";
+            defaultText = ''''${self}/hosts'';
           };
         } // (
           lib.pipe
@@ -194,29 +195,20 @@ in
 
   config = {
     flake = let
-      autoMachines =
+      autoHosts =
         lib.pipe
           configurationTypes
           [
             (builtins.map
               (configurationType:
                 lib.nameValuePair
-                "${configuration-type-to-outputs-machines configurationType}"
-                (if config.flake.autoConfigurations.${configurationType}.enable
-                  then recurseDir config.flake.autoConfigurations.${configurationType}.dir
-                  else { })))
+                  "${configuration-type-to-outputs-hosts configurationType}"
+                  (if config.flake.autoConfigurations.${configurationType}.enable
+                    then recurseDir config.flake.autoConfigurations.${configurationType}.dir
+                    else { })))
             builtins.listToAttrs
           ];
-    in {
-      # Machines
-      # NOTE: manually inheriting generated machines to avoid recursion
-      #       (`autoMachines` depends on `config.flake` itself)
-      inherit (autoMachines)
-        nixosMachines
-        darwinMachines
-        nixOnDroidMachines
-        homeManagerMachines;
-
+    in autoHosts // {
       # Configurations
       nixosConfigurations =
         createConfigurations
@@ -239,7 +231,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          config.flake.${configuration-type-to-outputs-machines "nixos"};
+          self.${configuration-type-to-outputs-hosts "nixos"};
 
       nixOnDroidConfigurations =
         createConfigurations
@@ -256,7 +248,7 @@ in
               inherit system;
               hostname = host;
             })
-          config.flake.${configuration-type-to-outputs-machines "nix-on-droid"};
+          self.${configuration-type-to-outputs-hosts "nix-on-droid"};
 
       darwinConfigurations =
         createConfigurations
@@ -279,7 +271,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          config.flake.${configuration-type-to-outputs-machines "nix-darwin"};
+          self.${configuration-type-to-outputs-hosts "nix-darwin"};
 
       homeConfigurations =
         createConfigurations
@@ -296,7 +288,7 @@ in
               inherit system;
               hostname = host;
             })
-          config.flake.${configuration-type-to-outputs-machines "home-manager"};
+          self.${configuration-type-to-outputs-hosts "home-manager"};
     };
   };
 }

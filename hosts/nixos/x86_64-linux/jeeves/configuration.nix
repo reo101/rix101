@@ -12,8 +12,15 @@
     ./mindustry.nix
     # ./home-assistant
     ./samba.nix
+    # ./steam.nix
     # ./ollama.nix
+    # ./sunshine.nix
+    # ./photoprism.nix
+    # ./immich.nix
+    # ./nextcloud.nix
   ];
+
+  # services.kanidm = { };
 
   age.rekey = {
     hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";

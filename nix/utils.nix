@@ -55,19 +55,19 @@ rec {
       (builtins.throw
         (mkError configuration-type));
 
-  # TODO: abstract away `_Machines` and `_Modules`
+  # TODO: abstract away `_Hosts` and `_Modules`
 
-  configuration-type-to-outputs-machines =
+  configuration-type-to-outputs-hosts =
     gen-configuration-type-to
       {
-        nixos = "nixosMachines";
-        nix-on-droid = "nixOnDroidMachines";
-        nix-darwin = "darwinMachines";
-        home-manager = "homeManagerMachines";
+        nixos = "nixosHosts";
+        nix-on-droid = "nixOnDroidHosts";
+        nix-darwin = "darwinHosts";
+        home-manager = "homeManagerHosts";
       }
       (configuration-type:
         builtins.throw
-          "Invaild configuration-type \"${configuration-type}\" for flake outputs' machines");
+          "Invaild configuration-type \"${configuration-type}\" for flake outputs' hosts");
 
   configuration-type-to-outputs-modules =
     gen-configuration-type-to
@@ -104,18 +104,18 @@ rec {
         builtins.throw
           "Invaild configuration-type \"${configuration-type}\" for deploy-rs deployment");
 
-  accumulateMachines = configuration-types: host-system-configuration-type-configuration-fn:
+  accumulateHosts = configuration-types: host-system-configuration-type-configuration-fn:
     lib.flip lib.concatMapAttrs
       (lib.genAttrs
         configuration-types
         (configuration-type:
           let
-            machines = configuration-type-to-outputs-machines configuration-type;
+            hosts = configuration-type-to-outputs-hosts configuration-type;
           in
-            self.${machines}))
-      (configuration-type: machines:
+            self.${hosts}))
+      (configuration-type: hosts:
         lib.pipe
-          machines
+          hosts
           [
             # Filter out nondirectories
             (lib.filterAttrs

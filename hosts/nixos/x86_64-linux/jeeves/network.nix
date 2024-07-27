@@ -53,4 +53,6 @@
       linkConfig.Name = "wan0"; # "wlp15s0";
     };
   };
+
+  # systemd.services.systemd-networkd.environment.SYSTEMD_LOG_LEVEL = "debug";
 }

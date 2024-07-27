@@ -2,13 +2,13 @@
 
 let
   inherit (import ../../nix/utils.nix { inherit lib self; })
-    accumulateMachines
+    accumulateHosts
     configuration-type-to-deploy-type;
 in
 {
   flake = {
     deploy.nodes =
-      accumulateMachines
+      accumulateHosts
         # TODO: nix-on-droid
         ["nixos" "nix-darwin"]
         ({ host, system, configuration-type, configuration }:
