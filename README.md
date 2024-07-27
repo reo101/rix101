@@ -39,53 +39,82 @@
      \__\/           \__\/       |__|/     
 ``` -->
 
+<!-- TODO: badges? -->
 <div align="center">
-    Based on <a href="https://github.com/Misterio77/nix-starter-configs">nix-starter-configs</a>
 </div>
+
+---
+
+# Structure
+
+- Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic modules and configurations extraction
+  - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
+  - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction
+- Hosts can be found under `./hosts/${config-type}/${system}/${hostname}/...`
+  - Check [`./modules/flake/configurations.nix`](./modules/flake/configurations.nix) for more info on what is extracted from those directories
+- Modules can be found under `./modules/${config-type}/...`
+  - Check [`./modules/flake/modules.nix`](./modules/flake/modules.nix) for more info on what is extracted from that directory
+
+# Topology
+
+You can see the overall topology of the hosts by running
+
+```bash
+nix build .#topology
+```
+
+And opening the resulting `./result/main.svg` and `./result/network.svg`
 
 ---
 
 # Secrets
 
+Secrets are managed by [`agenix`](https://github.com/ryantm/agenix) and [`agenix-rekey`](https://github.com/oddlama/agenix-rekey)
+
+> [!NOTE]
+> Secrets are defined by the hosts themselves, `agenix-rekey` *just* collects what secrets are referenced by them and lets you generate, edit and rekey them
+
 ```bash
-# To put `agenix` and friends in `$PATH`
+# To put `rage`, `agenix-rekey` and friends in `$PATH`
 nix develop
-cd secrets
-```
-
-## Make new key
-
-```bash
-rage-keygen -o key
 ```
 
 ## Edit secret
 
 ```bash
-agenix -i key -e sub/dir/secret_file.age
+# Select from `fzf` menu
+agenix edit
 ```
 
 ## Rekey all secrets
 
 ```bash
-agenix -i key --rekey
+agenix rekey
 ```
 
-# NixOS setup
+## Generate missing keys (with the defined `generators`)
+
+```bash
+agenix generate
+```
+
+---
+
+# Setups
+
+## NixOS setup
 
 ```bash
 # Initial setup
-nix run nixpkgs#nixos-anywhere -- --flake .#${HOSTNAME} --build-on-remote --ssh-port 22 root@${HOSTNAME} --no-reboott
+nix run nixpkgs#nixos-anywhere -- --flake .#${HOSTNAME} --build-on-remote --ssh-port 22 root@${HOSTNAME} --no-reboot
 
 # Deploy
 deploy .#${HOSTNAME} --skip-checks
 ```
 
----
+## MacOS / Darwin (silicon) setup
 
-# Mac (silicon) setup
-
-```sh
+```bash
 # Setup system tools
 softwareupdate --install-rosetta --agree-to-license
 sudo xcodebuild -license
@@ -100,5 +129,14 @@ nix build ".#darwinConfigurations.${HOSTNAME}.system"
 ./result/sw/bin/darwin-rebuild switch --flake .
 
 # System setup for `yabai` (in system recovery)
+# NOTE: <https://support.apple.com/guide/mac-help/macos-recovery-a-mac-apple-silicon-mchl82829c17/mac>
 csrutil enable --without fs --without debug --without nvram
 ```
+
+---
+
+# Credits
+
+- [`Miserio77`](https://github.com/Misterio77) for his amazing [nix-starter-configs](https://github.com/Misterio77/nix-starter-configs), on which this was based originally
+- [`disko`](https://github.com/nix-community/disko) for making disk partioning a breeze
+- [`oddlama`](https://github.com/oddlama) for creating the amazing [`agenix-rekey`](https://github.com/oddlama/agenix-rekey) and [`nix-topology`](https://github.com/oddlama/nix-topology) projects
