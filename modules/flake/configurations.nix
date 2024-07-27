@@ -40,7 +40,7 @@ let
     });
   };
 
-  mkNixosHost = args @ { root, system, hostname, users }: lib.nixosSystem {
+  mkNixosHost = args @ { root, system, hostname, users }: inputs.nixpkgs.lib.nixosSystem {
     inherit system;
     pkgs = withSystem system ({ pkgs, ... }: pkgs);
 
