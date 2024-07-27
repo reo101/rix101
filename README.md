@@ -59,7 +59,7 @@
 
 You can see the overall topology of the hosts by running
 
-```bash
+```sh
 nix build .#topology
 ```
 
@@ -74,27 +74,27 @@ Secrets are managed by [`agenix`](https://github.com/ryantm/agenix) and [`agenix
 > [!NOTE]
 > Secrets are defined by the hosts themselves, `agenix-rekey` *just* collects what secrets are referenced by them and lets you generate, edit and rekey them
 
-```bash
+```sh
 # To put `rage`, `agenix-rekey` and friends in `$PATH`
 nix develop
 ```
 
 ## Edit secret
 
-```bash
+```sh
 # Select from `fzf` menu
 agenix edit
 ```
 
 ## Rekey all secrets
 
-```bash
+```sh
 agenix rekey
 ```
 
 ## Generate missing keys (with the defined `generators`)
 
-```bash
+```sh
 agenix generate
 ```
 
@@ -104,17 +104,17 @@ agenix generate
 
 ## NixOS setup
 
-```bash
+```sh
 # Initial setup
-nix run nixpkgs#nixos-anywhere -- --flake .#${HOSTNAME} --build-on-remote --ssh-port 22 root@${HOSTNAME} --no-reboot
+nix run nixpkgs#nixos-anywhere -- --flake ".#${HOSTNAME}" --build-on-remote --ssh-port 22 "root@${HOSTNAME}" --no-reboot
 
 # Deploy
-deploy .#${HOSTNAME} --skip-checks
+deploy ".#${HOSTNAME}" --skip-checks
 ```
 
 ## MacOS / Darwin (silicon) setup
 
-```bash
+```sh
 # Setup system tools
 softwareupdate --install-rosetta --agree-to-license
 sudo xcodebuild -license
