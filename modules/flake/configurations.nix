@@ -284,7 +284,7 @@ in
               ])
           ({ system, host, configurationFiles, ... }:
             mkHomeManagerHost {
-              root = "${config.flake.homeManager.home-manager.dir}/${system}/${host}";
+              root = "${config.flake.autoConfigurations.home-manager.dir}/${system}/${host}";
               inherit system;
               hostname = host;
             })
