@@ -50,6 +50,12 @@
       };
     };
   in {
+    # NOTE: hide from `nix flake show`
+    #       requires `allow-import-from-derivation`
+    legacyPackages = {
+      topology = self.topology.${system}.config.output;
+    };
+
     topology = {
       # nixosConfigurations = {
       #   inherit (self.nixosConfigurations)
