@@ -54,6 +54,10 @@
   - Check [`./modules/flake/configurations.nix`](./modules/flake/configurations.nix) for more info on what is extracted from those directories
 - Modules can be found under `./modules/${config-type}/...`
   - Check [`./modules/flake/modules.nix`](./modules/flake/modules.nix) for more info on what is extracted from that directory
+- Packages can be found under `./pkgs/...`
+- Overlays can be found under `./overlays/...`
+- Shells can be found under `./shells/...`
+  - Default one puts a recent `nix` together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
 
 # Topology
 
@@ -137,6 +141,6 @@ csrutil enable --without fs --without debug --without nvram
 
 # Credits
 
-- [`Miserio77`](https://github.com/Misterio77) for his amazing [nix-starter-configs](https://github.com/Misterio77/nix-starter-configs), on which this was based originally
+- [`Misterio77`](https://github.com/Misterio77) for his amazing [`nix-starter-configs`](https://github.com/Misterio77/nix-starter-configs), on which this was based originally
 - [`disko`](https://github.com/nix-community/disko) for making disk partioning a breeze
 - [`oddlama`](https://github.com/oddlama) for creating the amazing [`agenix-rekey`](https://github.com/oddlama/agenix-rekey) and [`nix-topology`](https://github.com/oddlama/nix-topology) projects
