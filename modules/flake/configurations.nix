@@ -1,7 +1,7 @@
 { lib, config, self, inputs, withSystem, ... }:
 
 let
-  inherit (import ../../nix/utils.nix { inherit lib config self; })
+  inherit (config.lib)
     and
     hasFiles
     hasDirectories

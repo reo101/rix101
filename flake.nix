@@ -144,6 +144,7 @@
       ];
 
       imports = [
+        ./modules/flake/lib.nix
         ./modules/flake/pkgs.nix
         ./modules/flake/modules.nix
         ./modules/flake/configurations.nix
