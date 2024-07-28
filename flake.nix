@@ -150,17 +150,20 @@
         ./modules/flake/agenix.nix
         ./modules/flake/deploy.nix
         ./modules/flake/topology
+        ./modules/flake/packages
       ];
 
-      perSystem = { lib, pkgs, system, ... }: {
-        # Packages (`nix build`)
-        packages = import ./pkgs { inherit pkgs; };
 
+      perSystem = { lib, pkgs, system, ... }: {
         # Apps (`nix run`)
         apps = import ./apps { inherit pkgs; };
 
         # Dev Shells (`nix develop`)
-        devShells = import ./shells { inherit pkgs inputs; };
+        devShells = import ./shells {
+          inherit inputs;
+          # NOTE: for `nixVersions.monitored`
+          pkgs = pkgs.extend inputs.self.overlays.modifications;
+        };
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
@@ -174,6 +177,9 @@
 
         # Automatic configurations, see `./modules/flake/configurations.nix`
         autoConfigurations.enableAll = true;
+
+        # Automatic packages, see `./modules/flake/packages/default.nix`
+        autoPackages.enable = true;
 
         # Templates
         templates = import ./templates {

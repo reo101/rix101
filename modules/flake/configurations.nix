@@ -1,18 +1,22 @@
 { lib, config, self, inputs, withSystem, ... }:
 
 let
-  outputs = self;
-  inherit (import ../../nix/utils.nix { inherit lib self; })
+  inherit (import ../../nix/utils.nix { inherit lib config self; })
     and
     hasFiles
     hasDirectories
     recurseDir
-    configuration-type-to-outputs-modules
-    configuration-type-to-outputs-hosts;
+    configuration-type-to-outputs-modules;
 in
 let
   # Configuration helpers
   configurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
+
+  # `pkgs` with flake's overlays
+  # NOTE: done here to avoid infinite recursion
+  pkgs' = system:
+    (withSystem system ({ pkgs, ... }: pkgs)).extend
+      (final: prev: inputs.self.packages.${system});
 
   homeManagerModule = { root, system, hostname, users ? null }: {
     home-manager = {
@@ -24,7 +28,7 @@ let
       sharedModules = builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"};
       # Pass in `inputs`, `outputs` and maybe `meta`
       extraSpecialArgs = {
-        inherit inputs outputs;
+        inherit inputs;
         # TODO: meta?
         inherit hostname;
       };
@@ -42,7 +46,7 @@ let
 
   mkNixosHost = args @ { root, system, hostname, users }: inputs.nixpkgs.lib.nixosSystem {
     inherit system;
-    pkgs = withSystem system ({ pkgs, ... }: pkgs);
+    pkgs = pkgs' system;
 
     modules = [
       # Main configuration
@@ -62,14 +66,14 @@ let
     ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nixos"});
 
     specialArgs = {
-      inherit inputs outputs;
+      inherit inputs;
     };
   };
 
   mkNixOnDroidHost = args @ { root, system, hostname }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
     # NOTE: inferred by `pkgs.system`
     # inherit system;
-    pkgs = withSystem system ({ pkgs, ... }: pkgs);
+    pkgs = pkgs' system;
 
     modules = [
       # Main configuration
@@ -79,7 +83,7 @@ let
     ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-on-droid"});
 
     extraSpecialArgs = {
-      inherit inputs outputs;
+      inherit inputs;
     };
 
     home-manager-path = inputs.home-manager.outPath;
@@ -87,7 +91,7 @@ let
 
   mkNixDarwinHost = args @ { root, system, hostname, users }: inputs.nix-darwin.lib.darwinSystem {
     inherit system;
-    pkgs = withSystem system ({ pkgs, ... }: pkgs);
+    pkgs = pkgs' system;
 
     modules = [
       # Main configuration
@@ -102,20 +106,20 @@ let
     ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-darwin"});
 
     specialArgs = {
-      inherit inputs outputs;
+      inherit inputs;
     };
   };
 
   mkHomeManagerHost = args @ { root, system, hostname }: inputs.home-manager.lib.homeManagerConfiguration {
     inherit system;
-    pkgs = withSystem system ({ pkgs, ... }: pkgs);
+    pkgs = pkgs' system;
 
     modules = [
       "${root}/home.nix"
     ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"});
 
     extraSpecialArgs = {
-      inherit inputs outputs;
+      inherit inputs;
       inherit hostname;
     };
   };
@@ -182,6 +186,20 @@ in
                         type = types.path;
                         default = "${submodule.config.baseDir}/${configurationType}";
                       };
+                      # TODO: split hosts and configurations?
+                      resultHosts = lib.mkOption {
+                        description = ''
+                          The resulting automatic packages
+                        '';
+                        # TODO: specify
+                        type = types.unspecified;
+                        readOnly = true;
+                        internal = true;
+                        default =
+                          lib.optionalAttrs
+                            config.flake.autoConfigurations.${configurationType}.enable
+                            (recurseDir config.flake.autoConfigurations.${configurationType}.dir);
+                      };
                     };
                   };
                   default = {};
@@ -194,21 +212,7 @@ in
   };
 
   config = {
-    flake = let
-      autoHosts =
-        lib.pipe
-          configurationTypes
-          [
-            (builtins.map
-              (configurationType:
-                lib.nameValuePair
-                  "${configuration-type-to-outputs-hosts configurationType}"
-                  (if config.flake.autoConfigurations.${configurationType}.enable
-                    then recurseDir config.flake.autoConfigurations.${configurationType}.dir
-                    else { })))
-            builtins.listToAttrs
-          ];
-    in autoHosts // {
+    flake = {
       # Configurations
       nixosConfigurations =
         createConfigurations
@@ -231,7 +235,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          self.${configuration-type-to-outputs-hosts "nixos"};
+          config.flake.autoConfigurations.nixos.resultHosts;
 
       nixOnDroidConfigurations =
         createConfigurations
@@ -248,7 +252,7 @@ in
               inherit system;
               hostname = host;
             })
-          self.${configuration-type-to-outputs-hosts "nix-on-droid"};
+          config.flake.autoConfigurations.nix-on-droid.resultHosts;
 
       darwinConfigurations =
         createConfigurations
@@ -271,7 +275,7 @@ in
                 (lib.strings.removeSuffix ".nix")
                 (builtins.attrNames (configurationFiles."home" or { })));
             })
-          self.${configuration-type-to-outputs-hosts "nix-darwin"};
+          config.flake.autoConfigurations.nix-darwin.resultHosts;
 
       homeConfigurations =
         createConfigurations
@@ -288,7 +292,7 @@ in
               inherit system;
               hostname = host;
             })
-          self.${configuration-type-to-outputs-hosts "home-manager"};
+          config.flake.autoConfigurations.home-manager.resultHosts;
     };
   };
 }

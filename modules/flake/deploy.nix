@@ -1,7 +1,7 @@
 { lib, config, self, inputs, ... }:
 
 let
-  inherit (import ../../nix/utils.nix { inherit lib self; })
+  inherit (import ../../nix/utils.nix { inherit lib config self; })
     accumulateHosts
     configuration-type-to-deploy-type;
 in

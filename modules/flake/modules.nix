@@ -1,8 +1,7 @@
 { lib, config, self, inputs, ... }:
 
 let
-  outputs = self;
-  inherit (import ../../nix/utils.nix { inherit lib self; })
+  inherit (import ../../nix/utils.nix { inherit lib config self; })
     eq
     and
     hasFiles
@@ -12,7 +11,7 @@ let
   # Modules helpers
   moduleTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager" "flake"];
 
-  createModules = baseDir: { passthru ? { inherit inputs outputs; }, ... }:
+  createModules = baseDir: { passthru ? { inherit inputs; }, ... }:
     lib.pipe baseDir [
       # Read given directory
       builtins.readDir
@@ -55,6 +54,7 @@ let
           if and [
             (builtins.isFunction
               module)
+            # FIXME: check for subset, not `eq`
             (eq
               (lib.pipe module [ builtins.functionArgs builtins.attrNames ])
               (lib.pipe passthru [ builtins.attrNames ]))
@@ -104,6 +104,19 @@ in
                         type = types.path;
                         default = "${submodule.config.baseDir}/${moduleType}";
                       };
+                      result = lib.mkOption {
+                        description = ''
+                          The resulting automatic packages
+                        '';
+                        # TODO: specify
+                        type = types.unspecified;
+                        readOnly = true;
+                        internal = true;
+                        default =
+                          lib.optionalAttrs
+                            config.flake.autoModules.${moduleType}.enable
+                            (createModules config.flake.autoModules.${moduleType}.dir { });
+                      };
                     };
                   };
                   default = {};
@@ -123,22 +136,13 @@ in
           [
             (builtins.map
               (moduleType:
-                lib.nameValuePair
-                "${configuration-type-to-outputs-modules moduleType}"
-                (if config.flake.autoModules.${moduleType}.enable
-                  then createModules config.flake.autoModules.${moduleType}.dir { }
-                  else { })))
+                let
+                  name = "${configuration-type-to-outputs-modules moduleType}";
+                  value = config.flake.autoModules.${moduleType}.result;
+                in
+                  lib.nameValuePair name value))
             builtins.listToAttrs
           ];
-    in {
-      # NOTE: manually inheriting generated modules to avoid recursion
-      #       (`autoModules` depends on `config.flake` itself)
-      inherit (autoModules)
-        nixosModules
-        nixOnDroidModules
-        darwinModules
-        homeManagerModules
-        flakeModules;
-    };
+    in autoModules;
   };
 }

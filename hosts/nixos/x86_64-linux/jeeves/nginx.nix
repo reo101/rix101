@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, config, ... }:
 
 {
   # age.secrets."nextcloud.adminpass" = {

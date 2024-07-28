@@ -1,4 +1,4 @@
-{ lib, self, ... }:
+{ lib, config, self, ... }:
 
 rec {
   # Boolean helpers
@@ -109,10 +109,7 @@ rec {
       (lib.genAttrs
         configuration-types
         (configuration-type:
-          let
-            hosts = configuration-type-to-outputs-hosts configuration-type;
-          in
-            self.${hosts}))
+          config.flake.autoConfigurations.${configuration-type}.resultHosts))
       (configuration-type: hosts:
         lib.pipe
           hosts

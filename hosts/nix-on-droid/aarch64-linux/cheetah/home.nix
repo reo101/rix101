@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, config, ... }:
 
 {
   # Home Manager needs a bit of information about you and the

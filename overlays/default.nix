@@ -1,10 +1,9 @@
 # This file defines overlays
 { inputs, ... }:
 {
-  # This one brings our custom packages from the 'pkgs' directory
-  additions = final: _prev: import ../pkgs {
-    pkgs = final;
-  };
+  # This one brings our custom packages
+  # BUG: causes infinite recursion
+  # additions = final: prev: inputs.self.packages.${prev.system};
 
   # This one contains whatever you want to overlay
   # You can change versions, add patches, set compilation flags, anything really.
@@ -30,7 +29,7 @@
       };
     };
 
-    nix-monitored = inputs.nix-monitored.packages.${final.system}.default.override {
+    nix-monitored = inputs.nix-monitored.packages.${prev.system}.default.override {
       nix = prev.nix;
       nix-output-monitor = prev.nix-output-monitor;
     };

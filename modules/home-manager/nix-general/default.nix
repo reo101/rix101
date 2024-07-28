@@ -1,4 +1,4 @@
-{ inputs, outputs, ... }:
+{ inputs, ... }:
 { lib, pkgs, config, ... }:
 
 {
@@ -22,7 +22,7 @@
     #
     # # Use flake overlays by default
     # nixpkgs = {
-    #   overlays = lib.attrValues outputs.overlays;
+    #   overlays = lib.attrValues inputs.self.overlays;
     #
     #   config.allowUnfree = true;
     # };

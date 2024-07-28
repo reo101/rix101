@@ -1,4 +1,4 @@
-{ inputs, outputs, lib, pkgs, config, options, ... }:
+{ inputs, lib, pkgs, config, options, ... }:
 {
   config = {
     # NOTE: `(r)agenix` and `agenix-rekey` modules are imported by `../../../modules/flake/configurations.nix`
