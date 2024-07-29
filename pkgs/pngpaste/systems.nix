@@ -1,2 +1,2 @@
 { lib, hostPlatform, targetPlatform, ... }:
-targetPlatform.isDarwin
+hostPlatform.isDarwin && targetPlatform.isDarwin
