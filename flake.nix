@@ -1,6 +1,66 @@
 {
   description = "reo101's NixOS, nix-on-droid and nix-darwin configs";
 
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
+      systems = [
+        "aarch64-linux"
+        "i686-linux"
+        "x86_64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
+
+      imports = [
+        ./modules/flake/lib.nix
+        ./modules/flake/pkgs
+        ./modules/flake/modules
+        ./modules/flake/configurations
+        ./modules/flake/agenix
+        ./modules/flake/deploy
+        ./modules/flake/topology
+        ./modules/flake/packages
+      ];
+
+      perSystem = { lib, pkgs, system, ... }: {
+        # Apps (`nix run`)
+        apps = import ./apps { inherit pkgs; };
+
+        # Dev Shells (`nix develop`)
+        devShells = import ./shells {
+          inherit inputs;
+          # NOTE: for `nixVersions.monitored`
+          pkgs = pkgs.extend inputs.self.overlays.modifications;
+        };
+
+        # Formatter (`nix fmt`)
+        formatter = pkgs.nixpkgs-fmt;
+      };
+
+      flake = {
+        inherit (inputs) self;
+
+        # Automatic modules, see `./modules/flake/modules.nix`
+        autoModules.enableAll = true;
+
+        # Automatic configurations, see `./modules/flake/configurations.nix`
+        autoConfigurations.enableAll = true;
+
+        # Automatic packages, see `./modules/flake/packages/default.nix`
+        autoPackages.enable = true;
+
+        # Templates
+        templates = import ./templates {
+          inherit inputs;
+        };
+
+        # Overlays
+        overlays = import ./overlays {
+          inherit inputs;
+        };
+      };
+    });
+
   inputs = {
     # Nixpkgs
     nixpkgs = {
@@ -132,65 +192,4 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
-  outputs = inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
-      systems = [
-        "aarch64-linux"
-        "i686-linux"
-        "x86_64-linux"
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
-
-      imports = [
-        ./modules/flake/lib.nix
-        ./modules/flake/pkgs.nix
-        ./modules/flake/modules.nix
-        ./modules/flake/configurations.nix
-        ./modules/flake/agenix.nix
-        ./modules/flake/deploy.nix
-        ./modules/flake/topology
-        ./modules/flake/packages
-      ];
-
-
-      perSystem = { lib, pkgs, system, ... }: {
-        # Apps (`nix run`)
-        apps = import ./apps { inherit pkgs; };
-
-        # Dev Shells (`nix develop`)
-        devShells = import ./shells {
-          inherit inputs;
-          # NOTE: for `nixVersions.monitored`
-          pkgs = pkgs.extend inputs.self.overlays.modifications;
-        };
-
-        # Formatter (`nix fmt`)
-        formatter = pkgs.nixpkgs-fmt;
-      };
-
-      flake = {
-        inherit (inputs) self;
-
-        # Automatic modules, see `./modules/flake/modules.nix`
-        autoModules.enableAll = true;
-
-        # Automatic configurations, see `./modules/flake/configurations.nix`
-        autoConfigurations.enableAll = true;
-
-        # Automatic packages, see `./modules/flake/packages/default.nix`
-        autoPackages.enable = true;
-
-        # Templates
-        templates = import ./templates {
-          inherit inputs;
-        };
-
-        # Overlays
-        overlays = import ./overlays {
-          inherit inputs;
-        };
-      };
-    });
 }
