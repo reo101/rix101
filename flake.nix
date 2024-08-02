@@ -72,6 +72,11 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
+    dream2nix = {
+      url = "github:nix-community/dream2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Nix on Droid
     nix-on-droid = {
       url = "github:t184256/nix-on-droid";
