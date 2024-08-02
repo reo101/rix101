@@ -47,7 +47,8 @@
 
 # Structure
 
-- Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic modules and configurations extraction
+- Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic packages, modules && configurations extraction
+  - Automatic classic (`callPackage`) and `dream2nix` packages extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction
 - Hosts can be found under `./hosts/${config-type}/${system}/${hostname}/...`
