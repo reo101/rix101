@@ -1,6 +1,10 @@
 { lib, config, self, ... }:
 
 {
+  imports = [
+    ./things.nix
+  ];
+
   options = let
     inherit (lib) types;
   in {

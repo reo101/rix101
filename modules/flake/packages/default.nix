@@ -2,70 +2,18 @@
 
 let
   inherit (config.lib)
-    eq
-    and
-    hasFiles;
+    createThings;
 in
 let
-  createPackages = baseDir: { passthru ? { inherit inputs; }, ... }:
-    lib.pipe baseDir [
-      # Read given directory
-      builtins.readDir
-      # Map each entry to a package
-      (lib.mapAttrs'
-        (name: type:
-          let
-            packageDir = "${baseDir}/${name}";
-            systems = let
-              systemsPath = "${baseDir}/${name}/systems.nix";
-            in
-              # NOTE: If the package can restrict for which systems it wants to be built
-              if builtins.pathExists systemsPath
-              then import systemsPath
-              else lib.const true;
-            package = import packageDir;
-            result = {
-              inherit package systems;
-            };
-          in
-          if and [
-            (type == "directory")
-            (hasFiles [ "default.nix" ] (builtins.readDir packageDir))
-          ] then
-            # NOTE: Classic package in a directory
-            lib.nameValuePair
-              name
-              result
-          else if and [
-            (type == "regular")
-            (lib.hasSuffix ".nix" name)
-          ] then
-            # NOTE: Classic package in a file
-            lib.nameValuePair
-              (lib.removeSuffix ".nix" name)
-              result
-          else
-            # NOTE: Invalid package
-            lib.nameValuePair
-              name
-              null))
-      # Filter invalid packages
-      (lib.filterAttrs
-        (packageName: package:
-          package != null))
-      # Passthru if needed
-      (lib.mapAttrs
-        (packageName: package:
-          if and [
-            (builtins.isFunction
-              package)
-            (eq
-              (lib.pipe package [ builtins.functionArgs builtins.attrNames ])
-              (lib.pipe passthru [ builtins.attrNames ]))
-          ]
-          then package passthru
-          else package))
-    ];
+  createPackages = baseDir:
+    createThings {
+      inherit baseDir;
+      thingType = "package";
+      raw = false;
+      extras.systems = {
+        default = lib.const true;
+      };
+    };
 in
 {
   options = let
@@ -99,7 +47,7 @@ in
             default =
               lib.optionalAttrs
                 config.flake.autoPackages.enable
-                (createPackages config.flake.autoPackages.dir { });
+                (createPackages config.flake.autoPackages.dir);
           };
         };
       });

@@ -2,66 +2,18 @@
 
 let
   inherit (config.lib)
-    eq
-    and
-    hasFiles
+    createThings
     configuration-type-to-outputs-modules;
 in
 let
   # Modules helpers
   moduleTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager" "flake"];
 
-  createModules = baseDir: { passthru ? { inherit inputs; }, ... }:
-    lib.pipe baseDir [
-      # Read given directory
-      builtins.readDir
-      # Map each entry to a module
-      (lib.mapAttrs'
-        (name: type:
-          let
-            # BUG: cannot use `append` because of `${self}` (not a path)
-            # moduleDir = lib.path.append baseDir "${name}";
-            moduleDir = "${baseDir}/${name}";
-          in
-          if and [
-            (type == "directory")
-            (hasFiles [ "default.nix" ] (builtins.readDir moduleDir))
-          ] then
-            # Classic module in a directory
-            lib.nameValuePair
-              name
-              (import moduleDir)
-          else if and [
-            (type == "regular")
-            (lib.hasSuffix ".nix" name)
-          ] then
-            # Classic module in a file
-            lib.nameValuePair
-              (lib.removeSuffix ".nix" name)
-              (import moduleDir)
-          else
-            # Invalid module
-            lib.nameValuePair
-              name
-              null))
-      # Filter invalid modules
-      (lib.filterAttrs
-        (moduleName: module:
-          module != null))
-      # Passthru if needed
-      (lib.mapAttrs
-        (moduleName: module:
-          if and [
-            (builtins.isFunction
-              module)
-            # FIXME: check for subset, not `eq`
-            (eq
-              (lib.pipe module [ builtins.functionArgs builtins.attrNames ])
-              (lib.pipe passthru [ builtins.attrNames ]))
-          ]
-          then module passthru
-          else module))
-    ];
+  createModules = baseDir:
+    createThings {
+      inherit baseDir;
+      thingType = "module";
+    };
 in
 {
   options = let
@@ -115,7 +67,7 @@ in
                         default =
                           lib.optionalAttrs
                             config.flake.autoModules.${moduleType}.enable
-                            (createModules config.flake.autoModules.${moduleType}.dir { });
+                            (createModules config.flake.autoModules.${moduleType}.dir);
                       };
                     };
                   };

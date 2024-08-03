@@ -12,7 +12,7 @@
       ];
 
       imports = [
-        ./modules/flake/lib.nix
+        ./modules/flake/lib
         ./modules/flake/pkgs
         ./modules/flake/modules
         ./modules/flake/configurations
