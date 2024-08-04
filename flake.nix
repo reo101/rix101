@@ -20,6 +20,7 @@
         ./modules/flake/deploy
         ./modules/flake/topology
         ./modules/flake/packages
+        ./modules/flake/overlays
       ];
 
       perSystem = { lib, pkgs, system, ... }: {
@@ -49,13 +50,11 @@
         # Automatic packages, see `./modules/flake/packages/default.nix`
         autoPackages.enable = true;
 
+        # Automatic overlays, see `./modules/flake/overlays/default.nix`
+        autoOverlays.enable = true;
+
         # Templates
         templates = import ./templates {
-          inherit inputs;
-        };
-
-        # Overlays
-        overlays = import ./overlays {
           inherit inputs;
         };
       };
