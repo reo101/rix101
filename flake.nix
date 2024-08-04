@@ -21,18 +21,12 @@
         ./modules/flake/topology
         ./modules/flake/packages
         ./modules/flake/overlays
+        ./modules/flake/shells
       ];
 
       perSystem = { lib, pkgs, system, ... }: {
         # Apps (`nix run`)
         apps = import ./apps { inherit pkgs; };
-
-        # Dev Shells (`nix develop`)
-        devShells = import ./shells {
-          inherit inputs;
-          # NOTE: for `nixVersions.monitored`
-          pkgs = pkgs.extend inputs.self.overlays.modifications;
-        };
 
         # Formatter (`nix fmt`)
         formatter = pkgs.nixpkgs-fmt;
@@ -52,6 +46,9 @@
 
         # Automatic overlays, see `./modules/flake/overlays/default.nix`
         autoOverlays.enable = true;
+
+        # Automatic devShells, see `./modules/flake/shells/default.nix`
+        autoDevShells.enable = true;
 
         # Templates
         templates = import ./templates {
