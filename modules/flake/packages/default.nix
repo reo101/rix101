@@ -66,33 +66,34 @@ in
                 pkgs.callPackage systems {
                   inherit (pkgs) lib hostPlatform targetPlatform;
                 }))
-          (lib.mapAttrs
-            (name: { package, systems }:
-              let
-                isDream2Nix = lib.pipe package
-                  [
-                    builtins.functionArgs
-                    builtins.attrNames
-                    (builtins.elem "dream2nix")
-                  ];
-              in
-                if isDream2Nix
-                then inputs.dream2nix.lib.evalModules {
-                  packageSets.nixpkgs = pkgs;
-                  modules = [
-                    package
-                    {
-                      paths.projectRoot = "${self.outPath}";
-                      paths.projectRootFile = "flake.nix";
-                      paths.package = "${self.outPath}";
-                    }
-                  ];
-                  specialArgs = {
-                    # NOTE: for overlayed `maintainers`
-                    inherit (pkgs) lib;
-                  };
-                }
-              else pkgs.callPackage package { }))
+            (lib.mapAttrs
+              (name: { package, systems }:
+                let
+                  # TODO: put in `autoThings` `handle`?
+                  isDream2Nix = lib.pipe package
+                    [
+                      builtins.functionArgs
+                      builtins.attrNames
+                      (builtins.elem "dream2nix")
+                    ];
+                in
+                  if isDream2Nix
+                  then inputs.dream2nix.lib.evalModules {
+                    packageSets.nixpkgs = pkgs;
+                    modules = [
+                      package
+                      {
+                        paths.projectRoot = "${self.outPath}";
+                        paths.projectRootFile = "flake.nix";
+                        paths.package = "${self.outPath}";
+                      }
+                    ];
+                    specialArgs = {
+                      # NOTE: for overlayed `maintainers`
+                      inherit (pkgs) lib;
+                    };
+                  }
+                else pkgs.callPackage package { }))
           ];
     in {
       inherit packages;
