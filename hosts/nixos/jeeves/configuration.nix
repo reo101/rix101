@@ -23,6 +23,7 @@
   # services.kanidm = { };
 
   age.rekey = {
+    # TODO: store in `meta`
     hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
     # masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
     # storageMode = "local";
@@ -74,7 +75,10 @@
 
   environment.systemPackages = with pkgs; [
     git
-    neovim
+    # FIXME: cannot deploy neovim-nightly
+    #                               V neovim source
+    #      > error: cannot add path '/nix/store/rhjznh5jdzdkzbnn0fhhvcf9rys0s59d-source' because it lacks a signature by a trusted key
+    # neovim
   ];
 
   # NOTE: made with `mkpasswd -m sha-512`

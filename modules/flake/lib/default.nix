@@ -121,43 +121,5 @@
       (configuration-type:
         builtins.throw
         "Invaild configuration-type \"${configuration-type}\" for deploy-rs deployment");
-
-    accumulateHosts = configuration-types: host-system-configuration-type-configuration-fn:
-      lib.flip lib.concatMapAttrs
-      (lib.genAttrs
-        configuration-types
-        (configuration-type:
-          config.flake.autoConfigurations.${configuration-type}.resultHosts))
-      (configuration-type: hosts:
-        lib.pipe
-        hosts
-        [
-          # Filter out nondirectories
-          (lib.filterAttrs
-            (system: configurations:
-              builtins.isAttrs configurations))
-          # Convert non-template configs into `system-and-config` pairs
-          (lib.concatMapAttrs
-            (system: configurations:
-              (lib.concatMapAttrs
-                (host: configuration:
-                  lib.optionalAttrs
-                  (host != "__template__")
-                  {
-                    ${host} = {
-                      inherit system;
-                      configuration =
-                        let
-                          configurations = configuration-type-to-outputs-configurations configuration-type;
-                        in
-                          self.${configurations}.${host};
-                    };
-                  })
-                configurations)))
-          # Convert each `system-and-config` pair into a *whatever*
-          (lib.concatMapAttrs
-            (host: { system, configuration }:
-              host-system-configuration-type-configuration-fn { inherit host system configuration-type configuration; }))
-        ]);
   };
 }

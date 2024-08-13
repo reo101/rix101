@@ -20,7 +20,7 @@
 
     # Zig
     zigpkgs.master
-    inputs.zls-overlay.packages.x86_64-darwin.default
+    # inputs.zls-overlay.packages.x86_64-darwin.default
   ];
 
   programs.git = {

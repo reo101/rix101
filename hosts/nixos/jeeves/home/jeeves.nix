@@ -16,7 +16,7 @@
 
   home.packages = with pkgs; [
     ## Core
-    neovim
+    # neovim
     git
     gnupg
     pciutils # lspci

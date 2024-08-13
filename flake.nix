@@ -17,7 +17,6 @@
         ./modules/flake/modules
         ./modules/flake/configurations
         ./modules/flake/agenix
-        ./modules/flake/deploy
         ./modules/flake/topology
         ./modules/flake/packages
         ./modules/flake/overlays
@@ -35,19 +34,19 @@
       flake = {
         inherit (inputs) self;
 
-        # Automatic modules, see `./modules/flake/modules.nix`
+        # Automatic modules, see `./modules/flake/modules/default.nix`
         autoModules.enableAll = true;
 
-        # Automatic configurations, see `./modules/flake/configurations.nix`
+        # Automatic configurations, see `./modules/flake/configurations/default.nix`
         autoConfigurations.enableAll = true;
 
-        # Automatic packages, see `./modules/flake/packages/default.nix`
+        # Automatic packages, see `./modules/flake/packages/default/default.nix`
         autoPackages.enable = true;
 
-        # Automatic overlays, see `./modules/flake/overlays/default.nix`
+        # Automatic overlays, see `./modules/flake/overlays/default/default.nix`
         autoOverlays.enable = true;
 
-        # Automatic devShells, see `./modules/flake/shells/default.nix`
+        # Automatic devShells, see `./modules/flake/shells/default/default.nix`
         autoDevShells.enable = true;
 
         # Templates

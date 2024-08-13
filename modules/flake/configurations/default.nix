@@ -6,11 +6,12 @@ let
     hasFiles
     hasDirectories
     recurseDir
-    configuration-type-to-outputs-modules;
+    kebabToCamel
+    configuration-type-to-outputs-modules
+    configuration-type-to-outputs-configurations;
 in
 let
   # Configuration helpers
-  configurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
 
   # `pkgs` with flake's overlays
   # NOTE: done here to avoid infinite recursion
@@ -18,7 +19,15 @@ let
     (withSystem system ({ pkgs, ... }: pkgs)).extend
       (final: prev: inputs.self.packages.${system});
 
-  homeManagerModule = { root, system, hostname, users ? null }: {
+  genUsers = configurationFiles:
+    lib.pipe configurationFiles [
+      (cf: cf."home" or { })
+      builtins.attrNames
+      (builtins.map
+        (lib.strings.removeSuffix ".nix"))
+    ];
+
+  homeManagerModule = { root, meta, users ? null }: {
     home-manager = {
       # Use same `pkgs` instance as system (i.e. carry over overlays)
       useGlobalPkgs = true;
@@ -26,11 +35,10 @@ let
       useUserPackages = true;
       # Default import all of our exported `home-manager` modules
       sharedModules = builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"};
-      # Pass in `inputs`, `outputs` and maybe `meta`
+      # Pass in `inputs`, `hostname` and `meta`
       extraSpecialArgs = {
         inherit inputs;
-        # TODO: meta?
-        inherit hostname;
+        inherit meta;
       };
     } // (if users == null then {
       # nixOnDroid
@@ -44,9 +52,9 @@ let
     });
   };
 
-  mkNixosHost = args @ { root, system, hostname, users }: inputs.nixpkgs.lib.nixosSystem {
-    inherit system;
-    pkgs = pkgs' system;
+  mkNixosHost = args @ { root, meta, users }: inputs.nixpkgs.lib.nixosSystem {
+    inherit (meta) system;
+    pkgs = pkgs' meta.system;
 
     modules = [
       # Main configuration
@@ -61,19 +69,21 @@ let
       inputs.nix-topology.nixosModules.default
       # Sane default `networking.hostName`
       {
-        networking.hostName = lib.mkDefault hostname;
+        networking.hostName = lib.mkDefault meta.hostname;
       }
+         # TODO: lib.optionals
     ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nixos"});
 
     specialArgs = {
       inherit inputs;
+      inherit meta;
     };
   };
 
-  mkNixOnDroidHost = args @ { root, system, hostname }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
+  mkNixOnDroidHost = args @ { root, meta }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
     # NOTE: inferred by `pkgs.system`
     # inherit system;
-    pkgs = pkgs' system;
+    pkgs = pkgs' meta.system;
 
     modules = [
       # Main configuration
@@ -84,14 +94,15 @@ let
 
     extraSpecialArgs = {
       inherit inputs;
+      inherit meta;
     };
 
     home-manager-path = inputs.home-manager.outPath;
   };
 
-  mkNixDarwinHost = args @ { root, system, hostname, users }: inputs.nix-darwin.lib.darwinSystem {
-    inherit system;
-    pkgs = pkgs' system;
+  mkNixDarwinHost = args @ { root, meta, users }: inputs.nix-darwin.lib.darwinSystem {
+    inherit (meta) system;
+    pkgs = pkgs' meta.system;
 
     modules = [
       # Main configuration
@@ -107,12 +118,13 @@ let
 
     specialArgs = {
       inherit inputs;
+      inherit meta;
     };
   };
 
-  mkHomeManagerHost = args @ { root, system, hostname }: inputs.home-manager.lib.homeManagerConfiguration {
-    inherit system;
-    pkgs = pkgs' system;
+  mkHomeManagerHost = args @ { root, meta }: inputs.home-manager.lib.homeManagerConfiguration {
+    inherit (meta) system;
+    pkgs = pkgs' meta.system;
 
     modules = [
       "${root}/home.nix"
@@ -120,30 +132,9 @@ let
 
     extraSpecialArgs = {
       inherit inputs;
-      inherit hostname;
+      inherit meta;
     };
   };
-
-  createConfigurations =
-    pred: mkHost: hosts:
-    lib.foldAttrs
-      lib.const
-      [ ]
-      (builtins.attrValues
-        (builtins.mapAttrs
-          (system: hosts:
-            lib.concatMapAttrs
-              (host: configurationFiles:
-                lib.optionalAttrs
-                  (and [
-                    (host != "__template__")
-                    (pred { inherit system host configurationFiles; })
-                  ])
-                  {
-                    ${host} = mkHost { inherit system host configurationFiles; };
-                  })
-              hosts)
-          hosts));
 in
 {
   options = let
@@ -153,9 +144,18 @@ in
       description = ''
         Automagically generate configurations from walking directories with Nix files
       '';
-      type = types.submodule (submodule: {
+      internal = true;
+      type = types.submodule (autoConfigurationsSubmodule: let
+        inherit (autoConfigurationsSubmodule.config)
+          configurationTypes
+          enableAll
+          baseDir
+          ;
+      in {
         options = {
-          enableAll = lib.mkEnableOption "Automatic ${builtins.toString configurationTypes} configurations extraction";
+          enableAll = lib.mkEnableOption ''
+            Automatic ${builtins.toString (lib.attrValues configurationTypes)} configurations extraction
+          '';
           baseDir = lib.mkOption {
             description = ''
               Base directory of the contained configurations, used as a base for the rest of the options
@@ -164,135 +164,291 @@ in
             default = "${self}/hosts";
             defaultText = ''''${self}/hosts'';
           };
-        } // (
-          lib.pipe
-          configurationTypes
-          [
-            (builtins.map
-              # NOTE: create small submodule for every `configurationType`
-              (configurationType:
-                lib.nameValuePair
-                "${configurationType}"
-                (lib.mkOption {
-                  type = types.submodule {
-                    options = {
-                      # NOTE: each can be enabled (default global `enableAll`)
-                      enable = lib.mkEnableOption "Automatic ${configurationType} configurations extraction" // {
-                        default = submodule.config.enableAll;
-                      };
-                      # NOTE: each can be read from a different directory
-                      # (default global `baseDir` + `camelToKebab`-ed `configurationType`)
-                      dir = lib.mkOption {
-                        type = types.path;
-                        default = "${submodule.config.baseDir}/${configurationType}";
-                      };
-                      # TODO: split hosts and configurations?
-                      resultHosts = lib.mkOption {
-                        description = ''
-                          The resulting automatic packages
-                        '';
-                        # TODO: specify
-                        type = types.unspecified;
-                        readOnly = true;
-                        internal = true;
-                        default =
-                          lib.optionalAttrs
-                            config.flake.autoConfigurations.${configurationType}.enable
-                            (recurseDir config.flake.autoConfigurations.${configurationType}.dir);
+          configurationTypes = lib.mkOption {
+            type = types.attrsOf (types.submodule (configurationTypeSubmodule@{ name, ... }: let
+              inherit (configurationTypeSubmodule.config)
+                # enable
+                dir
+                predicate
+                mkHost
+                mkDeployNode
+                ;
+            in {
+              options = {
+                enable = lib.mkEnableOption "Automatic ${name} configurations extraction" // {
+                  default = enableAll;
+                };
+                # NOTE: each can be read from a different directory
+                dir = lib.mkOption {
+                  type = types.path;
+                  default = "${baseDir}/${name}";
+                };
+                hostsName = lib.mkOption {
+                  description = ''
+                    Name of the `hosts` output
+                  '';
+                  type = types.str;
+                  default = "${kebabToCamel name}Hosts";
+                };
+                configurationsName = lib.mkOption {
+                  description = ''
+                    Name of the `configurations` output
+                  '';
+                  type = types.str;
+                  default = "${kebabToCamel name}Configurations";
+                };
+                predicate = lib.mkOption {
+                  description = ''
+                    Function for filtering configurations
+                  '';
+                  # FIXME: `merge` of `functionTo` type causes a stray `passthru` to attempt getting evaluated
+                  # type = types.functionTo types.anything;
+                  type = types.unspecified;
+                  example = /* nix */ ''
+                    { root, host, configurationFiles, ... }:
+                      # Utils from `./modules/flake/lib/default.nix`
+                      and [
+                        (! (host == "__template__"))
+                        (hasFiles
+                          [ "configuration.nix" ]
+                          configurationFiles)
+                        (hasDirectories
+                          [ "home" ]
+                          configurationFiles)
+                      ]
+                  '';
+                };
+                mkHost = lib.mkOption {
+                  description = ''
+                    Function for generating a configuration
+                  '';
+                  # type = types.functionTo types.anything;
+                  type = types.unspecified;
+                  example = /* nix */ ''
+                    args @ { root, meta, users }: inputs.nixpkgs.lib.nixosSystem {
+                      inherit (meta) system;
+
+                      modules = [
+                        # Main configuration
+                        "''${root}/configuration.nix"
+                        # Home Manager
+                        inputs.home-manager.nixosModules.home-manager
+                        (homeManagerModule args)
+                      ] ++ (builtins.attrValues config.flake.''${configuration-type-to-outputs-modules "nixos"});
+
+                      specialArgs = {
+                        inherit inputs;
+                        inherit meta;
                       };
                     };
+                  '';
+                };
+                mkDeployNode = lib.mkOption {
+                  description = ''
+                    Function for generating a `deploy-rs` node (null to skip)
+                  '';
+                  type = types.nullOr (types.functionTo types.anything);
+                  default = null;
+                  # TODO: update
+                  example = /* nix */ ''
+                    args @ { root, host, meta, configuration }:
+                      inputs.deploy-rs.''${meta.system}.activate.nixos configuration;
+                  '';
+                };
+                resultConfigurations = lib.mkOption {
+                  description = ''
+                    The resulting automatic configurations
+                  '';
+                  # TODO: specify
+                  type = types.unspecified;
+                  readOnly = true;
+                  default =
+                    lib.pipe dir [
+                      recurseDir
+                      (lib.concatMapAttrs
+                        (host: configurationFiles:
+                          let
+                            root = "${dir}/${host}";
+                            meta-path = "${root}/meta.nix";
+                            meta = import meta-path;
+                            deploy-config = meta.deploy or null;
+                            has-mkDeployNode = mkDeployNode != null;
+                            has-deploy-config = builtins.pathExists meta-path && deploy-config != null;
+                            configuration-args = { inherit root host configurationFiles; };
+                            valid = predicate configuration-args;
+                            configuration = mkHost configuration-args;
+                            deploy-args = { inherit root host meta configuration; };
+                            deploy = mkDeployNode deploy-args;
+                          in
+                            lib.optionalAttrs valid {
+                              ${host} = {
+                                inherit configuration;
+                              } // lib.optionalAttrs (has-mkDeployNode && has-deploy-config) {
+                                inherit deploy;
+                              };
+                            }))
+                    ];
+                };
+              };
+              config = {};
+            }));
+            # TODO: put in a more visible place
+            default = {
+              nixos = {
+                predicate = ({ root, host, configurationFiles, ... }:
+                  and [
+                    (! (host == "__template__"))
+                    (hasFiles
+                      [ "configuration.nix" "meta.nix" ]
+                      configurationFiles)
+                  ]);
+                mkHost = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix" // {
+                    hostname = host;
                   };
-                  default = {};
-                })))
-            builtins.listToAttrs
-          ]);
+                in
+                  mkNixosHost {
+                    inherit root;
+                    inherit meta;
+                    users = genUsers configurationFiles;
+                  });
+                mkDeployNode = ({ root, host, meta, configuration }:
+                  {
+                    inherit (meta.deploy) hostname;
+                    profiles.system = meta.deploy // {
+                      path = inputs.deploy-rs.lib.${meta.system}.activate."nixos" configuration;
+                    };
+                  });
+              };
+              nix-on-droid = {
+                predicate = ({ root, host, configurationFiles, ... }:
+                  and [
+                    (! (host == "__template__"))
+                    (hasFiles
+                      [ "configuration.nix" "home.nix" "meta.nix" ]
+                      configurationFiles)
+                  ]);
+                mkHost = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix" // {
+                    hostname = host;
+                  };
+                in
+                  mkNixOnDroidHost {
+                    inherit root;
+                    inherit meta;
+                  });
+              };
+              nix-darwin = {
+                hostsName = "darwinHosts";
+                configurationsName = "darwinConfigurations";
+                predicate = ({ root, host, configurationFiles, ... }:
+                  and [
+                    (! (host == "__template__"))
+                    (hasFiles
+                      [ "configuration.nix" "meta.nix" ]
+                      configurationFiles)
+                    (hasDirectories
+                      [ "home" ]
+                      configurationFiles)
+                  ]);
+                mkHost = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix" // {
+                    hostname = host;
+                  };
+                in
+                  mkNixDarwinHost {
+                    inherit root;
+                    inherit meta;
+                    users = genUsers configurationFiles;
+                  });
+                mkDeployNode = ({ root, host, meta, configuration }:
+                  {
+                    inherit (meta.deploy) hostname;
+                    profiles.system = meta.deploy // {
+                      path = inputs.deploy-rs.lib.${meta.system}.activate."darwin" configuration;
+                    };
+                  });
+              };
+              home-manager = {
+                hostsName = "homeHosts";
+                configurationsName = "homeConfigurations";
+                predicate = ({ root, host, configurationFiles, ... }:
+                  and [
+                    (! (host == "__template__"))
+                    (hasFiles
+                      [ "home.nix" "meta.nix" ]
+                      configurationFiles)
+                  ]);
+                mkHost = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix" // {
+                    hostname = host;
+                  };
+                in
+                  mkHomeManagerHost {
+                    inherit root;
+                    inherit meta;
+                  });
+              };
+            };
+          };
+          resultConfigurations = lib.mkOption {
+            readOnly = true;
+            default = lib.pipe configurationTypes [
+              (lib.mapAttrs'
+                (configurationType: configurationTypeConfig:
+                  lib.nameValuePair
+                  configurationTypeConfig.configurationsName
+                  (lib.mapAttrs
+                    (host: { configuration, ... }:
+                      configuration)
+                    configurationTypeConfig.resultConfigurations)))
+            ];
+          };
+          resultDeployNodes = lib.mkOption {
+            readOnly = true;
+            default = lib.pipe configurationTypes [
+              (lib.concatMapAttrs
+                (configurationType: configurationTypeConfig:
+                  (lib.concatMapAttrs
+                    (host: { deploy ? null, ... }:
+                      lib.optionalAttrs
+                        (deploy != null)
+                        {
+                          ${host} = deploy;
+                        })
+                    configurationTypeConfig.resultConfigurations)))
+            ];
+          };
+        };
       });
       default = {};
     };
   };
 
   config = {
-    flake = {
-      # Configurations
-      nixosConfigurations =
-        createConfigurations
-          ({ system, host, configurationFiles, ... }:
-            and
-              [
-                (hasFiles
-                  [ "configuration.nix" ]
-                  configurationFiles)
-                # (hasDirectories
-                #   [ "home" ]
-                #   config)
-              ])
-          ({ system, host, configurationFiles, ... }:
-            mkNixosHost {
-              root = "${config.flake.autoConfigurations.nixos.dir}/${system}/${host}";
-              inherit system;
-              hostname = host;
-              users = (builtins.map
-                (lib.strings.removeSuffix ".nix")
-                (builtins.attrNames (configurationFiles."home" or { })));
-            })
-          config.flake.autoConfigurations.nixos.resultHosts;
-
-      nixOnDroidConfigurations =
-        createConfigurations
-          ({ system, host, configurationFiles, ... }:
-            and
-              [
-                (hasFiles
-                  [ "configuration.nix" "home.nix" ]
-                  configurationFiles)
-              ])
-          ({ system, host, configurationFiles, ... }:
-            mkNixOnDroidHost {
-              root = "${config.flake.autoConfigurations.nix-on-droid.dir}/${system}/${host}";
-              inherit system;
-              hostname = host;
-            })
-          config.flake.autoConfigurations.nix-on-droid.resultHosts;
-
-      darwinConfigurations =
-        createConfigurations
-          ({ system, host, configurationFiles, ... }:
-            and
-              [
-                (hasFiles
-                  [ "configuration.nix" ]
-                  configurationFiles)
-                (hasDirectories
-                  [ "home" ]
-                  configurationFiles)
-              ])
-          ({ system, host, configurationFiles, ... }:
-            mkNixDarwinHost {
-              root = "${config.flake.autoConfigurations.nix-darwin.dir}/${system}/${host}";
-              inherit system;
-              hostname = host;
-              users = (builtins.map
-                (lib.strings.removeSuffix ".nix")
-                (builtins.attrNames (configurationFiles."home" or { })));
-            })
-          config.flake.autoConfigurations.nix-darwin.resultHosts;
-
-      homeConfigurations =
-        createConfigurations
-          ({ system, host, configurationFiles, ... }:
-            and
-              [
-                (hasFiles
-                  [ "home.nix" ]
-                  configurationFiles)
-              ])
-          ({ system, host, configurationFiles, ... }:
-            mkHomeManagerHost {
-              root = "${config.flake.autoConfigurations.home-manager.dir}/${system}/${host}";
-              inherit system;
-              hostname = host;
-            })
-          config.flake.autoConfigurations.home-manager.resultHosts;
-    };
+    # BUG: cannot iterate on `config.flake.autoConfigurations.resultConfigurations`
+    #      because of infinite recursion
+    flake = let
+      ogConfigurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
+      configurations = lib.pipe ogConfigurationTypes [
+        (lib.map
+          configuration-type-to-outputs-configurations)
+        (lib.flip lib.genAttrs
+          (configurationType:
+            config.flake.autoConfigurations.resultConfigurations.${configurationType}))
+      ];
+      deployNodes = {
+        deploy.nodes = config.flake.autoConfigurations.resultDeployNodes;
+      };
+      deployChecks = {
+        checks =
+          lib.mapAttrs
+            (system: deployLib:
+              deployLib.deployChecks
+              self.deploy)
+            inputs.deploy-rs.lib;
+      };
+      # TODO: lib.something for merging (asserting for no overwrites)
+    in configurations // deployNodes // deployChecks;
   };
 }
