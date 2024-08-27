@@ -18,6 +18,7 @@
     # ./photoprism.nix
     # ./immich.nix
     # ./nextcloud.nix
+    ./paperless.nix
   ];
 
   # services.kanidm = { };
