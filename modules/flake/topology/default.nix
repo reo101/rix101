@@ -13,11 +13,12 @@
         ];
       } ''
         magick ${image} \
+          -monitor \
           -bordercolor white \
           -border 1x1 \
           -alpha set \
           -channel RGBA \
-          -fuzz ${toString fuzz}% \
+          -fuzz ${builtins.toString fuzz}% \
           -fill none \
           -floodfill +0+0 white \
           -shave 1x1 \
@@ -145,7 +146,7 @@
           nodes.cheetah = {
             deviceType = "device";
             hardware = {
-              info = "Goole Pixel 7 Pro (cheetah)";
+              info = "Google Pixel 7 Pro (cheetah)";
               image = images.cheetah;
             };
             interfaces.wlan0 = {
