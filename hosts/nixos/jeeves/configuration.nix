@@ -128,12 +128,12 @@
   #   ];
   # };
 
-  # security.sudo-rs = {
-  #   enable = !config.security.sudo.enable;
-  #   inherit (config.security.sudo) extraRules;
-  # };
+  security.sudo-rs = {
+    enable = true; # !config.security.sudo.enable;
+    inherit (config.security.sudo) extraRules;
+  };
   security.sudo = {
-    enable = true;
+    enable = false;
     extraRules = [
       {
         users = [
