@@ -90,6 +90,17 @@ in
           # pager = "nvim";
           editor = "nvim";
         };
+        revsets = {
+          log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
+        };
+        revset-aliases = {
+          "bases" = "dev";
+          "downstream(x,y)" = "(x::y) & y";
+          "branches" = "downstream(trunk(), branches()) & mine()";
+          "branchesandheads" = "branches | (heads(trunk()::) & mine())";
+          "curbranch" = "latest(branches::@- & branches)";
+          "nextbranch" = "roots(@:: & branchesandheads)";
+        };
       };
     };
   };
