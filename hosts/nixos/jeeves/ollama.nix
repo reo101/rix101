@@ -1,6 +1,7 @@
 { inputs, lib, pkgs, config, ... }:
 {
-  networking.firewall.allowedTCPPorts = [11434];
+  # NOTE: no need now (nginx)
+  # networking.firewall.allowedTCPPorts = [11434];
 
   services.ollama = {
     enable = true;
@@ -8,7 +9,17 @@
     port = 11434;
     acceleration = "rocm";
     environmentVariables = {
-      OLLAMA_ORIGINS = "*";
+      # NOTE: no need now (nginx), should be only `127.0.0.1`
+      # OLLAMA_ORIGINS = "*";
+    };
+  };
+
+  services.nginx.virtualHosts."ollama.jeeves.local" = {
+    enableACME = false;
+    forceSSL = false;
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:${builtins.toString config.services.ollama.port}";
+      proxyWebsockets = true;
     };
   };
 
@@ -25,6 +36,16 @@
       # Disable authentication
       WEBUI_AUTH = "False";
     };
-    openFirewall = true;
+    # NOTE: no need now (nginx)
+    # openFirewall = true;
+  };
+
+  services.nginx.virtualHosts."openwebui.jeeves.local" = {
+    enableACME = false;
+    forceSSL = false;
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:${builtins.toString config.services.open-webui.port}";
+      proxyWebsockets = true;
+    };
   };
 }

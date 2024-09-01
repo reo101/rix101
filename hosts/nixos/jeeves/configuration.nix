@@ -13,7 +13,7 @@
     # ./home-assistant
     ./samba.nix
     # ./steam.nix
-    # ./ollama.nix
+    ./ollama.nix
     # ./sunshine.nix
     # ./photoprism.nix
     # ./immich.nix
