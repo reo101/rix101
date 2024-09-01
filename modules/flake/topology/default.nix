@@ -66,12 +66,12 @@
       modules = [
         ({ config, ... }: let
           inherit (config.lib.topology)
-          mkInternet
-          mkRouter
-          mkSwitch
-          mkConnection
-          mkConnectionRev
-          ;
+            mkInternet
+            mkRouter
+            mkSwitch
+            mkConnection
+            mkConnectionRev
+            ;
         in {
           nodes.internet = mkInternet {
             connections = mkConnection "router1" "eth1";
