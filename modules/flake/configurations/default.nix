@@ -294,12 +294,15 @@ in
             # TODO: put in a more visible place
             default = {
               nixos = {
-                predicate = ({ root, host, configurationFiles, ... }:
+                predicate = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix";
+                in
                   and [
                     (! (host == "__template__"))
                     (hasFiles
                       [ "configuration.nix" "meta.nix" ]
                       configurationFiles)
+                    (meta.enable or true)
                   ]);
                 mkHost = ({ root, host, configurationFiles, ... }: let
                   meta = import "${root}/meta.nix" // {
@@ -320,12 +323,15 @@ in
                   });
               };
               nix-on-droid = {
-                predicate = ({ root, host, configurationFiles, ... }:
+                predicate = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix";
+                in
                   and [
                     (! (host == "__template__"))
                     (hasFiles
                       [ "configuration.nix" "home.nix" "meta.nix" ]
                       configurationFiles)
+                    (meta.enable or true)
                   ]);
                 mkHost = ({ root, host, configurationFiles, ... }: let
                   meta = import "${root}/meta.nix" // {
@@ -340,7 +346,9 @@ in
               nix-darwin = {
                 hostsName = "darwinHosts";
                 configurationsName = "darwinConfigurations";
-                predicate = ({ root, host, configurationFiles, ... }:
+                predicate = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix";
+                in
                   and [
                     (! (host == "__template__"))
                     (hasFiles
@@ -349,6 +357,7 @@ in
                     (hasDirectories
                       [ "home" ]
                       configurationFiles)
+                    (meta.enable or true)
                   ]);
                 mkHost = ({ root, host, configurationFiles, ... }: let
                   meta = import "${root}/meta.nix" // {
@@ -371,12 +380,15 @@ in
               home-manager = {
                 hostsName = "homeHosts";
                 configurationsName = "homeConfigurations";
-                predicate = ({ root, host, configurationFiles, ... }:
+                predicate = ({ root, host, configurationFiles, ... }: let
+                  meta = import "${root}/meta.nix";
+                in
                   and [
                     (! (host == "__template__"))
                     (hasFiles
                       [ "home.nix" "meta.nix" ]
                       configurationFiles)
+                    (meta.enable or true)
                   ]);
                 mkHost = ({ root, host, configurationFiles, ... }: let
                   meta = import "${root}/meta.nix" // {
