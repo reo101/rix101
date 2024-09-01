@@ -19,6 +19,7 @@
     # ./immich.nix
     # ./nextcloud.nix
     ./paperless.nix
+    ./podman.nix
   ];
 
   # services.kanidm = { };
