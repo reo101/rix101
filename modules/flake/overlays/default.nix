@@ -15,7 +15,7 @@ in
   options = let
     inherit (lib) types;
   in {
-    flake.autoOverlays = lib.mkOption {
+    auto.overlays = lib.mkOption {
       description = ''
         Automagically generate overlays from walking directories with Nix files
       '';
@@ -39,8 +39,8 @@ in
             internal = true;
             default =
               lib.optionalAttrs
-                config.flake.autoOverlays.enable
-                (createOverlays config.flake.autoOverlays.dir);
+                config.auto.overlays.enable
+                (createOverlays config.auto.overlays.dir);
           };
         };
       });
@@ -52,7 +52,7 @@ in
     flake = let
       overlays =
         lib.pipe
-          config.flake.autoOverlays.result
+          config.auto.overlays.result
           [
             (lib.mapAttrs
               (name: overlay:

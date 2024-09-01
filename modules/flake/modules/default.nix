@@ -3,12 +3,10 @@
 let
   inherit (config.lib)
     createThings
-    configuration-type-to-outputs-modules;
+    kebabToCamel;
 in
 let
   # Modules helpers
-  moduleTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager" "flake"];
-
   createModules = baseDir:
     createThings {
       inherit baseDir;
@@ -19,11 +17,17 @@ in
   options = let
     inherit (lib) types;
   in {
-    flake.autoModules = lib.mkOption {
+    auto.modules = lib.mkOption {
       description = ''
         Automagically generate modules from walking directories with Nix files
       '';
-      type = types.submodule (submodule: {
+      type = types.submodule (autoModulesSubmodule: let
+        inherit (autoModulesSubmodule.config)
+          moduleTypes
+          enableAll
+          baseDir
+          ;
+      in {
         options = {
           enableAll = lib.mkEnableOption "Automatic ${builtins.toString moduleTypes} modules extraction";
           baseDir = lib.mkOption {
@@ -34,47 +38,71 @@ in
             default = "${self}/modules";
             defaultText = ''''${self}/modules'';
           };
-        } // (
-          lib.pipe
-          moduleTypes
-          [
-            (builtins.map
-              # NOTE: create small submodule for every `moduleType`
-              (moduleType:
-                lib.nameValuePair
-                "${moduleType}"
-                (lib.mkOption {
-                  type = types.submodule {
-                    options = {
-                      # NOTE: each can be enabled (default global `enableAll`)
-                      enable = lib.mkEnableOption "Automatic ${moduleType} modules extraction" // {
-                        default = submodule.config.enableAll;
-                      };
-                      # NOTE: each can be read from a different directory
-                      # (default global `baseDir` + `camelToKebab`-ed `moduleType`)
-                      dir = lib.mkOption {
-                        type = types.path;
-                        default = "${submodule.config.baseDir}/${moduleType}";
-                      };
-                      result = lib.mkOption {
-                        description = ''
-                          The resulting automatic packages
-                        '';
-                        # TODO: specify
-                        type = types.unspecified;
-                        readOnly = true;
-                        internal = true;
-                        default =
-                          lib.optionalAttrs
-                            config.flake.autoModules.${moduleType}.enable
-                            (createModules config.flake.autoModules.${moduleType}.dir);
-                      };
-                    };
-                  };
-                  default = {};
-                })))
-            builtins.listToAttrs
-          ]);
+          moduleTypes = lib.mkOption {
+            type = types.attrsOf (types.submodule (moduleTypeSubmodule@{ name, ... }: let
+              inherit (moduleTypeSubmodule.config)
+                enable
+                dir
+                ;
+            in {
+              options = {
+                # NOTE: each can be enabled (default global `enableAll`)
+                enable = lib.mkEnableOption "Automatic ${name} modules extraction" // {
+                  default = enableAll;
+                };
+                # NOTE: each can be read from a different directory
+                dir = lib.mkOption {
+                  type = types.path;
+                  default = "${baseDir}/${name}";
+                };
+                modulesName = lib.mkOption {
+                  description = ''
+                    Name of the `modules` output
+                  '';
+                  type = types.str;
+                  default = "${kebabToCamel name}Modules";
+                };
+                resultModules = lib.mkOption {
+                  description = ''
+                    The resulting automatic packages
+                  '';
+                  # TODO: specify
+                  type = types.unspecified;
+                  readOnly = true;
+                  internal = true;
+                  default =
+                    lib.optionalAttrs
+                      enable
+                      (createModules dir);
+                };
+              };
+              config = {};
+            }));
+            # TODO: put in a more visible place
+            default = {
+              nixos = {};
+              nix-on-droid = {};
+              nix-darwin = {
+                modulesName = "darwinModules";
+              };
+              home-manager = {};
+              flake = {};
+            };
+          };
+          resultModules = lib.mkOption {
+            readOnly = true;
+            default = lib.pipe moduleTypes [
+              (lib.mapAttrs'
+                (moduleType: moduleTypeConfig:
+                  lib.nameValuePair
+                    moduleTypeConfig.modulesName
+                    (lib.mapAttrs
+                      (host: module:
+                        module)
+                      moduleTypeConfig.resultModules)))
+            ];
+          };
+        };
       });
       default = {};
     };
@@ -82,19 +110,7 @@ in
 
   config = {
     flake = let
-      autoModules =
-        lib.pipe
-          moduleTypes
-          [
-            (builtins.map
-              (moduleType:
-                let
-                  name = "${configuration-type-to-outputs-modules moduleType}";
-                  value = config.flake.autoModules.${moduleType}.result;
-                in
-                  lib.nameValuePair name value))
-            builtins.listToAttrs
-          ];
+      autoModules = config.auto.modules.resultModules;
     in autoModules;
   };
 }

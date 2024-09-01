@@ -19,7 +19,7 @@ in
   options = let
     inherit (lib) types;
   in {
-    flake.autoPackages = lib.mkOption {
+    auto.packages = lib.mkOption {
       description = ''
         Automagically generate packages from walking directories with Nix files
       '';
@@ -46,8 +46,8 @@ in
             internal = true;
             default =
               lib.optionalAttrs
-                config.flake.autoPackages.enable
-                (createPackages config.flake.autoPackages.dir);
+                config.auto.packages.enable
+                (createPackages config.auto.packages.dir);
           };
         };
       });
@@ -59,7 +59,7 @@ in
     perSystem = { lib, pkgs, system, ... }: let
       packages =
         lib.pipe
-          config.flake.autoPackages.result
+          config.auto.packages.result
           [
             (lib.filterAttrs
               (name: { package, systems }:

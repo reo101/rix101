@@ -11,6 +11,11 @@
         "x86_64-darwin"
       ];
 
+      # BUG: infinite recursion
+      # imports = [
+      #   ./modules/flake/modules
+      # ] ++ inputs.self.flakeModules;
+
       imports = [
         ./modules/flake/lib
         ./modules/flake/pkgs
@@ -23,6 +28,23 @@
         ./modules/flake/shells
       ];
 
+      auto = {
+        # Automatic modules, see `./modules/flake/modules/default.nix`
+        modules.enableAll = true;
+
+        # Automatic configurations, see `./modules/flake/configurations/default.nix`
+        configurations.enableAll = true;
+
+        # Automatic packages, see `./modules/flake/packages/default/default.nix`
+        packages.enable = true;
+
+        # Automatic overlays, see `./modules/flake/overlays/default/default.nix`
+        overlays.enable = true;
+
+        # Automatic devShells, see `./modules/flake/shells/default/default.nix`
+        devShells.enable = true;
+      };
+
       perSystem = { lib, pkgs, system, ... }: {
         # Apps (`nix run`)
         apps = import ./apps { inherit pkgs; };
@@ -33,21 +55,6 @@
 
       flake = {
         inherit (inputs) self;
-
-        # Automatic modules, see `./modules/flake/modules/default.nix`
-        autoModules.enableAll = true;
-
-        # Automatic configurations, see `./modules/flake/configurations/default.nix`
-        autoConfigurations.enableAll = true;
-
-        # Automatic packages, see `./modules/flake/packages/default/default.nix`
-        autoPackages.enable = true;
-
-        # Automatic overlays, see `./modules/flake/overlays/default/default.nix`
-        autoOverlays.enable = true;
-
-        # Automatic devShells, see `./modules/flake/shells/default/default.nix`
-        autoDevShells.enable = true;
 
         # Templates
         templates = import ./templates {

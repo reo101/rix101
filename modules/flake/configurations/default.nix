@@ -7,8 +7,7 @@ let
     hasDirectories
     recurseDir
     kebabToCamel
-    configuration-type-to-outputs-modules
-    configuration-type-to-outputs-configurations;
+    configuration-type-to-outputs-modules;
 in
 let
   # Configuration helpers
@@ -140,7 +139,7 @@ in
   options = let
     inherit (lib) types;
   in {
-    flake.autoConfigurations = lib.mkOption {
+    auto.configurations = lib.mkOption {
       description = ''
         Automagically generate configurations from walking directories with Nix files
       '';
@@ -397,11 +396,11 @@ in
               (lib.mapAttrs'
                 (configurationType: configurationTypeConfig:
                   lib.nameValuePair
-                  configurationTypeConfig.configurationsName
-                  (lib.mapAttrs
-                    (host: { configuration, ... }:
-                      configuration)
-                    configurationTypeConfig.resultConfigurations)))
+                    configurationTypeConfig.configurationsName
+                    (lib.mapAttrs
+                      (host: { configuration, ... }:
+                        configuration)
+                      configurationTypeConfig.resultConfigurations)))
             ];
           };
           resultDeployNodes = lib.mkOption {
@@ -426,19 +425,10 @@ in
   };
 
   config = {
-    # BUG: cannot iterate on `config.flake.autoConfigurations.resultConfigurations`
-    #      because of infinite recursion
     flake = let
-      ogConfigurationTypes = ["nixos" "nix-on-droid" "nix-darwin" "home-manager"];
-      configurations = lib.pipe ogConfigurationTypes [
-        (lib.map
-          configuration-type-to-outputs-configurations)
-        (lib.flip lib.genAttrs
-          (configurationType:
-            config.flake.autoConfigurations.resultConfigurations.${configurationType}))
-      ];
+      configurations = config.auto.configurations.resultConfigurations;
       deployNodes = {
-        deploy.nodes = config.flake.autoConfigurations.resultDeployNodes;
+        deploy.nodes = config.auto.configurations.resultDeployNodes;
       };
       deployChecks = {
         checks =

@@ -19,7 +19,7 @@ in
   options = let
     inherit (lib) types;
   in {
-    flake.autoDevShells = lib.mkOption {
+    auto.devShells = lib.mkOption {
       description = ''
         Automagically generate devShells from walking directories with Nix files
       '';
@@ -46,8 +46,8 @@ in
             internal = true;
             default =
               lib.optionalAttrs
-                config.flake.autoDevShells.enable
-                (createDevShells config.flake.autoDevShells.dir);
+                config.auto.devShells.enable
+                (createDevShells config.auto.devShells.dir);
           };
         };
       });
@@ -59,7 +59,7 @@ in
     perSystem = { lib, pkgs, system, ... }: let
       devShells =
         lib.pipe
-          config.flake.autoDevShells.result
+          config.auto.devShells.result
           [
             (lib.filterAttrs
               (name: { devShell, systems }:
