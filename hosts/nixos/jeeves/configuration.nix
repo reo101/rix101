@@ -24,14 +24,6 @@
 
   # services.kanidm = { };
 
-  age.rekey = {
-    # TODO: store in `meta`
-    hostPubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
-    # masterIdentities = [ "${inputs.self}/secrets/privkey.age" ];
-    # storageMode = "local";
-    # localStorageDir = "${inputs.self}/secrets/rekeyed/${config.networking.hostName}";
-  };
-
   networking.hostName = "jeeves";
 
   boot = {

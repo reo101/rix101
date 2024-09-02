@@ -2,6 +2,9 @@
   # The `system` of the host
   system = "x86_64-linux";
 
+  # The host SSH key, used for encrypting agenix secrets
+  pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
+
   # `deploy-rs` configuration
   deploy = {
     # This is the hostname by which you'll refer to this machine using reploy-rs
