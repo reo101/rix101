@@ -9,136 +9,11 @@ let
     kebabToCamel
     configuration-type-to-outputs-modules;
 in
-let
-  # Configuration helpers
-
-  # `pkgs` with flake's overlays
-  # NOTE: done here to avoid infinite recursion
-  pkgs' = system:
-    (withSystem system ({ pkgs, ... }: pkgs)).extend
-      (final: prev: inputs.self.packages.${system});
-
-  genUsers = configurationFiles:
-    lib.pipe configurationFiles [
-      (cf: cf."home" or { })
-      builtins.attrNames
-      (builtins.map
-        (lib.strings.removeSuffix ".nix"))
-    ];
-
-  homeManagerModule = { root, meta, users ? null }: {
-    home-manager = {
-      # Use same `pkgs` instance as system (i.e. carry over overlays)
-      useGlobalPkgs = true;
-      # Do not keep packages in ${HOME}
-      useUserPackages = true;
-      # Default import all of our exported `home-manager` modules
-      sharedModules = builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"};
-      # Pass in `inputs`, `hostname` and `meta`
-      extraSpecialArgs = {
-        inherit inputs;
-        inherit meta;
-      };
-    } // (if users == null then {
-      # nixOnDroid
-      config = "${root}/home.nix";
-    } else {
-      # Not nixOnDroid
-      users =
-        lib.attrsets.genAttrs
-          users
-          (user: import "${root}/home/${user}.nix");
-    });
-  };
-
-  mkNixosHost = args @ { root, meta, users }: inputs.nixpkgs.lib.nixosSystem {
-    inherit (meta) system;
-    pkgs = pkgs' meta.system;
-
-    modules = [
-      # Main configuration
-      "${root}/configuration.nix"
-      # Home Manager
-      inputs.home-manager.nixosModules.home-manager
-      (homeManagerModule args)
-      # (r)agenix && agenix-rekey
-      inputs.ragenix.nixosModules.default
-      inputs.agenix-rekey.nixosModules.default
-      (lib.optionalAttrs (meta ? pubkey) {
-        age.rekey.hostPubkey = meta.pubkey;
-      })
-      # nix-topology
-      inputs.nix-topology.nixosModules.default
-      # Sane default `networking.hostName`
-      {
-        networking.hostName = lib.mkDefault meta.hostname;
-      }
-         # TODO: lib.optionals
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nixos"});
-
-    specialArgs = {
-      inherit inputs;
-      inherit meta;
-    };
-  };
-
-  mkNixOnDroidHost = args @ { root, meta }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
-    # NOTE: inferred by `pkgs.system`
-    # inherit system;
-    pkgs = pkgs' meta.system;
-
-    modules = [
-      # Main configuration
-      "${root}/configuration.nix"
-      # Home Manager
-      (homeManagerModule args)
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-on-droid"});
-
-    extraSpecialArgs = {
-      inherit inputs;
-      inherit meta;
-    };
-
-    home-manager-path = inputs.home-manager.outPath;
-  };
-
-  mkNixDarwinHost = args @ { root, meta, users }: inputs.nix-darwin.lib.darwinSystem {
-    inherit (meta) system;
-    pkgs = pkgs' meta.system;
-
-    modules = [
-      # Main configuration
-      "${root}/configuration.nix"
-      # Home Manager
-      inputs.home-manager.darwinModules.home-manager
-      (homeManagerModule args)
-      # # Set `nixpkgs.hostPlatform`
-      # {
-      #   nixpkgs.hostPlatform = system;
-      # }
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-darwin"});
-
-    specialArgs = {
-      inherit inputs;
-      inherit meta;
-    };
-  };
-
-  mkHomeManagerHost = args @ { root, meta }: inputs.home-manager.lib.homeManagerConfiguration {
-    inherit (meta) system;
-    pkgs = pkgs' meta.system;
-
-    modules = [
-      "${root}/home.nix"
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"});
-
-    extraSpecialArgs = {
-      inherit inputs;
-      inherit meta;
-    };
-  };
-in
 {
+  imports = [
+    ./default-generators.nix
+  ];
+
   options = let
     inherit (lib) types;
   in {
@@ -253,13 +128,17 @@ in
                   default = null;
                   # TODO: update
                   example = /* nix */ ''
-                    args @ { root, host, meta, configuration }:
-                      inputs.deploy-rs.''${meta.system}.activate.nixos configuration;
+                    { root, host, meta, configuration }: {
+                      inherit (meta.deploy) hostname;
+                      profiles.system = meta.deploy // {
+                        path = inputs.deploy-rs.lib.''${meta.system}.activate."nixos" configuration;
+                      };
+                    }
                   '';
                 };
-                resultConfigurations = lib.mkOption {
+                result = lib.mkOption {
                   description = ''
-                    The resulting automatic configurations
+                    The resulting automatic host && deploy-rs configurations
                   '';
                   # TODO: specify
                   type = types.unspecified;
@@ -272,14 +151,28 @@ in
                           let
                             root = "${dir}/${host}";
                             meta-path = "${root}/meta.nix";
-                            meta = import meta-path;
-                            deploy-config = meta.deploy or null;
+                            meta = (lib.evalModules {
+                              class = "meta";
+                              modules = [
+                                (if builtins.pathExists meta-path
+                                 then import meta-path
+                                 else {})
+                                ./meta-module.nix
+                                {
+                                  config = {
+                                    enable = lib.mkDefault (host != "__template__");
+                                    hostname = lib.mkDefault host;
+                                  };
+                                }
+                              ];
+                            }).config;
+                            deploy-config = meta.deploy;
                             has-mkDeployNode = mkDeployNode != null;
-                            has-deploy-config = builtins.pathExists meta-path && deploy-config != null;
-                            configuration-args = { inherit root host configurationFiles; };
+                            has-deploy-config = deploy-config != null;
+                            configuration-args = { inherit root meta configurationFiles; };
                             valid = predicate configuration-args;
                             configuration = mkHost configuration-args;
-                            deploy-args = { inherit root host meta configuration; };
+                            deploy-args = { inherit root meta configuration; };
                             deploy = mkDeployNode deploy-args;
                           in
                             lib.optionalAttrs valid {
@@ -292,146 +185,37 @@ in
                     ];
                 };
               };
-              config = {};
             }));
-            # TODO: put in a more visible place
+            default = {};
+          };
+          result = lib.mkOption {
+            readOnly = true;
             default = {
-              nixos = {
-                predicate = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix";
-                in
-                  and [
-                    (! (host == "__template__"))
-                    (hasFiles
-                      [ "configuration.nix" "meta.nix" ]
-                      configurationFiles)
-                    (meta.enable or true)
-                  ]);
-                mkHost = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix" // {
-                    hostname = host;
-                  };
-                in
-                  mkNixosHost {
-                    inherit root;
-                    inherit meta;
-                    users = genUsers configurationFiles;
-                  });
-                mkDeployNode = ({ root, host, meta, configuration }:
-                  {
-                    inherit (meta.deploy) hostname;
-                    profiles.system = meta.deploy // {
-                      path = inputs.deploy-rs.lib.${meta.system}.activate."nixos" configuration;
-                    };
-                  });
-              };
-              nix-on-droid = {
-                predicate = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix";
-                in
-                  and [
-                    (! (host == "__template__"))
-                    (hasFiles
-                      [ "configuration.nix" "home.nix" "meta.nix" ]
-                      configurationFiles)
-                    (meta.enable or true)
-                  ]);
-                mkHost = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix" // {
-                    hostname = host;
-                  };
-                in
-                  mkNixOnDroidHost {
-                    inherit root;
-                    inherit meta;
-                  });
-              };
-              nix-darwin = {
-                hostsName = "darwinHosts";
-                configurationsName = "darwinConfigurations";
-                predicate = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix";
-                in
-                  and [
-                    (! (host == "__template__"))
-                    (hasFiles
-                      [ "configuration.nix" "meta.nix" ]
-                      configurationFiles)
-                    (hasDirectories
-                      [ "home" ]
-                      configurationFiles)
-                    (meta.enable or true)
-                  ]);
-                mkHost = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix" // {
-                    hostname = host;
-                  };
-                in
-                  mkNixDarwinHost {
-                    inherit root;
-                    inherit meta;
-                    users = genUsers configurationFiles;
-                  });
-                mkDeployNode = ({ root, host, meta, configuration }:
-                  {
-                    inherit (meta.deploy) hostname;
-                    profiles.system = meta.deploy // {
-                      path = inputs.deploy-rs.lib.${meta.system}.activate."darwin" configuration;
-                    };
-                  });
-              };
-              home-manager = {
-                hostsName = "homeHosts";
-                configurationsName = "homeConfigurations";
-                predicate = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix";
-                in
-                  and [
-                    (! (host == "__template__"))
-                    (hasFiles
-                      [ "home.nix" "meta.nix" ]
-                      configurationFiles)
-                    (meta.enable or true)
-                  ]);
-                mkHost = ({ root, host, configurationFiles, ... }: let
-                  meta = import "${root}/meta.nix" // {
-                    hostname = host;
-                  };
-                in
-                  mkHomeManagerHost {
-                    inherit root;
-                    inherit meta;
-                  });
-              };
-            };
-          };
-          resultConfigurations = lib.mkOption {
-            readOnly = true;
-            default = lib.pipe configurationTypes [
-              (lib.mapAttrs'
-                (configurationType: configurationTypeConfig:
-                  lib.nameValuePair
-                    configurationTypeConfig.configurationsName
-                    (lib.mapAttrs
-                      (host: { configuration, ... }:
-                        configuration)
-                      configurationTypeConfig.resultConfigurations)))
-            ];
-          };
-          resultDeployNodes = lib.mkOption {
-            readOnly = true;
-            default = lib.pipe configurationTypes [
-              (lib.concatMapAttrs
-                (configurationType: configurationTypeConfig:
+              configurations =
+                lib.pipe configurationTypes [
+                  (lib.mapAttrs'
+                    (configurationType: configurationTypeConfig:
+                      lib.nameValuePair
+                      configurationTypeConfig.configurationsName
+                      (lib.mapAttrs
+                        (host: { configuration, ... }:
+                          configuration)
+                        configurationTypeConfig.result)))
+                ];
+              deployNodes =
+                lib.pipe configurationTypes [
                   (lib.concatMapAttrs
-                    (host: { deploy ? null, ... }:
-                      lib.optionalAttrs
-                        (deploy != null)
-                        {
-                          ${host} = deploy;
-                        })
-                    configurationTypeConfig.resultConfigurations)))
-            ];
+                    (configurationType: configurationTypeConfig:
+                      (lib.concatMapAttrs
+                        (host: { deploy ? null, ... }:
+                          lib.optionalAttrs
+                          (deploy != null)
+                          {
+                            ${host} = deploy;
+                          })
+                        configurationTypeConfig.result)))
+                ];
+            };
           };
         };
       });
@@ -441,9 +225,9 @@ in
 
   config = {
     flake = let
-      configurations = config.auto.configurations.resultConfigurations;
+      configurations = config.auto.configurations.result.configurations;
       deployNodes = {
-        deploy.nodes = config.auto.configurations.resultDeployNodes;
+        deploy.nodes = config.auto.configurations.result.deployNodes;
       };
       deployChecks = {
         checks =
