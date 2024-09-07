@@ -1,19 +1,23 @@
 { lib, config, self, inputs, ... }:
 
-let
-  inherit (config.lib)
-    createThings;
-in
-let
-  createOverlays = baseDir:
-    createThings {
-      inherit baseDir;
-      thingType = "overlay";
-    };
-in
 {
+  imports = [
+    ../lib
+  ];
+
   options = let
-    inherit (lib) types;
+    inherit (lib)
+      types
+      ;
+    inherit (config.lib)
+      createThings
+      ;
+
+    createOverlays = baseDir:
+      createThings {
+        inherit baseDir;
+        thingType = "overlay";
+      };
   in {
     auto.overlays = lib.mkOption {
       description = ''

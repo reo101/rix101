@@ -5,9 +5,9 @@ let
     and
     hasFiles
     hasDirectories
-    configuration-type-to-outputs-modules;
-in
-let
+    configuration-type-to-outputs-modules
+    ;
+
   # `pkgs` with flake's overlays
   # NOTE: done here to avoid infinite recursion
   pkgs' = system:

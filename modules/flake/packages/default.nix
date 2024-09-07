@@ -1,23 +1,27 @@
 { lib, config, self, inputs, ... }:
 
-let
-  inherit (config.lib)
-    createThings;
-in
-let
-  createPackages = baseDir:
-    createThings {
-      inherit baseDir;
-      thingType = "package";
-      raw = false;
-      extras.systems = {
-        default = lib.const true;
-      };
-    };
-in
 {
+  imports = [
+    ../lib
+  ];
+
   options = let
-    inherit (lib) types;
+    inherit (lib)
+      types
+      ;
+    inherit (config.lib)
+      createThings
+      ;
+
+    createPackages = baseDir:
+      createThings {
+        inherit baseDir;
+        thingType = "package";
+        raw = false;
+        extras.systems = {
+          default = lib.const true;
+        };
+      };
   in {
     auto.packages = lib.mkOption {
       description = ''

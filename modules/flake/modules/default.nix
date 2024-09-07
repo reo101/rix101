@@ -1,21 +1,24 @@
 { lib, config, self, inputs, ... }:
 
-let
-  inherit (config.lib)
-    createThings
-    kebabToCamel;
-in
-let
-  # Modules helpers
-  createModules = baseDir:
-    createThings {
-      inherit baseDir;
-      thingType = "module";
-    };
-in
 {
+  imports = [
+    ../lib
+  ];
+
   options = let
-    inherit (lib) types;
+    inherit (lib)
+      types
+      ;
+    inherit (config.lib)
+      createThings
+      kebabToCamel
+      ;
+
+    createModules = baseDir:
+      createThings {
+        inherit baseDir;
+        thingType = "module";
+      };
   in {
     auto.modules = lib.mkOption {
       description = ''
@@ -76,7 +79,6 @@ in
                       (createModules dir);
                 };
               };
-              config = {};
             }));
             # TODO: put in a more visible place
             default = {

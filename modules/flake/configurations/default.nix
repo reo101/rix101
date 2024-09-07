@@ -1,21 +1,19 @@
 { lib, config, self, inputs, withSystem, ... }:
 
-let
-  inherit (config.lib)
-    and
-    hasFiles
-    hasDirectories
-    recurseDir
-    kebabToCamel
-    configuration-type-to-outputs-modules;
-in
 {
   imports = [
+    ../lib
     ./default-generators.nix
   ];
 
   options = let
-    inherit (lib) types;
+    inherit (lib)
+      types
+      ;
+    inherit (config.lib)
+      recurseDir
+      kebabToCamel
+      ;
   in {
     auto.configurations = lib.mkOption {
       description = ''

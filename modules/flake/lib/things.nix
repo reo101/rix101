@@ -1,14 +1,13 @@
 { lib, config, self, inputs, ... }:
 
-let
-  inherit (config.lib)
-    and
-    eq
-    hasFiles
-    ;
-in
 {
-  config.lib = rec {
+  config.lib = let
+    inherit (config.lib)
+      and
+      eq
+      hasFiles
+      ;
+  in rec {
     # Try to passthru `inputs` by default
     defaultThingHandle = { raw, thingType }: name: result: let
       thing =

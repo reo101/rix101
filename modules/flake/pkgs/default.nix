@@ -4,7 +4,7 @@
   perSystem = { system, ... }: {
     _module.args.pkgs = import inputs.nixpkgs {
       inherit system;
-      # WARN: not including `self.packages` overylay
+      # WARN: not including `self.packages` overlay
       #       because it causes an infinite recursion
       overlays = lib.attrValues self.overlays ++ [
         inputs.neovim-nightly-overlay.overlays.default

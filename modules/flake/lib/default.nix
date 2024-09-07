@@ -6,9 +6,12 @@
   ];
 
   options = let
-    inherit (lib) types;
+    inherit (lib)
+      types
+      ;
   in {
     lib = lib.mkOption {
+      internal = true;
       type = types.unspecified;
     };
   };
