@@ -63,6 +63,7 @@ let
       (lib.optionalAttrs (meta ? pubkey) {
         age.rekey.hostPubkey = meta.pubkey;
       })
+      ./agenix-rekey
       # nix-topology
       inputs.nix-topology.nixosModules.default
       # Sane default `networking.hostName`
