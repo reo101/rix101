@@ -2,12 +2,12 @@
 
 source "${UTIL_DIR}/colors.sh"
 
-BATT_PERCENT=$(pmset -g batt | grep -Eo "\d+%" | cut -d% -f1)
+BATT_PERCENT=$(pmset -g batt | grep -Eo '[[:digit:]]+%' | cut -d% -f1)
 CHARGING=$(pmset -g batt | grep 'AC Power')
 
 sketchybar --set "${NAME}" icon.color=0xff989898
 
-if [ ${CHARGING} != "" ]; then
+if [ "${CHARGING}" != "" ]; then
     case ${BATT_PERCENT} in
         100)
             ICON=""

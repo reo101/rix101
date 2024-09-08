@@ -57,7 +57,7 @@ yabai -m config "external_bar"               "all:32:0"     \
                 "window_border_blur"         "off"          \
                 "window_border_width"        "2"            \
                 "window_border_hidpi"        "off"          \
-                "window_border_radius"       "11"           \
+                "window_border_radius"       "0"            \
                 "window_animation_duration"  "0.22"         \
                 "active_window_border_color" "0xffe1e3e4"   \
                 "normal_window_border_color" "0xff2a2f38"   \
