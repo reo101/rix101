@@ -47,25 +47,30 @@
 
 # Structure
 
-- Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic packages, modules && configurations extraction
+- Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic *stuff* extraction
   - Automatic classic (`callPackage`) and `dream2nix` packages extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction
+  - Automatic overlays extraction
+  - Automatic devShells extraction
 - Hosts can be found under `./hosts/${config-type}/${system}/${hostname}/...`
-  - Check [`./modules/flake/configurations.nix`](./modules/flake/configurations.nix) for more info on what is extracted from those directories
+  - Check [`./modules/flake/configurations`](./modules/flake/configurations) for more info on what is extracted from those directories
 - Modules can be found under `./modules/${config-type}/...`
-  - Check [`./modules/flake/modules.nix`](./modules/flake/modules.nix) for more info on what is extracted from that directory
+  - Check [`./modules/flake/modules`](./modules/flake/modules) for more info on what is extracted from that directory
 - Packages can be found under `./pkgs/...`
+  - Check [`./modules/flake/packages`](./modules/flake/packages) for more info on what is extracted from that directory
 - Overlays can be found under `./overlays/...`
+  - Check [`./modules/flake/overlays`](./modules/flake/overlays) for more info on what is extracted from that directory
 - Shells can be found under `./shells/...`
-  - Default one puts a recent `nix` together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
+  - Check [`./modules/flake/shells`](./modules/flake/shells) for more info on what is extracted from that directory
+  - Default one puts a recent `nix` (as of recently - `lix`) together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
 
 # Topology
 
 You can see the overall topology of the hosts by running
 
 ```sh
-nix build .#topology
+nix build ".#topology"
 ```
 
 And opening the resulting `./result/main.svg` and `./result/network.svg`
