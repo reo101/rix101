@@ -15,33 +15,35 @@
     enable = true;
     package = pkgs.sambaFull;
     openFirewall = true;
-    securityType = "user";
-    extraConfig = ''
-      # Files
-      workgroup = WORKGROUP
-      server string = Jeeves
-      netbios name = jeeves
-      security = user
-      #use sendfile = yes
-      #max protocol = smb2
-      # NOTE: localhost is the ipv6 localhost ::1
-      hosts allow = 192.168.0. 192.168.1. 10.100.0. 127.0.0.1 localhost
-      hosts deny = 0.0.0.0/0
-      guest account = nobody
-      map to guest = bad user
+    settings = {
+      global = {
+        # Files
+        "workgroup" = "WORKGROUP";
+        "server string" = "Jeeves";
+        "netbios name" = "jeeves";
+        "security" = "user";
+        # "use sendfile" = "yes";
+        # "max protocol" = "smb2";
+        # NOTE: localhost is the ipv6 localhost ::1
+        # TODO: keep glogal network metadata somehow
+        "hosts allow" = "192.168.0. 192.168.1. 10.100.0. 127.0.0.1 localhost";
+        "hosts deny" = "0.0.0.0/0";
+        "guest account" = "nobody";
+        "map to guest" = "bad user";
 
-      # Symlinks
-      allow insecure wide links = yes
+        # Symlinks;
+        "allow insecure wide links" = "yes";
 
-      # Printers
-      load printers = yes
-      printing = cups
-      printcap name = cups
-    '';
-    shares = {
+        # Printers;
+        "load printers" = "yes";
+        "printing" = "cups";
+        "printcap name" = "cups";
+      };
+
+      # Shares
       public = {
-        path = "/data/samba/public";
-        browseable = "yes";
+        "path" = "/data/samba/public";
+        "browseable" = "yes";
         "read only" = "no";
         "guest ok" = "yes";
         "create mask" = "0644";
@@ -50,8 +52,8 @@
         "force group" = "users";
       };
       private = {
-        path = "/data/samba/private";
-        browseable = "yes";
+        "path" = "/data/samba/private";
+        "browseable" = "yes";
         "read only" = "no";
         "guest ok" = "no";
         "create mask" = "0644";
