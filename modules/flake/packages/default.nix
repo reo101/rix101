@@ -74,6 +74,7 @@
               (name: { package, systems }:
                 let
                   # TODO: put in `autoThings` `handle`?
+                  # TODO: keep source `dream2nix` module for overriding?
                   isDream2Nix = lib.pipe package
                     [
                       builtins.functionArgs

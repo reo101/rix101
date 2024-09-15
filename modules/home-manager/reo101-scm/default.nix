@@ -29,6 +29,7 @@ in
 
   config = let
     # TODO: agenix???
+    # TODO: module options???
     name = "reo101";
     email = "pavel.atanasov2001@gmail.com";
     key = "675AA7EF13964ACB";
