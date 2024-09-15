@@ -23,6 +23,11 @@ final: prev:
     nix-output-monitor = prev.nix-output-monitor;
   };
 
+  lix-monitored = inputs.nix-monitored.packages.${prev.system}.default.override {
+    nix = inputs.lix-module.packages.${prev.system}.default;
+    nix-output-monitor = prev.nix-output-monitor;
+  };
+
   nixVersions = prev.nixVersions // {
     monitored =
       final.lib.flip final.lib.concatMapAttrs prev.nixVersions (version: package:

@@ -7,7 +7,7 @@
     extra-experimental-features = nix-command flakes
   '';
   nativeBuildInputs = with pkgs; [
-    nixVersions.monitored.latest
+    lix-monitored
     home-manager
     git
     wireguard-tools

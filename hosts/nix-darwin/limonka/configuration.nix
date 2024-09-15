@@ -14,7 +14,7 @@
     # Ensure we can work with flakes
     # TODO: add to `README.md`
     # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
-    package = pkgs.nixVersions.monitored.latest;
+    package = pkgs.lix-monitored;
 
     # This will add each flake input as a registry
     # To make nix3 commands consistent with your flake
