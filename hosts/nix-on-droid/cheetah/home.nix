@@ -70,7 +70,7 @@
   programs.neovim = {
     enable = true;
     package = pkgs.neovim;
-    # defaultEditor = true;
+    defaultEditor = true;
 
     viAlias = true;
     vimAlias = true;
