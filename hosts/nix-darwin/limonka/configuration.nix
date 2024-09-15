@@ -8,33 +8,12 @@
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
 
-  nix = let
-    flakeInputs = lib.filterAttrs (lib.const (lib.isType "flake")) inputs;
-  in {
+  nix = {
     # Ensure we can work with flakes
     # TODO: add to `README.md`
     # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
     package = pkgs.lix-monitored;
 
-    # This will add each flake input as a registry
-    # To make nix3 commands consistent with your flake
-    registry = lib.mapAttrs (_: value: { flake = value; }) flakeInputs;
-
-    # This will additionally add your inputs to the system's legacy channels
-    # Making legacy nix commands consistent as well, awesome!
-    nixPath = lib.mapAttrsToList (key: value: "${key}=flake:${key}") flakeInputs;
-
-    # extraOptions = ''
-    #   # Enable flakes and new 'nix' command
-    #   experimental-features = nix-command flakes
-    #   # Allow building multiple derivations in parallel
-    #   max-jobs = auto
-    #   # Deduplicate and optimize nix store
-    #   auto-optimise-store = true
-    #   # Keep outputs and derivations
-    #   keep-outputs = true
-    #   keep-derivations = true
-    # '';
 
     settings = {
       # Enable flakes and new 'nix' command
