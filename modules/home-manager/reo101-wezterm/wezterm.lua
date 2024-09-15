@@ -2,6 +2,9 @@ local M = {}
 
 local wezterm = require("wezterm")
 
+-- https://github.com/NixOS/nixpkgs/issues/336069
+M.front_end = "WebGpu"
+
 ----------
 -- Font --
 ----------

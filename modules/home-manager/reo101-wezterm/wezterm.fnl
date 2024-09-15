@@ -3,6 +3,9 @@
                   (wezterm.config_builder)
                   {}))
 
+;; https://github.com/NixOS/nixpkgs/issues/336069
+(set config.front_end "WebGpu")
+
 ;;;;;;;;;;;;;;;;;;;;
 ;;; Font Options ;;;
 ;;;;;;;;;;;;;;;;;;;;
