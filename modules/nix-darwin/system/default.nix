@@ -261,7 +261,7 @@ in
         __dock_item() {
             echo "${
               lib.pipe
-                ''
+                /* xml */ ''
                   <dict>
                     <key>
                       tile-data
