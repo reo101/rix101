@@ -1,6 +1,10 @@
 { inputs, lib, pkgs, config, ... }:
 
 {
+  imports = [
+    inputs.self.nixosModules.substituters
+  ];
+
   environment.packages = with pkgs; [ ];
 
   # Backup etc files instead of failing to activate generation if a file already exists in /etc
