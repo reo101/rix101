@@ -14,11 +14,11 @@
   };
   networking.wireless = {
     iwd.enable = true;
-    environmentFile = config.age.secrets."home.wifi.env".path;
+    secretsFile = config.age.secrets."home.wifi.env".path;
     networks = {
       home = {
-        ssid = "@HOME_WIFI_SSID@";
-        psk = "@HOME_WIFI_PSK@";
+        ssid = "ext:HOME_WIFI_SSID";
+        pskRaw = "ext:HOME_WIFI_PSK";
       };
     };
   };
