@@ -96,9 +96,10 @@
   reo101 = {
     shell = {
       enable = true;
-      shells = [ "nushell" "zsh" ];
+      shells = [ "zsh" "nushell" ];
       starship = true;
       atuin = true;
+      carpace = true;
       direnv = true;
       zoxide = true;
     };
@@ -114,27 +115,14 @@
     };
   };
 
-  # programs.git = {
-  #   enable = true;
-  #   userName = "reo101";
-  #   # userEmail = "pavel.atanasov@limechain.tech";
-  #   userEmail = "pavel.atanasov2001@gmail.com";
-  #   signing = {
-  #     signByDefault = true;
-  #     key = "675AA7EF13964ACB";
-  #   };
-  #   # init.defaultBranch = "master";
-  #   lfs = {
-  #     enable = true;
-  #   };
-  # };
-
-
   home.file.".gnupg/gpg-agent.conf" = {
-    text = ''
+    text = let
+      # 24 hours
+      ttl = 24 * 60 * 60;
+    in /* sh */ ''
       allow-preset-passphrase
-      max-cache-ttl 86400
-      default-cache-ttl 86400
+      max-cache-ttl ${builtins.toString ttl}
+      default-cache-ttl ${builtins.toString ttl}
       enable-ssh-support
       pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
       # pinentry-program /usr/local/opt/pinentry-touchid/bin/pinentry-touchid
@@ -147,16 +135,20 @@
     '';
   };
 
-  programs.zsh.initExtra = ''
+  programs.zsh.initExtra = let
+      gpgconf = lib.getExe' pkgs.gnupg "gpgconf";
+      gpg-connect-agent = lib.getExe' pkgs.gnupg "gpg-connect-agent";
+      tty = lib.getExe' pkgs.toybox "tty";
+  in /* sh */ ''
     # if [ "''${SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
     #   export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
     # fi
     # if [ -z "$SSH_AUTH_SOCK" ]; then
-    #   export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
+    #   export SSH_AUTH_SOCK=$(${gpgconf} --list-dirs agent-ssh-socket)
     # fi
     unset SSH_AGENT_PID
-    export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
-    gpg-connect-agent updatestartuptty /bye >/dev/null
-    export GPG_TTY=$(tty)
+    export SSH_AUTH_SOCK=$(${gpgconf} --list-dirs agent-ssh-socket)
+    ${gpg-connect-agent} updatestartuptty /bye >/dev/null
+    export GPG_TTY=$(${tty})
   '';
 }

@@ -83,6 +83,11 @@ in
           type = types.bool;
           default = true;
         };
+        carapace = mkOption {
+          description = "Integrate with carapace";
+          type = types.bool;
+          default = true;
+        };
         direnv = mkOption {
           description = "Integrate with direnv";
           type = types.bool;
@@ -114,6 +119,9 @@ in
           (optionals cfg.atuin [
             atuin
           ])
+          (optionals cfg.carapace [
+            carapace
+          ])
           (optionals cfg.direnv [
             direnv
           ])
@@ -128,6 +136,11 @@ in
         text = import ./atuin.nix {
           keyPath = "${config.xdg.dataHome}/atuin/key";
         };
+      };
+
+      # carapace
+      programs.carapace = mkIf cfg.carapace {
+        enable = true;
       };
 
       # Direnv
