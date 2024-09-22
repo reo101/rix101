@@ -70,59 +70,5 @@
     #     (lib.concatMapStrings
     #       (mutFirstChar lib.toUpper)
     #       (lib.splitString "-" s));
-
-    gen-configuration-type-to = mappings: mkError: configuration-type:
-      mappings.${configuration-type} or
-      (builtins.throw
-        (mkError configuration-type));
-
-    # TODO: abstract away `_Hosts` and `_Modules`
-
-    configuration-type-to-outputs-hosts =
-      gen-configuration-type-to
-      {
-        nixos = "nixosHosts";
-        nix-on-droid = "nixOnDroidHosts";
-        nix-darwin = "darwinHosts";
-        home-manager = "homeManagerHosts";
-      }
-      (configuration-type:
-        builtins.throw
-        "Invaild configuration-type \"${configuration-type}\" for flake outputs' hosts");
-
-    configuration-type-to-outputs-modules =
-      gen-configuration-type-to
-      {
-        nixos = "nixosModules";
-        nix-on-droid = "nixOnDroidModules";
-        nix-darwin = "darwinModules";
-        home-manager = "homeManagerModules";
-        flake = "flakeModules";
-      }
-      (configuration-type:
-        builtins.throw
-        "Invaild configuration-type \"${configuration-type}\" for flake outputs' modules");
-
-    configuration-type-to-outputs-configurations =
-      gen-configuration-type-to
-      {
-        nixos = "nixosConfigurations";
-        nix-on-droid = "nixOnDroidConfigurations";
-        nix-darwin = "darwinConfigurations";
-        home-manager = "homeConfigurations";
-      }
-      (configuration-type:
-        builtins.throw
-        "Invaild configuration-type \"${configuration-type}\" for flake outputs' configurations");
-
-    configuration-type-to-deploy-type =
-      gen-configuration-type-to
-      {
-        nixos = "nixos";
-        nix-darwin = "darwin";
-      }
-      (configuration-type:
-        builtins.throw
-        "Invaild configuration-type \"${configuration-type}\" for deploy-rs deployment");
   };
 }

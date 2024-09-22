@@ -5,12 +5,11 @@ let
     and
     hasFiles
     hasDirectories
-    configuration-type-to-outputs-modules
     ;
 
   # `pkgs` with flake's overlays
   # NOTE: done here to avoid infinite recursion
-  pkgs' = system:
+  pkgsFor = system:
     (withSystem system ({ pkgs, ... }: pkgs)).extend
       (final: prev: inputs.self.packages.${system});
 
@@ -22,41 +21,57 @@ let
         (lib.strings.removeSuffix ".nix"))
     ];
 
-  homeManagerModule = { root, meta, users ? null }: {
+  homeManagerModule = {
+    root,
+    meta,
+    # NOTE: `[]` is default for normal systems
+    #       set to `null` for `nixOnDroid`
+    users ? [],
+    extraModules ? [],
+  }: {
     home-manager = {
       # Use same `pkgs` instance as system (i.e. carry over overlays)
       useGlobalPkgs = true;
       # Do not keep packages in ${HOME}
       useUserPackages = true;
       # Default import all of our exported `home-manager` modules
-      sharedModules = builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"};
+      sharedModules = builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName};
       # Pass in `inputs`, `hostname` and `meta`
       extraSpecialArgs = {
         inherit inputs;
         inherit meta;
       };
-    } // (if users == null then {
-      # nixOnDroid
-      config = "${root}/home.nix";
-    } else {
+    } // (if users != null then {
       # Not nixOnDroid
       users =
         lib.attrsets.genAttrs
           users
           (user: import "${root}/home/${user}.nix");
+    } else {
+      # nixOnDroid
+      config = "${root}/home.nix";
     });
   };
 
-  mkNixosHost = args @ { root, meta, users }: inputs.nixpkgs.lib.nixosSystem {
+  mkNixosHost = args @ {
+    root,
+    meta,
+    users,
+    extraModules ? [],
+    extraHomeModules ? [],
+  }: inputs.nixpkgs.lib.nixosSystem {
     inherit (meta) system;
-    pkgs = pkgs' meta.system;
+    pkgs = pkgsFor meta.system;
 
     modules = [
       # Main configuration
       "${root}/configuration.nix"
       # Home Manager
       inputs.home-manager.nixosModules.home-manager
-      (homeManagerModule args)
+      (homeManagerModule {
+        inherit root meta users;
+        extraModules = extraHomeModules;
+      })
       # (r)agenix && agenix-rekey
       inputs.ragenix.nixosModules.default
       inputs.agenix-rekey.nixosModules.default
@@ -70,8 +85,7 @@ let
       {
         networking.hostName = lib.mkDefault meta.hostname;
       }
-         # TODO: lib.optionals
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nixos"});
+    ] ++ extraModules;
 
     specialArgs = {
       inherit inputs;
@@ -79,17 +93,25 @@ let
     };
   };
 
-  mkNixOnDroidHost = args @ { root, meta }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
+  mkNixOnDroidHost = args @ {
+    root,
+    meta,
+    extraModules ? [],
+    extraHomeModules ? [],
+  }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
     # NOTE: inferred by `pkgs.system`
     # inherit system;
-    pkgs = pkgs' meta.system;
+    pkgs = pkgsFor meta.system;
 
     modules = [
       # Main configuration
       "${root}/configuration.nix"
       # Home Manager
-      (homeManagerModule args)
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-on-droid"});
+      (homeManagerModule {
+        inherit root meta;
+        extraModules = extraHomeModules;
+      })
+    ] ++ extraModules;
 
     extraSpecialArgs = {
       inherit inputs;
@@ -99,17 +121,26 @@ let
     home-manager-path = inputs.home-manager.outPath;
   };
 
-  mkNixDarwinHost = args @ { root, meta, users }: inputs.nix-darwin.lib.darwinSystem {
+  mkNixDarwinHost = args @ {
+    root,
+    meta,
+    users,
+    extraModules ? [],
+    extraHomeModules ? [],
+  }: inputs.nix-darwin.lib.darwinSystem {
     inherit (meta) system;
-    pkgs = pkgs' meta.system;
+    pkgs = pkgsFor meta.system;
 
     modules = [
       # Main configuration
       "${root}/configuration.nix"
       # Home Manager
       inputs.home-manager.darwinModules.home-manager
-      (homeManagerModule args)
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "nix-darwin"});
+      (homeManagerModule {
+        inherit root meta users;
+        extraModules = extraHomeModules;
+      })
+    ] ++ extraModules;
 
     specialArgs = {
       inherit inputs;
@@ -117,13 +148,17 @@ let
     };
   };
 
-  mkHomeManagerHost = args @ { root, meta }: inputs.home-manager.lib.homeManagerConfiguration {
+  mkHomeManagerHost = args @ {
+    root,
+    meta,
+    extraModules ? [],
+  }: inputs.home-manager.lib.homeManagerConfiguration {
     inherit (meta) system;
-    pkgs = pkgs' meta.system;
+    pkgs = pkgsFor meta.system;
 
     modules = [
       "${root}/home.nix"
-    ] ++ (builtins.attrValues config.flake.${configuration-type-to-outputs-modules "home-manager"});
+    ] ++ extraModules;
 
     extraSpecialArgs = {
       inherit inputs;
@@ -146,6 +181,8 @@ in
           inherit root;
           inherit meta;
           users = genUsers configurationFiles;
+          extraModules = builtins.attrValues config.flake.nixosModules;
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
       mkDeployNode = ({ root, meta, configuration }:
         {
@@ -167,6 +204,9 @@ in
         mkNixOnDroidHost {
           inherit root;
           inherit meta;
+          users = null;
+          extraModules = builtins.attrValues config.flake.nixOnDroidModules;
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
     };
     nix-darwin = {
@@ -187,6 +227,8 @@ in
           inherit root;
           inherit meta;
           users = genUsers configurationFiles;
+          extraModules = builtins.attrValues config.flake.darwinModules;
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
       mkDeployNode = ({ root, meta, configuration }:
         {
@@ -210,6 +252,7 @@ in
         mkHomeManagerHost {
           inherit root;
           inherit meta;
+          extraModules = builtins.attrValues config.flake.homeManagerModules;
         });
     };
   };

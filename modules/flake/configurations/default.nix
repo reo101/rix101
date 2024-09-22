@@ -108,8 +108,7 @@
                         "''${root}/configuration.nix"
                         # Home Manager
                         inputs.home-manager.nixosModules.home-manager
-                        (homeManagerModule args)
-                      ] ++ (builtins.attrValues config.flake.''${configuration-type-to-outputs-modules "nixos"});
+                      ] ++ (builtins.attrValues config.flake.nixosModules);
 
                       specialArgs = {
                         inherit inputs;
@@ -124,9 +123,8 @@
                   '';
                   type = types.nullOr (types.functionTo types.anything);
                   default = null;
-                  # TODO: update
                   example = /* nix */ ''
-                    { root, host, meta, configuration }: {
+                    { root, meta, configuration }: {
                       inherit (meta.deploy) hostname;
                       profiles.system = meta.deploy // {
                         path = inputs.deploy-rs.lib.''${meta.system}.activate."nixos" configuration;
@@ -207,10 +205,10 @@
                       (lib.concatMapAttrs
                         (host: { deploy ? null, ... }:
                           lib.optionalAttrs
-                          (deploy != null)
-                          {
-                            ${host} = deploy;
-                          })
+                            (deploy != null)
+                            {
+                              ${host} = deploy;
+                            })
                         configurationTypeConfig.result)))
                 ];
             };
