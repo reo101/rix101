@@ -99,7 +99,7 @@
       shells = [ "zsh" "nushell" ];
       starship = true;
       atuin = true;
-      carpace = true;
+      carapace = true;
       direnv = true;
       zoxide = true;
     };
