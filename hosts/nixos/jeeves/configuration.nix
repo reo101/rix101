@@ -21,6 +21,7 @@
     ./paperless.nix
     ./podman.nix
     ./anki.nix
+    ./stirling-pdf.nix
   ];
 
   # services.kanidm = { };
