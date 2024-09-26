@@ -189,6 +189,7 @@ in
             shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
           in
           "${shellPackage}/${shellPackage.shellPath}";
+        MANPAGER = "${lib.getExe config.programs.neovim.package} +Man!";
       };
 
       # Nushell
