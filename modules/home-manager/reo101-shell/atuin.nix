@@ -1,6 +1,6 @@
 { keyPath, ... }:
 
-''
+/* toml */ ''
   ## where to store your database, default is your system data directory
   ## mac: ~/Library/Application Support/com.elliehuxtable.atuin/history.db
   ## linux: ~/.local/share/atuin/history.db
