@@ -73,8 +73,8 @@
   age.secrets."jeeves.user.password" = {
     rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
     generator = {
-      script = { pkgs, ... }: ''
-        ${pkgs.mkpasswd}/bin/mkpasswd -m sha-512
+      script = { pkgs, ... }: /* bash */ ''
+        ${lib.getExe pkgs.mkpasswd} -m sha-512
       '';
     };
   };
