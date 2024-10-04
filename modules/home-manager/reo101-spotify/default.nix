@@ -36,6 +36,7 @@ in
           enable = true;
           spotifyPackage = pkgs.spotify;
 
+          theme = spicePkgs.themes.text;
           colorScheme = "text";
 
           enabledExtensions = with spicePkgs.extensions; [
@@ -50,9 +51,11 @@ in
             hidePodcasts
             history
             keyboardShortcut
+            newReleases
             lastfm
             listPlaylistsWithSong
             loopyLoop
+            lyricsPlus
             phraseToPlaylist
             playNext
             playlistIcons
