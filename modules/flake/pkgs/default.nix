@@ -13,6 +13,8 @@
         inputs.wired.overlays.default
         # nix-on-droid overlay (needed for `proot`)
         inputs.nix-on-droid.overlays.default
+        # NOTE: for `oddlamma`'s modified `lib.nix`
+        inputs.nixos-extra-modules.overlays.default
       ];
       config = {
         # TODO: per machine?

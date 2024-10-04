@@ -1,4 +1,11 @@
 { inputs, lib, pkgs, config, ... }:
+
+let
+  inherit (pkgs.lib) net;
+  wireguard-interface = "wg0";
+  wireguard-network-cidr = "10.100.0.0/24";
+  wireguard-network-gateway = net.cidr.host 0 wireguard-network-cidr;
+in
 {
   environment.systemPackages = with pkgs; [
     wireguard-tools
@@ -26,8 +33,9 @@
   networking.nat = {
     enable = true;
     enableIPv6 = true;
+    # TODO: `vlan` or something to multiplex `eth0` and `wan0` for this
     externalInterface = "eth0";
-    internalInterfaces = [ "wg0" ];
+    internalInterfaces = [ wireguard-interface ];
   };
 
   # Open ports in the firewall
@@ -36,12 +44,35 @@
     allowedUDPPorts = [ 53 51820 ];
   };
 
+  # Enable dnsmasq
+  # FIXME: not working
+  # NOTE: mainly for redirecting `wg0`'s DNS queries to `192.168.1.1`
+  # services.resolved.enable = false;
+  # services.dnsmasq = {
+  #   enable = false;
+  #   settings = {
+  #     server = [
+  #       "192.168.1.1"
+  #       # "1.1.1.1"
+  #     ];
+  #     interface = [ wireguard-interface ];
+  #     bind-interfaces = true;
+  #     domain-needed = true;
+  #     bogus-priv = true;
+  #     no-resolv = true;
+  #     address = [
+  #       # NOTE: automatic `*.jeeves.local` subdomain handling
+  #       "/jeeves.local/${wireguard-network-gateway}"
+  #     ];
+  #   };
+  # };
+
   systemd.network = {
     netdevs = {
-      "50-wg0" = {
+      "50-${wireguard-interface}" = {
         netdevConfig = {
           Kind = "wireguard";
-          Name = "wg0";
+          Name = wireguard-interface;
           MTUBytes = "1300";
         };
         wireguardConfig = {
@@ -49,59 +80,47 @@
           ListenPort = 51820;
         };
         wireguardPeers =
-          lib.mapAttrsToList
-            (host: peerConfig: peerConfig)
-            {
-              cheetah = {
+          lib.imap1
+            (i: peer: {
+              inherit (peer) PublicKey;
+              AllowedIPs = [
+                (net.cidr.host
+                  (i + 1)
+                  wireguard-network-cidr)
+              ];
+            })
+            [
+              {
+                Host = "cheetah";
                 PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
-                AllowedIPs = [
-                  "10.100.0.2/32"
-                  "0.0.0.0/0"
-                  # "::/0"
-                ];
-              };
-              limonka = {
+              }
+              {
+                Host = "limonka";
                 PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
-                AllowedIPs = [
-                  "10.100.0.3/32"
-                  "0.0.0.0/0"
-                ];
-              };
-              peshoDjam = {
+              }
+              {
+                Host = "peshoDjam";
                 PublicKey = "37QEe3Lsq5BTIzxqAh9z7clHYeaOaMH31oqi5YvAPBY=";
-                AllowedIPs = [
-                  "10.100.0.4/32"
-                  "192.168.1.134/32"
-                ];
-              };
-              s42 = {
+              }
+              {
+                Host = "s42";
                 PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
-                AllowedIPs = [
-                  "10.100.0.5/32"
-                  "0.0.0.0/0"
-                ];
-              };
-              a41 = {
+              }
+              {
+                Host = "a41";
                 PublicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0=";
-                AllowedIPs = [
-                  "10.100.0.6/32"
-                  "0.0.0.0/0"
-                ];
-              };
-              t410 = {
+              }
+              {
+                Host = "t410";
                 PublicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0=";
-                AllowedIPs = [
-                  "10.100.0.7/32"
-                  "0.0.0.0/0"
-                ];
-              };
-            };
+              }
+            ];
       };
     };
 
-    networks.wg0 = {
-      matchConfig.Name = "wg0";
-      address = [ "10.100.0.1/24" ];
+    networks.${wireguard-interface} = {
+      matchConfig.Name = wireguard-interface;
+      address = [ wireguard-network-cidr ];
       networkConfig = {
         IPMasquerade = "ipv4";
         IPv4Forwarding = true;
