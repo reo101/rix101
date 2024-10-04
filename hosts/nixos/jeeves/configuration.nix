@@ -16,7 +16,7 @@
     ./ollama.nix
     # ./sunshine.nix
     # ./photoprism.nix
-    # ./immich.nix
+    ./immich.nix
     # ./nextcloud.nix
     ./paperless.nix
     ./podman.nix
