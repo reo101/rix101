@@ -8,10 +8,12 @@ let
     ;
 
   # `pkgs` with flake's overlays
-  # NOTE: done here to avoid infinite recursion
   pkgsFor = system:
-    (withSystem system ({ pkgs, ... }: pkgs)).extend
-      (final: prev: inputs.self.packages.${system});
+    lib.pipe (withSystem system ({ pkgs, ... }: pkgs)) [
+      # NOTE: flake's packages, done here to avoid infinite recursion
+      (p: p.extend
+        (final: prev: inputs.self.packages.${system}))
+    ];
 
   genUsers = configurationFiles:
     lib.pipe configurationFiles [
