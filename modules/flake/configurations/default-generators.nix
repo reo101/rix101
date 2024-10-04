@@ -36,7 +36,7 @@ let
       useUserPackages = true;
       # Default import all of our exported `home-manager` modules
       sharedModules = builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName};
-      # Pass in `inputs`, `hostname` and `meta`
+      # Pass in `inputs` and `meta`
       extraSpecialArgs = {
         inherit inputs;
         inherit meta;
