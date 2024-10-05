@@ -94,11 +94,14 @@
                       }
                     ];
                     specialArgs = {
-                      # NOTE: for overlayed `maintainers`
+                      # NOTE: for overlayed `maintainers` and `net`
                       inherit (pkgs) lib;
+                      inherit inputs;
                     };
                   }
-                else pkgs.callPackage package { }))
+                else
+                  # TODO: only inherit `input` if requested
+                  pkgs.callPackage package { /* inherit inputs; */ }))
           ];
     in {
       inherit packages;

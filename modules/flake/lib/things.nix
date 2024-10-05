@@ -5,7 +5,8 @@
     inherit (config.lib)
       and
       eq
-      hasFiles
+      recurseDir
+      hasNixFiles
       ;
   in rec {
     # Try to passthru `inputs` by default
@@ -44,9 +45,10 @@
       , handle ? (defaultThingHandle { inherit raw thingType; })
       , raw ? true
       , extras ? {}
-      , ...
       }:
       assert raw -> extras == {};
+      # NOTE: not using `recurseDir` since we are
+      #       only interested in one level of depth
       lib.pipe baseDir [
         # Read given directory
         builtins.readDir
@@ -76,12 +78,13 @@
                 if raw
                 then thing
                 else lib.attrsets.unionOfDisjoint
-                       { ${thingType} = thing; }
-                       importedExtras;
+                  { ${thingType} = thing; }
+                  importedExtras;
             in
             if and [
               (type == "directory")
-              (hasFiles [ "default.nix" ] (builtins.readDir thingDir))
+              # PERF: `recurseDir` here may not be optimal
+              (hasNixFiles [ "default.nix" ] (recurseDir thingDir))
             ] then
               # Classic thing in a directory
               lib.nameValuePair

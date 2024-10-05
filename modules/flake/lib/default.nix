@@ -23,28 +23,85 @@
     eq = x: y: x == y;
 
     # Directory walking helpers
-    recurseDir = dir:
-      lib.mapAttrs
+    recurseDir = dir: lib.pipe dir [
+      builtins.readDir
+      (lib.mapAttrs
         (file: type:
-          if type == "directory"
-          then recurseDir "${dir}/${file}"
-          else type)
-        (builtins.readDir dir);
+          let
+            # Causes individual files to be sent to the store
+            # newPath = lib.path.append dir file;
+            newPath = "${dir}/${file}";
+          in
+          if and [
+           (type == "directory")
+          ] then
+            {
+              _type = "directory";
+              content = recurseDir newPath;
+            }
+          else if and [
+            (type == "regular")
+            (lib.strings.hasSuffix ".nix" file)
+          ] then
+            {
+              _type = "nix";
+              content = import newPath;
+            }
+          else
+            {
+              _type = type;
+              content = newPath;
+            }))
+    ];
 
     allSatisfy = predicate: attrs: attrset:
       lib.all
-      (attr:
-        and [
-          (builtins.hasAttr attr attrset)
-          (predicate (builtins.getAttr attr attrset))
-        ])
-      attrs;
+        (attr:
+          and [
+            (builtins.hasAttr attr attrset)
+            (predicate (builtins.getAttr attr attrset))
+          ])
+        attrs;
 
     # NOTE: Implying last argument is the output of `recurseDir`
-    hasFiles = allSatisfy (eq "regular");
+    hasNixFiles = allSatisfy (file: file._type == "nix");
 
     # NOTE: Implying last argument is the output of `recurseDir`
-    hasDirectories = allSatisfy lib.isAttrs;
+    hasDirectories = allSatisfy (file: file._type == "directory");
+
+    # NOTE: Implying `files` is the output of `recurseDir`
+    extract = {
+      files,
+      path,
+      pred,
+      default ? null,
+      transform ? file: { inherit (file) content; },
+    }:
+      lib.pipe files [
+        (lib.attrByPath
+          (lib.intersperse "content"
+            # NOTE: turn single strings into a path list
+            (lib.toList path))
+          # ~FIXME~: `null` may be be `content` of a real Nix file
+          null)
+        # Now is either a { _type = "..."; ... } or a null
+        (file: if file == null || !(pred file) then
+          default
+        else
+          transform file)
+        # Same, but now always a nix file if not null
+      ];
+    extractNixFile = files: path: extract {
+      inherit files path;
+      pred = file: file._type == "nix";
+      # transform = file: { inherit (file) content; };
+    };
+    extractDirectory = files: path: extract {
+      inherit files path;
+      pred = file: file._type == "directory";
+      default = {};
+      transform = dir: dir.content;
+    };
 
     camelToKebab =
       lib.stringAsChars

@@ -11,6 +11,7 @@
       types
       ;
     inherit (config.lib)
+      extractNixFile
       recurseDir
       kebabToCamel
       ;
@@ -80,11 +81,11 @@
                   # type = types.functionTo types.anything;
                   type = types.unspecified;
                   example = /* nix */ ''
-                    { root, host, configurationFiles, ... }:
+                    { host, configurationFiles, ... }:
                       # Utils from `./modules/flake/lib/default.nix`
                       and [
                         (! (host == "__template__"))
-                        (hasFiles
+                        (hasNixFiles
                           [ "configuration.nix" ]
                           configurationFiles)
                         (hasDirectories
@@ -100,12 +101,12 @@
                   # type = types.functionTo types.anything;
                   type = types.unspecified;
                   example = /* nix */ ''
-                    args @ { root, meta, users }: inputs.nixpkgs.lib.nixosSystem {
+                    args @ { meta, configuration, users }: inputs.nixpkgs.lib.nixosSystem {
                       inherit (meta) system;
 
                       modules = [
                         # Main configuration
-                        "''${root}/configuration.nix"
+                        configuration
                         # Home Manager
                         inputs.home-manager.nixosModules.home-manager
                       ] ++ (builtins.attrValues config.flake.nixosModules);
@@ -124,7 +125,7 @@
                   type = types.nullOr (types.functionTo types.anything);
                   default = null;
                   example = /* nix */ ''
-                    { root, meta, configuration }: {
+                    { meta, configuration }: {
                       inherit (meta.deploy) hostname;
                       profiles.system = meta.deploy // {
                         path = inputs.deploy-rs.lib.''${meta.system}.activate."nixos" configuration;
@@ -142,17 +143,25 @@
                   default =
                     lib.pipe dir [
                       recurseDir
+                      # Leave out only the directories
+                      (lib.concatMapAttrs
+                        (file: value:
+                          lib.optionalAttrs
+                            (value._type == "directory")
+                            {
+                              ${file} = value.content;
+                            }))
                       (lib.concatMapAttrs
                         (host: configurationFiles:
                           let
-                            root = "${dir}/${host}";
-                            meta-path = "${root}/meta.nix";
+                            meta-file = extractNixFile configurationFiles "meta.nix";
+                            has-meta = meta-file != null;
+                            meta-content = meta-file.content;
                             meta = (lib.evalModules {
                               class = "meta";
                               modules = [
-                                (if builtins.pathExists meta-path
-                                 then import meta-path
-                                 else {})
+                                # {} if no `meta.nix` is provided
+                                (lib.optionalAttrs has-meta meta-content)
                                 ./meta-module.nix
                                 {
                                   config = {
@@ -165,10 +174,10 @@
                             deploy-config = meta.deploy;
                             has-mkDeployNode = mkDeployNode != null;
                             has-deploy-config = deploy-config != null;
-                            configuration-args = { inherit root meta configurationFiles; };
+                            configuration-args = { inherit meta configurationFiles; };
                             valid = predicate configuration-args;
                             configuration = mkHost configuration-args;
-                            deploy-args = { inherit root meta configuration; };
+                            deploy-args = { inherit meta configuration; };
                             deploy = mkDeployNode deploy-args;
                           in
                             lib.optionalAttrs valid {

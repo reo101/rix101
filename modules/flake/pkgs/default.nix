@@ -1,7 +1,7 @@
 { inputs, self, lib, config, ... }:
 
 {
-  perSystem = { system, ... }: {
+  perSystem = { pkgs, system, ... }: {
     _module.args.pkgs = import inputs.nixpkgs {
       inherit system;
       # WARN: not including `self.packages` overlay

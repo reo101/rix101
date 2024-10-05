@@ -3,8 +3,9 @@
 let
   inherit (config.lib)
     and
-    hasFiles
+    hasNixFiles
     hasDirectories
+    extractDirectory
     ;
 
   # `pkgs` with flake's overlays
@@ -17,18 +18,24 @@ let
 
   genUsers = configurationFiles:
     lib.pipe configurationFiles [
-      (cf: cf."home" or { })
-      builtins.attrNames
-      (builtins.map
-        (lib.strings.removeSuffix ".nix"))
+      # Enter `home` subdirectory, if it exists
+      (cf: extractDirectory cf "home")
+      # Filter out only the nix files, extracting their contents
+      (lib.concatMapAttrs
+        (file: value:
+          lib.optionalAttrs
+            (value._type == "nix")
+            {
+              ${lib.strings.removeSuffix ".nix" file} = value.content;
+            }))
     ];
 
   homeManagerModule = {
-    root,
     meta,
-    # NOTE: `[]` is default for normal systems
-    #       set to `null` for `nixOnDroid`
-    users ? [],
+    # NOTE: `{}` is default for normal systems
+    #       set to module directly for `nixOnDroid`
+    # FIXME: `nixOnDroid` module has to not be an attrset
+    users ? {},
     extraModules ? [],
   }: {
     home-manager = {
@@ -43,21 +50,18 @@ let
         inherit inputs;
         inherit meta;
       };
-    } // (if users != null then {
+    } // (if builtins.isAttrs users then {
       # Not nixOnDroid
-      users =
-        lib.attrsets.genAttrs
-          users
-          (user: import "${root}/home/${user}.nix");
+      inherit users;
     } else {
       # nixOnDroid
-      config = "${root}/home.nix";
+      config = users;
     });
   };
 
-  mkNixosHost = args @ {
-    root,
+  mkNixosHost = {
     meta,
+    configuration,
     users,
     extraModules ? [],
     extraHomeModules ? [],
@@ -67,11 +71,11 @@ let
 
     modules = [
       # Main configuration
-      "${root}/configuration.nix"
+      configuration
       # Home Manager
       inputs.home-manager.nixosModules.home-manager
       (homeManagerModule {
-        inherit root meta users;
+        inherit meta users;
         extraModules = extraHomeModules;
       })
       # (r)agenix && agenix-rekey
@@ -95,9 +99,9 @@ let
     };
   };
 
-  mkNixOnDroidHost = args @ {
-    root,
+  mkNixOnDroidHost = {
     meta,
+    configuration,
     extraModules ? [],
     extraHomeModules ? [],
   }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
@@ -107,10 +111,10 @@ let
 
     modules = [
       # Main configuration
-      "${root}/configuration.nix"
+      configuration
       # Home Manager
       (homeManagerModule {
-        inherit root meta;
+        inherit meta;
         extraModules = extraHomeModules;
       })
     ] ++ extraModules;
@@ -123,9 +127,9 @@ let
     home-manager-path = inputs.home-manager.outPath;
   };
 
-  mkNixDarwinHost = args @ {
-    root,
+  mkNixDarwinHost = {
     meta,
+    configuration,
     users,
     extraModules ? [],
     extraHomeModules ? [],
@@ -135,11 +139,11 @@ let
 
     modules = [
       # Main configuration
-      "${root}/configuration.nix"
+      configuration
       # Home Manager
       inputs.home-manager.darwinModules.home-manager
       (homeManagerModule {
-        inherit root meta users;
+        inherit meta users;
         extraModules = extraHomeModules;
       })
     ] ++ extraModules;
@@ -150,16 +154,16 @@ let
     };
   };
 
-  mkHomeManagerHost = args @ {
-    root,
+  mkHomeManagerHost = {
     meta,
+    configuration,
     extraModules ? [],
   }: inputs.home-manager.lib.homeManagerConfiguration {
     inherit (meta) system;
     pkgs = pkgsFor meta.system;
 
     modules = [
-      "${root}/home.nix"
+      configuration
     ] ++ extraModules;
 
     extraSpecialArgs = {
@@ -171,22 +175,22 @@ in
 {
   auto.configurations.configurationTypes = lib.mkDefault {
     nixos = {
-      predicate = ({ root, meta, configurationFiles, ... }:
+      predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
-          (hasFiles
+          (hasNixFiles
             [ "configuration.nix" ]
             configurationFiles)
         ]);
-      mkHost = ({ root, meta, configurationFiles, ... }:
+      mkHost = ({ meta, configurationFiles, ... }:
         mkNixosHost {
-          inherit root;
           inherit meta;
+          configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
           extraModules = builtins.attrValues config.flake.nixosModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
-      mkDeployNode = ({ root, meta, configuration }:
+      mkDeployNode = ({ meta, configuration }:
         {
           inherit (meta.deploy) hostname;
           profiles.system = meta.deploy // {
@@ -195,17 +199,17 @@ in
         });
     };
     nix-on-droid = {
-      predicate = ({ root, meta, configurationFiles, ... }:
+      predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
-          (hasFiles
+          (hasNixFiles
             [ "configuration.nix" "home.nix" ]
             configurationFiles)
         ]);
-      mkHost = ({ root, meta, configurationFiles, ... }:
+      mkHost = ({ meta, configurationFiles, ... }:
         mkNixOnDroidHost {
-          inherit root;
           inherit meta;
+          configuration = configurationFiles."configuration.nix".content;
           users = null;
           extraModules = builtins.attrValues config.flake.nixOnDroidModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
@@ -214,25 +218,25 @@ in
     nix-darwin = {
       hostsName = "darwinHosts";
       configurationsName = "darwinConfigurations";
-      predicate = ({ root, meta, configurationFiles, ... }:
+      predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
-          (hasFiles
+          (hasNixFiles
             [ "configuration.nix" ]
             configurationFiles)
           (hasDirectories
             [ "home" ]
             configurationFiles)
         ]);
-      mkHost = ({ root, meta, configurationFiles, ... }:
+      mkHost = ({ meta, configurationFiles, ... }:
         mkNixDarwinHost {
-          inherit root;
           inherit meta;
+          configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
           extraModules = builtins.attrValues config.flake.darwinModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
-      mkDeployNode = ({ root, meta, configuration }:
+      mkDeployNode = ({ meta, configuration }:
         {
           inherit (meta.deploy) hostname;
           profiles.system = meta.deploy // {
@@ -243,17 +247,17 @@ in
     home-manager = {
       hostsName = "homeHosts";
       configurationsName = "homeConfigurations";
-      predicate = ({ root, meta, configurationFiles, ... }:
+      predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
-          (hasFiles
+          (hasNixFiles
             [ "home.nix" ]
             configurationFiles)
         ]);
-      mkHost = ({ root, meta, configurationFiles, ... }:
+      mkHost = ({ meta, configurationFiles, ... }:
         mkHomeManagerHost {
-          inherit root;
           inherit meta;
+          configuration = configurationFiles."home.nix".content;
           extraModules = builtins.attrValues config.flake.homeManagerModules;
         });
     };
