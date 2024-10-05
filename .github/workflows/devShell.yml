@@ -1,0 +1,22 @@
+name: "Build default devShell"
+on:
+  pull_request:
+  push:
+jobs:
+  devShell:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: DeterminateSystems/nix-installer-action@v4
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v15
+      with:
+        name: rix101
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: |
+       # systems=(x86_64-linux aarch64-linux)
+       systems=(x86_64-linux)
+       for system in "${systems[@]}"; do
+         nix build .#devShells.${system}.default --verbose --print-build-logs
+       done

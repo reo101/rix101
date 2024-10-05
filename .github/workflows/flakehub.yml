@@ -10,9 +10,9 @@ jobs:
       id-token: "write"
       contents: "read"
     steps:
-      - uses: "actions/checkout@v3"
-      - uses: "DeterminateSystems/nix-installer-action@main"
-      - uses: "DeterminateSystems/flakehub-push@main"
+      - uses: "actions/checkout@v4"
+      - uses: "DeterminateSystems/nix-installer-action@v4"
+      - uses: "DeterminateSystems/flakehub-push@v5"
         with:
           name: "reo101/rix101"
           rolling: true
