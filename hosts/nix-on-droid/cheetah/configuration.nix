@@ -29,12 +29,31 @@
   system.stateVersion = "22.11";
 
   nix.extraOptions = ''
-    experimental-features = nix-command flakes recursive-nix
+    experimental-features = ${
+      builtins.concatStringsSep " " [
+        "nix-command"
+        "flakes"
+        "recursive-nix"
+        # NOTE: not in `lix`, yet
+        # "pipe-operators"
+      ]
+    }
+
     keep-outputs = true
     keep-derivations = true
+
+    # Remote builders
+    builders = ${
+      # TODO: <https://nix.dev/manual/nix/2.18/advanced-topics/distributed-builds>
+      builtins.concatStringsSep " ; " [
+        "ssh://jeeves                      x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
+        "ssh://pavelatanasov@limonka.local aarch64-darwin             - 4  3 nixos-test                            -"
+      ]
+    }
+    builders-use-substitutes = true
   '';
 
-  nix.package = pkgs.nixVersions.monitored.latest;
+  nix.package = pkgs.lix-monitored;
 
   time.timeZone = "Europe/Sofia";
 

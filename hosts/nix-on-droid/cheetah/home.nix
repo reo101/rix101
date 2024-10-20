@@ -22,6 +22,8 @@
     diffutils
     findutils
     utillinux
+    curl
+    wget
     tzdata
     hostname
     man
@@ -30,14 +32,19 @@
     gnupg
     gnused
     gnutar
+    (gnumake.override { guileSupport = true; })
     bzip2
     gzip
     xz
     zip
     unzip
 
+    zellij
+
     direnv
     nix-direnv
+    # inputs.nil.packages.${pkgs.system}.nil
+    nil
 
     # Bling
     onefetch
@@ -46,6 +53,13 @@
     # Utils
     ripgrep
     duf
+    watchman
+
+    # Email
+    himalaya
+
+    # XMPP
+    profanity
 
     # Passwords
     (pass.withExtensions (extensions: with extensions; [
@@ -53,12 +67,12 @@
     ]))
 
     # Dhall
-    # dhall
-    # dhall-lsp-server
+    dhall
+    dhall-lsp-server
 
     # Zig
-    # zigpkgs.master
-    # inputs.zls-overlay.packages.aarch64-linux.default
+    zigpkgs.master
+    inputs.zls-overlay.packages.${pkgs.system}.default
 
     # Emacs
     # emacs
@@ -100,6 +114,7 @@
     atuin = true;
     direnv = true;
     zoxide = true;
+    shells = [ "zsh" "nushell" ];
   };
 
   home.file = {
@@ -108,14 +123,9 @@
     };
   };
 
-  programs.git = {
-    enable = true;
-    userName = "reo101";
-    userEmail = "pavel.atanasov2001@gmail.com";
-    signing = {
-      signByDefault = true;
-      key = "675AA7EF13964ACB";
-    };
+  reo101.scm = {
+    git.enable = true;
+    jj.enable = true;
   };
 
   services.gpg-agent = {
