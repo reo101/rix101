@@ -102,6 +102,7 @@ let
   mkNixOnDroidHost = {
     meta,
     configuration,
+    homeConfiguration,
     extraModules ? [],
     extraHomeModules ? [],
   }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
@@ -115,6 +116,7 @@ let
       # Home Manager
       (homeManagerModule {
         inherit meta;
+        users = homeConfiguration;
         extraModules = extraHomeModules;
       })
     ] ++ extraModules;
@@ -210,7 +212,7 @@ in
         mkNixOnDroidHost {
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
-          users = null;
+          homeConfiguration = configurationFiles."home.nix".content;
           extraModules = builtins.attrValues config.flake.nixOnDroidModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
         });
