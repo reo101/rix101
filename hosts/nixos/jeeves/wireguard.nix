@@ -21,9 +21,11 @@ in
     mode = "077";
     rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/key.age";
     generator = {
-      script = { lib, pkgs, file, ... }: /* bash */ ''
-        priv=$(${lib.getExe' pkgs.wireguard-tools "wg"} genkey)
-        ${lib.getExe' pkgs.wireguard-tools "wg"} pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
+      script = { lib, pkgs, file, ... }: let
+        wg = lib.getExe' pkgs.wireguard-tools "wg";
+      in /* bash */ ''
+        priv=$(${wg} genkey)
+        ${wg} pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
         echo "$priv"
       '';
     };
