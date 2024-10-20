@@ -18,6 +18,13 @@
 
   user.shell = "${pkgs.zsh}/bin/zsh";
 
+  environment.sessionVariables = let
+    dnshack = pkgs.callPackage "${inputs.dnshack.outPath}" { };
+  in {
+    DNSHACK_RESOLVER_CMD = "${dnshack}/bin/dnshackresolver";
+    LD_PRELOAD = "${dnshack}/lib/libdnshackbridge.so";
+  };
+
   # Read the changelog before changing this value
   system.stateVersion = "22.11";
 

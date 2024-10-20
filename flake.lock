@@ -204,6 +204,22 @@
         "type": "github"
       }
     },
+    "dnshack": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1690842697,
+        "narHash": "sha256-KFzzPd1Yjko+aBST0yGC7KR4ENitT6fQqaaJZBAMGcs=",
+        "owner": "ettom",
+        "repo": "dnshack",
+        "rev": "58bbba6d2873d3dfdb65699bf0376b1856e74b9f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ettom",
+        "repo": "dnshack",
+        "type": "github"
+      }
+    },
     "dream2nix": {
       "inputs": {
         "nixpkgs": [

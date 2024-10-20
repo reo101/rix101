@@ -91,6 +91,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+    dnshack = {
+      url = "github:ettom/dnshack";
+      flake = false;
+    };
 
     # Nix Darwin
     nix-darwin = {
