@@ -24,9 +24,7 @@ final: prev:
   };
 
   lix-monitored = inputs.nix-monitored.packages.${prev.system}.default.override {
-    nix = inputs.lix-module.packages.${prev.system}.default.overrideAttrs {
-      doCheck = false;
-    };
+    nix = prev.lix;
     nix-output-monitor = prev.nix-output-monitor;
   };
 
