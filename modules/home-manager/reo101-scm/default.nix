@@ -60,7 +60,6 @@ in
       };
     };
 
-
     programs.jujutsu = mkIf cfg.jj.enable {
       enable = true;
       package = pkgs.jujutsu;
@@ -90,6 +89,11 @@ in
           color = "always";
           # pager = "nvim";
           editor = "nvim";
+          diff-editor = [
+            "nvim"
+            "-c"
+            "DiffEditor $left $right $output"
+          ];
         };
         revsets = {
           log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
