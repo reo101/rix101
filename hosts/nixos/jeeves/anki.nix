@@ -20,7 +20,7 @@
   };
 
   services.nginx = {
-    virtualHosts."anki.jeeves.local" = {
+    virtualHosts."anki.jeeves.lan" = {
       enableACME = false;
       forceSSL = false;
       locations."/" = {

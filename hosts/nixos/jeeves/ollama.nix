@@ -14,7 +14,7 @@
     };
   };
 
-  services.nginx.virtualHosts."ollama.jeeves.local" = {
+  services.nginx.virtualHosts."ollama.jeeves.lan" = {
     enableACME = false;
     forceSSL = false;
     locations."/" = {
@@ -40,7 +40,7 @@
     # openFirewall = true;
   };
 
-  services.nginx.virtualHosts."openwebui.jeeves.local" = {
+  services.nginx.virtualHosts."openwebui.jeeves.lan" = {
     enableACME = false;
     forceSSL = false;
     locations."/" = {

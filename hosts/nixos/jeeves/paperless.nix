@@ -1,7 +1,7 @@
 { inputs, lib, pkgs, config, ... }:
 
 let
-  paperlessDomain = "paperless.jeeves.local";
+  paperlessDomain = "paperless.jeeves.lan";
 in
 {
   age.secrets."paperless.password" = {

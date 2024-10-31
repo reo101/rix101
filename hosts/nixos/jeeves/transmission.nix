@@ -4,8 +4,7 @@
     tremc
   ];
 
-  services = {
-    transmission = {
+  services.transmission = {
       enable = true;
       package = pkgs.transmission_4;
       openRPCPort = true;
@@ -20,12 +19,11 @@
       };
     };
 
-    nginx = {
-      virtualHosts."transmission.jeeves.local" = {
-        enableACME = false;
-        forceSSL = false;
-        locations."/".proxyPass = "http://127.0.0.1:9091";
-      };
+  services.nginx = {
+    virtualHosts."transmission.jeeves.lan" = {
+      enableACME = false;
+      forceSSL = false;
+      locations."/".proxyPass = "http://127.0.0.1:${builtins.toString config.services.transmission.settings.rpc-port}";
     };
   };
 }

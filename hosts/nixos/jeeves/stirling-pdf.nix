@@ -13,7 +13,7 @@
   };
 
   services.nginx = {
-    virtualHosts."pdf.jeeves.local" = {
+    virtualHosts."pdf.jeeves.lan" = {
       locations."/" = {
         proxyPass = "http://127.0.0.1:${builtins.toString config.services.stirling-pdf.environment.SERVER_PORT}";
       };

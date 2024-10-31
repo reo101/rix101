@@ -4,7 +4,8 @@ let
   inherit (pkgs.lib) net;
   wireguard-interface = "wg0";
   wireguard-network-cidr = "10.100.0.0/24";
-  wireguard-network-gateway = net.cidr.host 0 wireguard-network-cidr;
+  wireguard-network-host-cidr = net.cidr.hostCidr 1 wireguard-network-cidr;
+  wireguard-network-gateway = net.cidr.host 1 wireguard-network-cidr;
 in
 {
   environment.systemPackages = with pkgs; [
@@ -46,28 +47,33 @@ in
     allowedUDPPorts = [ 53 51820 ];
   };
 
-  # Enable dnsmasq
-  # FIXME: not working
-  # NOTE: mainly for redirecting `wg0`'s DNS queries to `192.168.1.1`
-  # services.resolved.enable = false;
-  # services.dnsmasq = {
-  #   enable = false;
-  #   settings = {
-  #     server = [
-  #       "192.168.1.1"
-  #       # "1.1.1.1"
-  #     ];
-  #     interface = [ wireguard-interface ];
-  #     bind-interfaces = true;
-  #     domain-needed = true;
-  #     bogus-priv = true;
-  #     no-resolv = true;
-  #     address = [
-  #       # NOTE: automatic `*.jeeves.local` subdomain handling
-  #       "/jeeves.local/${wireguard-network-gateway}"
-  #     ];
-  #   };
-  # };
+  # Local DNS resolving, mainly for `jeeves.lan`
+  services.coredns = {
+    enable = true;
+    config = ''
+      . {
+        bind ${wireguard-network-gateway}
+
+        # Handle jeeves.lan subdomains locally
+        template IN A jeeves.lan {
+          match (.*)\.jeeves\.lan
+          answer "{{ .Name }} 60 IN A ${wireguard-network-gateway}"
+          fallthrough
+        }
+
+        # Forward everything else to main router
+        forward . 192.168.1.1 {
+          policy sequential
+          health_check 5s
+        }
+
+        # Enable logging for debugging
+        log
+        errors
+        cache
+      }
+    '';
+  };
 
   systemd.network = {
     netdevs = {
@@ -122,7 +128,10 @@ in
 
     networks.${wireguard-interface} = {
       matchConfig.Name = wireguard-interface;
-      address = [ wireguard-network-cidr ];
+      address = [
+        # NOTE: `10.100.0.1/24`
+        wireguard-network-host-cidr
+      ];
       networkConfig = {
         IPMasquerade = "ipv4";
         IPv4Forwarding = true;

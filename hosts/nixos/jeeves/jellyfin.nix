@@ -14,7 +14,7 @@
 
   services = {
     nginx = {
-      virtualHosts."jellyfin.jeeves.local" = {
+      virtualHosts."jellyfin.jeeves.lan" = {
         enableACME = false;
         forceSSL = false;
         locations."/".proxyPass = "http://127.0.0.1:8096";

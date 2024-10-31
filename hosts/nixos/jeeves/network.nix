@@ -4,7 +4,7 @@
   ];
 
   networking.extraHosts = ''
-    127.0.0.1 jeeves.local
+    # 127.0.0.1 jeeves.local
   '';
 
   # networking.nftables.enable = true;
@@ -23,21 +23,22 @@
     };
   };
 
+  # TODO: `r8168` driver?
+
   networking.useNetworkd = true;
   systemd.network = {
     enable = true;
     wait-online = {
       enable = false;
       anyInterface = true;
-      ignoredInterfaces = [
-        "eth0"
-      ];
+      # ignoredInterfaces = [
+      #   "eth0"
+      # ];
     };
 
     networks."10-eth0" = {
       matchConfig.Name = "eth0";
       networkConfig.DHCP = "yes";
-      networkConfig.DHCPServer = "yes";
     };
     links."10-eth0" = {
       matchConfig.PermanentMACAddress = "04:7c:16:80:3c:2c";
