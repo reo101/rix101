@@ -39,12 +39,12 @@ in
 
       keyboard = {
         remapCapsLockToControl = true;
-        # nonUS.remapTilde = true;
+        nonUS.remapTilde = true;
         enableKeyMapping = true; # Allows for skhd
-        userKeyMapping = [
-          # { HIDKeyboardModifierMappingSrc = 30064771172; HIDKeyboardModifierMappingDst = 30064771125; }
-          { HIDKeyboardModifierMappingSrc = 30064771125; HIDKeyboardModifierMappingDst = 30064771172; }
-        ];
+        # userKeyMapping = [
+        #   # { HIDKeyboardModifierMappingSrc = 30064771172; HIDKeyboardModifierMappingDst = 30064771125; }
+        #   { HIDKeyboardModifierMappingSrc = 30064771125; HIDKeyboardModifierMappingDst = 30064771172; }
+        # ];
       };
 
       defaults = {
@@ -190,7 +190,7 @@ in
 
         echo "Allow apps from anywhere"
         SPCTL="$(spctl --status)"
-        if ! [ "''$''\{SPCTL''\}" = "assessments disabled" ]; then
+        if ! [ "$SPCTL" = "assessments disabled" ]; then
             sudo spctl --master-disable
         fi
 

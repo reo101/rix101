@@ -1,5 +1,10 @@
-# Open WezTerm
-cmd - return : wezterm
+# Open Terminal
+cmd + shift - return : wezterm
+# -n : Open a new instance of the application(s) even if one is already running.
+# -a application : Specifies the application to use for opening the file
+# ~ : Have to supply a path, otherwise it opens the last opened terminal
+#     (with `-n` correctly creates a new one, but with the same `cwd` of the last one)
+cmd - return : open -a /Applications/Ghostty.app ~
 
 # Close window
 cmd - q : yabai -m window --close
