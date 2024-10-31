@@ -22,6 +22,7 @@
     ./podman.nix
     ./anki.nix
     ./stirling-pdf.nix
+    ./taskwarrior.nix
   ];
 
   # services.kanidm = { };
