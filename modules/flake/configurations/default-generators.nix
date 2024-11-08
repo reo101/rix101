@@ -119,6 +119,15 @@ let
         users = homeConfiguration;
         extraModules = extraHomeModules;
       })
+      # UID and GUI
+      {
+        user = {
+          inherit (meta)
+            uid
+            gid
+            ;
+        };
+      }
     ] ++ extraModules;
 
     extraSpecialArgs = {
@@ -208,6 +217,18 @@ in
             [ "configuration.nix" "home.nix" ]
             configurationFiles)
         ]);
+      extraMeta = { lib, ... }: {
+        options = let
+          inherit (lib) types;
+        in {
+          uid = lib.mkOption {
+            type = types.ints.positive;
+          };
+          gid = lib.mkOption {
+            type = types.ints.positive;
+          };
+        };
+      };
       mkHost = ({ meta, configurationFiles, ... }:
         mkNixOnDroidHost {
           inherit meta;
@@ -215,6 +236,15 @@ in
           homeConfiguration = configurationFiles."home.nix".content;
           extraModules = builtins.attrValues config.flake.nixOnDroidModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
+        });
+      mkDeployNode = ({ meta, configuration }:
+        {
+          inherit (meta.deploy) hostname;
+          profiles.system = meta.deploy // {
+            path = inputs.deploy-rs.lib.${meta.system}.activate.custom
+              configuration.activationPackage
+              "${configuration.activationPackage}/activate";
+          };
         });
     };
     nix-darwin = {

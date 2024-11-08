@@ -41,11 +41,13 @@
             defaultText = ''''${self}/hosts'';
           };
           configurationTypes = lib.mkOption {
+            # TODO: better merging (test on separate flake)
             type = types.attrsOf (types.submodule (configurationTypeSubmodule@{ name, ... }: let
               inherit (configurationTypeSubmodule.config)
                 # enable
                 dir
                 predicate
+                extraMeta
                 mkHost
                 mkDeployNode
                 ;
@@ -94,6 +96,14 @@
                       ]
                   '';
                 };
+                extraMeta = lib.mkOption {
+                  description = ''
+                    Extra module to be included in the `meta` computation
+                  '';
+                  type = types.deferredModule;
+                  default = {};
+                };
+                # TODO: export common (simple) `mkHost`s?
                 mkHost = lib.mkOption {
                   description = ''
                     Function for generating a configuration
@@ -160,9 +170,13 @@
                             meta = (lib.evalModules {
                               class = "meta";
                               modules = [
+                                # Main module, defining the options
+                                ./meta-module.nix
                                 # {} if no `meta.nix` is provided
                                 (lib.optionalAttrs has-meta meta-content)
-                                ./meta-module.nix
+                                # {} if no `extraMeta` is provided
+                                extraMeta
+                                # Adequate defaults
                                 {
                                   config = {
                                     enable = lib.mkDefault (host != "__template__");
