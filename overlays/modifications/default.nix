@@ -10,6 +10,11 @@ final: prev:
         github = "reo101";
         githubId = "37866329";
         keys = [
+          # YubiKey 1 (Green)
+          {
+            fingerprint = "49B8 3918 36E2 4FEC BC68  7504 7DA9 78E6 383E 5885";
+          }
+          # Old GPG
           {
             fingerprint = "8A29 0250 C775 7813 1DD1  DC57 7275 0ABE E181 26D0";
           }
