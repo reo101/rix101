@@ -72,7 +72,7 @@
 
   # NOTE: made with `mkpasswd -m sha-512`
   age.secrets."jeeves.user.password" = {
-    rekeyFile = "${inputs.self}/secrets/home/jeeves/user/password.age";
+    rekeyFile = "${inputs.self}/secrets/master/home/jeeves/user/password.age";
     generator = {
       script = { pkgs, ... }: /* bash */ ''
         ${lib.getExe pkgs.mkpasswd} -m sha-512

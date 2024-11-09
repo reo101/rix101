@@ -10,7 +10,7 @@
   # networking.nftables.enable = true;
 
   age.secrets."home.wifi.env" = {
-    rekeyFile = "${inputs.self}/secrets/home/wifi/env.age";
+    rekeyFile = "${inputs.self}/secrets/master/home/wifi/env.age";
   };
   networking.wireless = {
     iwd.enable = true;

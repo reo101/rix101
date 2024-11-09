@@ -16,5 +16,6 @@
     # inputs.ragenix.packages.${pkgs.system}.ragenix
     rage
     inputs.agenix-rekey.packages.${pkgs.system}.agenix-rekey
+    age-plugin-yubikey
   ];
 }

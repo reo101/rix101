@@ -20,7 +20,7 @@ in
   # Server
   age.secrets."wireguard.privateKey" = {
     mode = "077";
-    rekeyFile = "${inputs.self}/secrets/home/jeeves/wireguard/key.age";
+    rekeyFile = "${inputs.self}/secrets/master/home/jeeves/wireguard/key.age";
     generator = {
       script = { lib, pkgs, file, ... }: let
         wg = lib.getExe' pkgs.wireguard-tools "wg";
