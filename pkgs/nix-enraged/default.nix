@@ -1,3 +1,4 @@
+{ inputs }:
 { pkgs
 , lib
 , runCommand
@@ -6,6 +7,11 @@
 
 # NOTE: only works with vanilla `2.24` nix
 , nix ? pkgs.nixVersions.latest
+, nix-monitored ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
+    inherit nix;
+    nix-output-monitor = pkgs.nix-output-monitor;
+  }
+, monitored ? true
 , nix-plugins ? pkgs.nix-plugins.overrideAttrs (oldAttrs: {
     # Only override `nix`
     buildInputs = lib.pipe oldAttrs.buildInputs [
@@ -45,11 +51,11 @@ let
     "plugin-files" = "${nix-plugins}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
-in runCommand "nix-enraged" {
+in runCommand "nix-enraged${if monitored then "-monitored" else ""}" {
   buildInputs = [ makeWrapper ];
 } ''
   mkdir -p $out/bin
-  ln -s ${lib.getExe nix} $out/bin/nix
+  ln -s ${lib.getExe (if monitored then nix-monitored else nix)} $out/bin/nix
   wrapProgram $out/bin/nix \
     --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
 ''
