@@ -67,8 +67,9 @@
           [
             (lib.filterAttrs
               (name: { package, systems }:
+                # TODO: do we need `pkgs.callPackage`?
                 pkgs.callPackage systems {
-                  inherit (pkgs) lib hostPlatform targetPlatform;
+                  inherit (pkgs) lib hostPlatform buildPlatform targetPlatform;
                 }))
             (lib.mapAttrs
               (name: { package, systems }:
