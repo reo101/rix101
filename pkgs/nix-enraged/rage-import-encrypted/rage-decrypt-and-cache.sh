@@ -37,4 +37,8 @@ if [[ ! -e "${out}" ]]; then
 fi
 
 # Print out path or decrypted content
-[[ "${print_out_path}" == true ]] && echo "${out}" || cat "${out}"
+if [[ "${print_out_path}" == true ]]; then
+  echo "${out}"
+else
+  cat "${out}"
+fi
