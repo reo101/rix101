@@ -1,21 +1,19 @@
 # Shell for bootstrapping flake-enabled nix and other tooling
-{ pkgs
-, inputs
+{ inputs
+, pkgs
 , ...
 }: pkgs.mkShellNoCC {
-  NIX_CONFIG = ''
-    extra-experimental-features = nix-command flakes
-  '';
   nativeBuildInputs = with pkgs; [
-    lix-monitored
+    # lix-monitored
+    nix-enraged
     home-manager
     git
     wireguard-tools
     deploy-rs
-    # inputs.agenix.packages.${pkgs.system}.agenix
-    # inputs.ragenix.packages.${pkgs.system}.ragenix
+    # inputs.agenix.packages.${pkgs.hostPlatform.system}.agenix
+    # inputs.ragenix.packages.${pkgs.hostPlatform.system}.ragenix
     rage
-    inputs.agenix-rekey.packages.${pkgs.system}.agenix-rekey
+    inputs.agenix-rekey.packages.${pkgs.hostPlatform.system}.agenix-rekey
     age-plugin-yubikey
   ];
 }
