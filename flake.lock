@@ -1288,6 +1288,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-stable_3": {
+      "locked": {
+        "lastModified": 1730963269,
+        "narHash": "sha256-rz30HrFYCHiWEBCKHMffHbMdWJ35hEkcRVU0h7ms3x0=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "83fb6c028368e465cd19bb127b86f971a5e41ebc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-24.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1730200266,
@@ -1580,6 +1596,7 @@
         "nix-topology": "nix-topology",
         "nixos-extra-modules": "nixos-extra-modules",
         "nixpkgs": "nixpkgs_2",
+        "nixpkgs-stable": "nixpkgs-stable_3",
         "nur": "nur",
         "ragenix": "ragenix",
         "spicetify-nix": "spicetify-nix",
