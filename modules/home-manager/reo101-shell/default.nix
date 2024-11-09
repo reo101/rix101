@@ -93,6 +93,14 @@ in
           type = types.bool;
           default = true;
         };
+        gpg = {
+          enable = mkEnableOption "GPG setup";
+          pinentryPackage = mkOption {
+            type = types.nullOr types.package;
+            example = lib.literalExpression "pkgs.pinentry-gnome3";
+            default = null;
+          };
+        };
         zoxide = mkOption {
           description = "Integrate with zoxide";
           type = types.bool;
@@ -125,6 +133,12 @@ in
           (optionals cfg.direnv [
             direnv
           ])
+          (optionals cfg.gpg.enable [
+            gnupg
+            # FIXME: latest doesn't build on darwin
+            nixpkgs.stable.yubikey-manager
+            yubikey-personalization
+          ])
           (optionals cfg.zoxide [
             zoxide
           ])
@@ -133,12 +147,13 @@ in
       # Atuin
       home.file."${config.xdg.configHome}/atuin/config.toml" = mkIf cfg.atuin {
         # TODO: use pkgs.substituteAll
+        # TODO: agenix?
         text = import ./atuin.nix {
           keyPath = "${config.xdg.dataHome}/atuin/key";
         };
       };
 
-      # carapace
+      # Carapace
       programs.carapace = mkIf cfg.carapace {
         enable = true;
       };
@@ -177,7 +192,28 @@ in
       };
 
       # GnuPG
-      services.gpg-agent = {
+      services.gpg-agent = mkIf cfg.gpg.enable (let
+        # 24 hours
+        ttl = 24 * 60 * 60;
+      in {
+        enable = true;
+        defaultCacheTtl = 86400;
+        maxCacheTtl = 86400;
+        pinentryPackage = if cfg.gpg.pinentryPackage != null then
+          cfg.gpg.pinentryPackage
+        else if pkgs.hostPlatform.isDarwin then
+          pkgs.pinentry_mac
+        # TODO: `pinentry` for GUI systems
+        # else if meta.gui then
+        #   pkgs.pinentry-qt
+        else
+          pkgs.pinentry-tty;
+        enableSshSupport = true;
+        sshKeys = [
+          # NOTE: will mainly be using `YubiKey`s, this is a fallback
+          "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7"
+        ];
+      }) // {
         enableNushellIntegration = builtins.elem "nushell" cfg.shells;
         enableZshIntegration = builtins.elem "zsh" cfg.shells;
       };

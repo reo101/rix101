@@ -101,6 +101,7 @@
       atuin = true;
       carapace = true;
       direnv = true;
+      gpg.enable = true;
       zoxide = true;
     };
     scm = {
@@ -114,41 +115,4 @@
       enable = false;
     };
   };
-
-  home.file.".gnupg/gpg-agent.conf" = {
-    text = let
-      # 24 hours
-      ttl = 24 * 60 * 60;
-    in /* sh */ ''
-      allow-preset-passphrase
-      max-cache-ttl ${builtins.toString ttl}
-      default-cache-ttl ${builtins.toString ttl}
-      enable-ssh-support
-      pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
-      # pinentry-program /usr/local/opt/pinentry-touchid/bin/pinentry-touchid
-    '';
-  };
-
-  home.file.".gnupg/sshcontrol" = {
-    text = ''
-      CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7
-    '';
-  };
-
-  programs.zsh.initExtra = let
-      gpgconf = lib.getExe' pkgs.gnupg "gpgconf";
-      gpg-connect-agent = lib.getExe' pkgs.gnupg "gpg-connect-agent";
-      tty = lib.getExe' pkgs.toybox "tty";
-  in /* sh */ ''
-    # if [ "''${SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
-    #   export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
-    # fi
-    # if [ -z "$SSH_AUTH_SOCK" ]; then
-    #   export SSH_AUTH_SOCK=$(${gpgconf} --list-dirs agent-ssh-socket)
-    # fi
-    unset SSH_AGENT_PID
-    export SSH_AUTH_SOCK=$(${gpgconf} --list-dirs agent-ssh-socket)
-    ${gpg-connect-agent} updatestartuptty /bye >/dev/null
-    export GPG_TTY=$(${tty})
-  '';
 }
