@@ -3,6 +3,7 @@
 {
   imports = [
     ./things.nix
+    ./secrets.nix
   ];
 
   options = let

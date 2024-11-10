@@ -26,4 +26,9 @@
       (builtins.getAttr "darwin-rebuild")
     ])
   ];
+
+  env = {
+    # NOTE: Always add affected files to git after agenix operations
+    AGENIX_REKEY_ADD_TO_GIT = "always";
+  };
 }
