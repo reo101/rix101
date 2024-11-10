@@ -3,7 +3,7 @@
 , lib
 , runCommand
 , makeWrapper
-, writeShellScriptBin
+, writeShellApplication
 
 # NOTE: only works with vanilla `2.24` nix
 , nix ? pkgs.nixVersions.latest
@@ -27,7 +27,7 @@
 let
   # Create a wrapped version of the decrypt script with all required runtime dependencies
   # TODO: rewrite the script in another language
-  rage-decrypt-and-cache = pkgs.writeShellApplication {
+  rage-decrypt-and-cache = writeShellApplication {
     name = "rage-decrypt-and-cache";
     runtimeInputs = [ coreutils rage ];
     text = builtins.readFile ./rage-import-encrypted/rage-decrypt-and-cache.sh;
@@ -47,7 +47,11 @@ let
 
   # Default Nix configuration
   defaultNixConfig = makeNixConfig {
-    "extra-experimental-features" = "nix-command flakes";
+    "extra-experimental-features" = lib.concatStringsSep " " [
+      "nix-command"
+      "flakes"
+      "pipe-operators"
+    ];
     "plugin-files" = "${nix-plugins}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
