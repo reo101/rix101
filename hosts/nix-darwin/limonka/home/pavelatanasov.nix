@@ -1,6 +1,10 @@
 { inputs, lib, pkgs, config, ... }:
 
 {
+  imports = [
+    ../modules/taskwarrior.nix
+  ];
+
   home = {
     username = lib.mkForce "pavelatanasov";
     homeDirectory = lib.mkForce "/Users/pavelatanasov";
