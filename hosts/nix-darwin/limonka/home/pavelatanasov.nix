@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ../modules/taskwarrior.nix
+    ../homeModules/taskwarrior.nix
   ];
 
   home = {
