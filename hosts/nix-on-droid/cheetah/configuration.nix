@@ -2,7 +2,6 @@
 
 {
   imports = [
-    inputs.self.nixosModules.substituters
   ];
 
   environment.packages = with pkgs; [ ];
