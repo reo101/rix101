@@ -61,15 +61,23 @@
 
   config = {
     perSystem = { lib, pkgs, system, ... }: let
+      # NOTE: evaluate packages in isolation, which allows
+      #       merging them back into the global `pkgs` later
+      # NOTE: also faster than `import nixpkgs { inherit system; }`
+      pkgsPure = inputs.nixpkgs.legacyPackages.${system};
       packages =
         lib.pipe
           config.auto.packages.result
           [
             (lib.filterAttrs
               (name: { package, systems }:
-                # TODO: do we need `pkgs.callPackage`?
-                pkgs.callPackage systems {
-                  inherit (pkgs) lib hostPlatform buildPlatform targetPlatform;
+                systems {
+                  inherit (pkgsPure)
+                    lib
+                    hostPlatform
+                    buildPlatform
+                    targetPlatform
+                    ;
                 }))
             (lib.mapAttrs
               (name: { package, systems }:
@@ -85,7 +93,7 @@
                 in
                 if isDream2Nix then
                   inputs.dream2nix.lib.evalModules {
-                    packageSets.nixpkgs = pkgs;
+                    packageSets.nixpkgs = pkgsPure;
                     modules = [
                       package
                       {
@@ -102,7 +110,7 @@
                   }
                 else
                   # TODO: only inherit `input` if requested
-                  pkgs.callPackage package { /* inherit inputs; */ }))
+                  pkgsPure.callPackage package { /* inherit inputs; */ }))
           ];
     in {
       inherit packages;

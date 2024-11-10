@@ -18,21 +18,28 @@
 
   perSystem = { pkgs, system, ... }: {
     _module.args.pkgs = let
-      overlays = lib.attrValues self.overlays ++ [
-        inputs.neovim-nightly-overlay.overlays.default
-        inputs.zig-overlay.overlays.default
-        inputs.nix-topology.overlays.default
-        inputs.wired.overlays.default
-        # NOTE: nix-on-droid overlay (needed for `proot`)
-        inputs.nix-on-droid.overlays.default
-        # NOTE: for `oddlamma`'s modified `lib.nix`
-        # TODO: fork and expose separately
-        inputs.nixos-extra-modules.overlays.default
-      ] ++ [
-        # WARN: not including a `self.packages` overlay
-        #       because it causes an infinite recursion
-        # (_: _: (config.perSystem system).packages)
-        # (_: _: self.packages.${system})
+      overlays = lib.concatLists [
+        # NOTE: packages from flake outputs
+        [
+          (_: _: (config.perSystem system).packages)
+          # (_: _: self.packages.${system})
+        ]
+
+        # NOTE: overlays from flake outputs
+        (lib.attrValues self.overlays)
+
+        # NOTE: overlays from flake inputs
+        [
+          inputs.neovim-nightly-overlay.overlays.default
+          inputs.zig-overlay.overlays.default
+          inputs.nix-topology.overlays.default
+          inputs.wired.overlays.default
+          # NOTE: nix-on-droid overlay (needed for `proot`)
+          inputs.nix-on-droid.overlays.default
+          # NOTE: for `oddlamma`'s modified `lib-net`
+          # TODO: fork and expose separately
+          inputs.nixos-extra-modules.overlays.default
+        ]
       ];
     in import inputs.nixpkgs {
       inherit system;
@@ -58,7 +65,7 @@
       };
     };
 
-    # NOTE: Export this custom `pkgs` instance (+ our packages)
-    pkgs = pkgs.extend (_: _: self.packages.${system});
+    # NOTE: Export this custom `pkgs` instance
+    inherit pkgs;
   };
 }

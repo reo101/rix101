@@ -8,7 +8,7 @@ let
     extractDirectory
     ;
 
-  # `pkgs` with flake's overlays and packages
+  # Global `pkgs` with flake's overlays and packages
   # See <../pkgs/default.nix>
   pkgsFor = system: (config.perSystem system).pkgs;
 
