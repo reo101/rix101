@@ -37,7 +37,7 @@
     gnupg
     firefox
     discord
-    armcord # modded discord
+    legcord # modded discord
     vifm # file editor
     pciutils # lspci
     usbutils # lsusb
