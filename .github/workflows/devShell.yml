@@ -6,7 +6,7 @@ jobs:
   devShell:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: DeterminateSystems/nix-installer-action@v4
       with:
         nix_path: nixpkgs=channel:nixos-unstable
