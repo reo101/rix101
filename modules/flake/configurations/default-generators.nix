@@ -8,13 +8,9 @@ let
     extractDirectory
     ;
 
-  # `pkgs` with flake's overlays
-  pkgsFor = system:
-    lib.pipe (withSystem system ({ pkgs, ... }: pkgs)) [
-      # NOTE: flake's packages, done here to avoid infinite recursion
-      (p: p.extend
-        (final: prev: inputs.self.packages.${system}))
-    ];
+  # `pkgs` with flake's overlays and packages
+  # See <../pkgs/default.nix>
+  pkgsFor = system: (config.perSystem system).pkgs;
 
   genUsers = configurationFiles:
     lib.pipe configurationFiles [
@@ -43,8 +39,9 @@ let
       useGlobalPkgs = true;
       # Do not keep packages in ${HOME}
       useUserPackages = true;
-      # Default import all of our exported `home-manager` modules
-      sharedModules = builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName};
+      # Default import provided modules
+      # Usually `builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName}`
+      sharedModules = extraModules;
       # Pass in `inputs` and `meta`
       extraSpecialArgs = {
         inherit inputs;
@@ -72,12 +69,14 @@ let
     modules = [
       # Main configuration
       configuration
+
       # Home Manager
       inputs.home-manager.nixosModules.home-manager
       (homeManagerModule {
         inherit meta users;
         extraModules = extraHomeModules;
       })
+
       # (r)agenix && agenix-rekey
       inputs.ragenix.nixosModules.default
       inputs.agenix-rekey.nixosModules.default
@@ -85,8 +84,10 @@ let
         age.rekey.hostPubkey = meta.pubkey;
       })
       ./agenix-rekey
+
       # nix-topology
       inputs.nix-topology.nixosModules.default
+
       # Sane default `networking.hostName`
       {
         networking.hostName = lib.mkDefault meta.hostname;

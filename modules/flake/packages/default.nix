@@ -83,8 +83,8 @@
                       (builtins.elem "dream2nix")
                     ];
                 in
-                  if isDream2Nix
-                  then inputs.dream2nix.lib.evalModules {
+                if isDream2Nix then
+                  inputs.dream2nix.lib.evalModules {
                     packageSets.nixpkgs = pkgs;
                     modules = [
                       package

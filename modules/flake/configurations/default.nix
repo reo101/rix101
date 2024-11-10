@@ -197,6 +197,7 @@
                             lib.optionalAttrs valid {
                               ${host} = {
                                 inherit configuration;
+                                inherit meta;
                               } // lib.optionalAttrs (has-mkDeployNode && has-deploy-config) {
                                 inherit deploy;
                               };
@@ -217,8 +218,11 @@
                       lib.nameValuePair
                       configurationTypeConfig.configurationsName
                       (lib.mapAttrs
-                        (host: { configuration, ... }:
-                          configuration)
+                        (host: { configuration, meta, ... }:
+                          configuration // {
+                            # NOTE: for introspection
+                            inherit meta;
+                          })
                         configurationTypeConfig.result)))
                 ];
               deployNodes =

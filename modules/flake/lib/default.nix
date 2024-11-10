@@ -19,7 +19,6 @@
   config.lib = rec {
     # Boolean helpers
     and = lib.all lib.id;
-    or = lib.any lib.id;
     eq = x: y: x == y;
 
     # Directory walking helpers
