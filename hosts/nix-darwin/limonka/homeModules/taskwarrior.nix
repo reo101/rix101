@@ -2,7 +2,12 @@
 
 {
   home.packages = with pkgs; [
-    taskopen
+    (taskopen.overrideAttrs (oldAttrs: {
+      meta = oldAttrs.meta // {
+        # NOTE: marked as `linux` only, but also works on `darwin`
+        platforms = lib.platforms.unix;
+      };
+    }))
   ];
 
   programs.taskwarrior = {
