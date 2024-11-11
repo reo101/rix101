@@ -36,9 +36,7 @@
           inputs.wired.overlays.default
           # NOTE: nix-on-droid overlay (needed for `proot`)
           inputs.nix-on-droid.overlays.default
-          # NOTE: for `oddlamma`'s modified `lib-net`
-          # TODO: fork and expose separately
-          inputs.nixos-extra-modules.overlays.default
+          inputs.nix-lib-net.overlays.default
         ]
       ];
     in import inputs.nixpkgs {

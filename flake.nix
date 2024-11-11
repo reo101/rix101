@@ -130,9 +130,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-extra-modules = {
-      url = "github:oddlama/nixos-extra-modules";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nix-lib-net = {
+      url = "github:reo101/nix-lib-net";
     };
 
     nix-monitored = {
