@@ -152,6 +152,15 @@ let
     modules = [
       # Main configuration
       configuration
+
+      # (r)agenix && agenix-rekey
+      inputs.ragenix.darwinModules.default
+      inputs.agenix-rekey.nixosModules.default
+      (lib.optionalAttrs (meta.pubkey != null) {
+        age.rekey.hostPubkey = meta.pubkey;
+      })
+      ./agenix-rekey
+
       # Home Manager
       inputs.home-manager.darwinModules.home-manager
       (homeManagerModule {
