@@ -17,7 +17,6 @@ in
 
   config = mkIf cfg.enable {
 
-    services.activate-system.enable = true;
     services.nix-daemon.enable = true;
     # programs.nix-index.enable = true;
 
