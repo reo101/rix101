@@ -26,6 +26,19 @@ let
             }))
     ];
 
+  # NOTE: `agenix-rekey`'s `nixosModules.default` module
+  #       actually works everywhere where `(r)agenix` works
+  agenix-module-for = host-type: { meta, ... }: {
+    imports = [
+      inputs.ragenix."${config.lib.kebabToCamel host-type}Modules".default
+      inputs.agenix-rekey.nixosModules.default
+      (lib.optionalAttrs (meta.pubkey != null) {
+        age.rekey.hostPubkey = meta.pubkey;
+      })
+      ./agenix-rekey
+    ];
+  };
+
   homeManagerModule = {
     meta,
     # NOTE: `{}` is default for normal systems
@@ -209,7 +222,9 @@ in
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
           extraModules = builtins.attrValues config.flake.nixosModules;
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+            (agenix-module-for "nixos")
+          ];
         });
       mkDeployNode = ({ meta, configuration }:
         {
@@ -276,7 +291,9 @@ in
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
           extraModules = builtins.attrValues config.flake.darwinModules;
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+            (agenix-module-for "darwin")
+          ];
         });
       mkDeployNode = ({ meta, configuration }:
         {

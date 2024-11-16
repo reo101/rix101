@@ -7,7 +7,7 @@
 
   perSystem = {
     agenix-rekey = {
-      nodes = self.nixosConfigurations;
+      nodes = self.nixosConfigurations // self.darwinConfigurations;
     };
   };
 

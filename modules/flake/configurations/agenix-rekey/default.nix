@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, config, options, ... }:
+{ inputs, meta, lib, pkgs, config, options, ... }:
 {
   config = {
     # NOTE: `(r)agenix` and `agenix-rekey` modules are imported by `../default.nix`
@@ -8,7 +8,7 @@
       masterIdentities = lib.mkDefault inputs.self.secretsConfig.masterIdentities;
       extraEncryptionPubkeys = lib.mkDefault inputs.self.secretsConfig.extraEncryptionPubkeys;
       storageMode = lib.mkDefault "local";
-      localStorageDir = lib.mkDefault "${inputs.self}/secrets/rekeyed/${config.networking.hostName}";
+      localStorageDir = lib.mkDefault "${inputs.self}/secrets/rekeyed/${meta.hostname}";
     };
   };
 }
