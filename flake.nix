@@ -35,13 +35,13 @@
         # Automatic configurations, see `./modules/flake/configurations/default.nix`
         configurations.enableAll = true;
 
-        # Automatic packages, see `./modules/flake/packages/default/default.nix`
+        # Automatic packages, see `./modules/flake/packages/default.nix`
         packages.enable = true;
 
-        # Automatic overlays, see `./modules/flake/overlays/default/default.nix`
+        # Automatic overlays, see `./modules/flake/overlays/default.nix`
         overlays.enable = true;
 
-        # Automatic devShells, see `./modules/flake/shells/default/default.nix`
+        # Automatic devShells, see `./modules/flake/shells/default.nix`
         devShells.enable = true;
       };
 
