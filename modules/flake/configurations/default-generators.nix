@@ -205,6 +205,18 @@ let
       inherit meta;
     };
   };
+
+  mkOpenwrt = {
+    meta,
+    configuration,
+  }: let
+    pkgs = pkgsFor meta.system;
+    profiles = inputs.openwrt-imagebuilder.lib.profiles {
+      inherit pkgs;
+      inherit (meta) release;
+    };
+    openwrtConfig = profiles.identifyProfile meta.profile // configuration { inherit pkgs; };
+  in inputs.openwrt-imagebuilder.lib.build openwrtConfig;
 in
 {
   auto.configurations.configurationTypes = lib.mkDefault {
@@ -216,6 +228,15 @@ in
             [ "configuration.nix" ]
             configurationFiles)
         ]);
+      metaModule = { lib, metaModules, ... }: {
+        imports = [
+          metaModules.enable
+          metaModules.system
+          metaModules.hostname
+          metaModules.pubkey
+          metaModules.deploy
+        ];
+      };
       mkHost = ({ meta, configurationFiles, ... }:
         mkNixosHost {
           inherit meta;
@@ -242,14 +263,25 @@ in
             [ "configuration.nix" "home.nix" ]
             configurationFiles)
         ]);
-      extraMeta = { lib, ... }: {
+      metaModule = { lib, metaModules, ... }: {
+        imports = [
+          metaModules.enable
+          metaModules.system
+          metaModules.hostname
+          metaModules.pubkey
+          metaModules.deploy
+        ];
+
         options = let
-          inherit (lib) types;
+          inherit (lib)
+            mkOption
+            types
+            ;
         in {
-          uid = lib.mkOption {
+          uid = mkOption {
             type = types.ints.positive;
           };
-          gid = lib.mkOption {
+          gid = mkOption {
             type = types.ints.positive;
           };
         };
@@ -285,6 +317,15 @@ in
             [ "home" ]
             configurationFiles)
         ]);
+      metaModule = { lib, metaModules, ... }: {
+        imports = [
+          metaModules.enable
+          metaModules.system
+          metaModules.hostname
+          metaModules.pubkey
+          # metaModules.deploy
+        ];
+      };
       mkHost = ({ meta, configurationFiles, ... }:
         mkNixDarwinHost {
           inherit meta;
@@ -292,7 +333,7 @@ in
           users = genUsers configurationFiles;
           extraModules = builtins.attrValues config.flake.darwinModules;
           extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
-            (agenix-module-for "darwin")
+            # (agenix-module-for "darwin")
           ];
         });
       mkDeployNode = ({ meta, configuration }:
@@ -313,11 +354,52 @@ in
             [ "home.nix" ]
             configurationFiles)
         ]);
+      metaModule = { lib, metaModules, ... }: {
+        imports = [
+          metaModules.enable
+          metaModules.system
+          metaModules.hostname
+          # metaModules.pubkey
+        ];
+      };
       mkHost = ({ meta, configurationFiles, ... }:
         mkHomeManagerHost {
           inherit meta;
           configuration = configurationFiles."home.nix".content;
           extraModules = builtins.attrValues config.flake.homeManagerModules;
+        });
+    };
+    openwrt = {
+      predicate = ({ meta, configurationFiles, ... }:
+        and [
+          meta.enable
+          (hasNixFiles
+            [ "configuration.nix" ]
+            configurationFiles)
+        ]);
+      metaModule = { lib, metaModules, ... }: {
+        imports = [
+          metaModules.enable
+          metaModules.system
+        ];
+
+        options = let
+          inherit (lib)
+            mkOption
+            types;
+        in {
+          release = mkOption {
+            type = types.str;
+          };
+          profile = mkOption {
+            type = types.str;
+          };
+        };
+      };
+      mkHost = ({ meta, configurationFiles, ... }:
+        mkOpenwrt {
+          inherit meta;
+          configuration = configurationFiles."configuration.nix".content;
         });
     };
   };

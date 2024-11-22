@@ -47,7 +47,7 @@
                 # enable
                 dir
                 predicate
-                extraMeta
+                metaModule
                 mkHost
                 mkDeployNode
                 ;
@@ -96,9 +96,10 @@
                       ]
                   '';
                 };
-                extraMeta = lib.mkOption {
+                metaModule = lib.mkOption {
                   description = ''
-                    Extra module to be included in the `meta` computation
+                    Module to be included in the `meta` computation
+                    Has access to the `metaModules` module argument for access to common meta modules
                   '';
                   type = types.deferredModule;
                   default = {};
@@ -169,25 +170,22 @@
                             meta-content = meta-file.content;
                             meta = (lib.evalModules {
                               class = "meta";
+                              specialArgs = {
+                                # Give access to common meta modules
+                                metaModules = (import ./meta-modules);
+                                # Pass through host (default for `hostname`, etc.)
+                                inherit host;
+                              };
                               modules = [
-                                # Main module, defining the options
-                                ./meta-module.nix
+                                # {} if no `metaModule` is provided
+                                metaModule
                                 # {} if no `meta.nix` is provided
                                 (lib.optionalAttrs has-meta meta-content)
-                                # {} if no `extraMeta` is provided
-                                extraMeta
-                                # Adequate defaults
-                                {
-                                  config = {
-                                    enable = lib.mkDefault (host != "__template__");
-                                    hostname = lib.mkDefault host;
-                                  };
-                                }
                               ];
                             }).config;
-                            deploy-config = meta.deploy;
-                            has-mkDeployNode = mkDeployNode != null;
+                            deploy-config = meta.deploy or null;
                             has-deploy-config = deploy-config != null;
+                            has-mkDeployNode = mkDeployNode != null;
                             configuration-args = { inherit meta configurationFiles; };
                             valid = predicate configuration-args;
                             configuration = mkHost configuration-args;

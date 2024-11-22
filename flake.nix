@@ -206,6 +206,10 @@
       inputs.zig-overlay.follows = "zig-overlay";
     };
 
+    openwrt-imagebuilder = {
+      url = "github:astro/nix-openwrt-imagebuilder";
+    };
+
     wired = {
       url = "github:Toqozz/wired-notify";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -2,36 +2,19 @@
   inherit (lib) types;
 in {
   options = {
-    enable = lib.mkOption {
-      description = "Whether to enable this host's configuration";
-      type = types.bool;
-      default = true;
-    };
-    hostname = lib.mkOption {
-      description = "Hostname of the machine";
-      type = types.str;
-      # NOTE: set as a config-side default outside
-      # default = host;
-    };
-    system = lib.mkOption {
-      description = "The `system` of the host";
-      type = types.str;
-    };
-    pubkey = lib.mkOption {
-      description = "The host SSH key, used for encrypting agenix secrets";
-      type = types.nullOr types.str;
-      default = null;
-    };
     deploy = lib.mkOption {
       type = types.nullOr (types.submodule (deploySubmodule: {
         options = {
-          hostname = lib.mkOption {
+          hostname = lib.mkOption ({
             description = ''
               This is the hostname by which you'll refer to this machine using reploy-rs
             '';
             type = types.str;
+          } // lib.optionalAttrs (config ? hostname) {
+            # NOTE: `hostname` meta module might not be included
+            # TODO: `host` vs `meta.hostname`
             default = config.hostname;
-          };
+          });
           sshUser = lib.mkOption {
             description = ''
               This is the user that deploy-rs will use when connecting.
