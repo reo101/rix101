@@ -1010,11 +1010,11 @@
         "lib-net": "lib-net"
       },
       "locked": {
-        "lastModified": 1731363206,
-        "narHash": "sha256-OrEoZalgQ4SjCeeMY6tPjKAgW6OhLWl154HmbHQrzi8=",
+        "lastModified": 1732312010,
+        "narHash": "sha256-kQuiPSq3Iz/t5RC+QqwHfvj4hKQesm/WGffcQlhhCVE=",
         "owner": "reo101",
         "repo": "nix-lib-net",
-        "rev": "f47c1dd5eb4db1f8052f76d2a8917a1289d039c9",
+        "rev": "0f3412ccb56d783b974341f5f83abfaed7aa8b5b",
         "type": "github"
       },
       "original": {

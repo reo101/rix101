@@ -14,8 +14,7 @@
     enable = true;
     package = pkgs.taskwarrior3;
     colorTheme = "dark-green-256";
-    config = builtins.extraBuiltins.rageImportEncrypted
-      ["${inputs.self}/secrets/identities/age-yubikey-1-identity-9306892a.pub"]
+    config = lib.rageImportEncryptedBySystem pkgs.stdenv.hostPlatform.system
       ./taskwarrior-config.nix.age;
   };
 }

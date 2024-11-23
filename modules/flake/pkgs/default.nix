@@ -36,7 +36,7 @@
           inputs.wired.overlays.default
           # NOTE: nix-on-droid overlay (needed for `proot`)
           inputs.nix-on-droid.overlays.default
-          inputs.nix-lib-net.overlays.default
+          # inputs.nix-lib-net.overlays.default
         ]
       ];
     in import inputs.nixpkgs {

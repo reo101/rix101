@@ -1,6 +1,8 @@
 { lib, config, self, inputs, withSystem, ... }:
 
 let
+  # HACK: doesn't get automatically overriden for some reason
+  lib = config._module.args.lib;
   inherit (config.lib)
     and
     hasNixFiles
@@ -26,7 +28,7 @@ let
             }))
     ];
 
-  # NOTE: `agenix-rekey`'s `nixosModules.default` module
+  # HACK: `agenix-rekey`'s `nixosModules.default` module
   #       actually works everywhere where `(r)agenix` works
   agenix-module-for = host-type: { meta, ... }: {
     imports = [
@@ -59,6 +61,7 @@ let
       extraSpecialArgs = {
         inherit inputs;
         inherit meta;
+        inherit lib;
       };
     } // (if builtins.isAttrs users then {
       # Not nixOnDroid
@@ -110,6 +113,7 @@ let
     specialArgs = {
       inherit inputs;
       inherit meta;
+      inherit lib;
     };
   };
 
@@ -147,6 +151,7 @@ let
     extraSpecialArgs = {
       inherit inputs;
       inherit meta;
+      inherit lib;
     };
 
     home-manager-path = inputs.home-manager.outPath;
@@ -185,6 +190,7 @@ let
     specialArgs = {
       inherit inputs;
       inherit meta;
+      inherit lib;
     };
   };
 
@@ -203,6 +209,7 @@ let
     extraSpecialArgs = {
       inherit inputs;
       inherit meta;
+      inherit lib;
     };
   };
 
@@ -215,7 +222,7 @@ let
       inherit pkgs;
       inherit (meta) release;
     };
-    openwrtConfig = profiles.identifyProfile meta.profile // configuration { inherit pkgs; };
+    openwrtConfig = profiles.identifyProfile meta.profile // configuration { inherit pkgs lib; };
   in inputs.openwrt-imagebuilder.lib.build openwrtConfig;
 in
 {
@@ -323,7 +330,7 @@ in
           metaModules.system
           metaModules.hostname
           metaModules.pubkey
-          # metaModules.deploy
+          metaModules.deploy
         ];
       };
       mkHost = ({ meta, configurationFiles, ... }:

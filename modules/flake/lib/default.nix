@@ -1,4 +1,4 @@
-{ lib, config, self, ... }:
+{ inputs, lib, config, self, ... }:
 
 {
   imports = [
@@ -16,6 +16,19 @@
       type = types.unspecified;
     };
   };
+
+  # NOTE: expose our `lib` augmentations to everybody
+  #       (including configurations, check <../configurations/default-generators.nix>)
+  config._module.args.lib = let
+    # NOTE: using raw `lib` to avoid recursion
+    overlay = lib.composeManyExtensions [
+      inputs.nix-lib-net.overlays.raw
+      # (final: prev: {
+      #   utils = config.lib;
+      # })
+      (final: prev: config.lib)
+    ];
+  in lib.extend overlay;
 
   config.lib = rec {
     # Boolean helpers
