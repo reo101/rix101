@@ -41,6 +41,21 @@
         };
         fuzz = 2;
       };
+      jeeves = removebg {
+        image = pkgs.fetchurl {
+          url = "https://www.fractal-design.com/app/uploads/2019/06/Define-R2-XL_BK_2-1440x1440.jpg";
+          hash = "sha256-VvPsfRaoSNV5fxPxLA9lk9HI+osibdJLiaEHUV8pXQM=";
+        };
+        fuzz = 1;
+      };
+      homix = removebg {
+        image = pkgs.fetchurl {
+          name = "homix.jpg";
+          url = "https://pcbuild.bg/assets/products/000/000/209/000000209949--kutiya-nzxt-h510-flow-matte-black.jpeg";
+          hash = "sha256-elyj+/MDwoRHVg8usFzQEwuUwRC/0/lY6+f3a50TP+g=";
+        };
+        fuzz = 10;
+      };
       cheetah = removebg {
         image = pkgs.fetchurl {
           name = "cheetah.jpg";
@@ -74,16 +89,21 @@
             ;
         in {
           nodes.internet = mkInternet {
-            connections = mkConnection "router1" "eth1";
+            connections = [(mkConnection "router2" "wan")];
           };
 
           nodes.router1 = mkRouter "router1" {
             info = "TP-Link TL-WR740N";
             image = images.TL-WR740N;
             interfaceGroups = [
-              ["eth1" "eth2" "eth3" "eth4"]
-              ["wan1"]
+              ["wan"]
+              ["eth1" "eth2" "eth3" "eth4" "wlan"]
             ];
+            interfaces.wan = {
+              addresses = ["192.168.1.150"];
+              network = "router2";
+              physicalConnections = [(mkConnectionRev "router2" "lan2")];
+            };
           };
           networks.router1 = {
             name = "router1";
@@ -100,15 +120,9 @@
             info = "Zbtlink ZBT-WR8305RT";
             image = images.ZBT-WR8305RT;
             interfaceGroups = [
-              ["eth0"]
-              ["lan1" "lan2" "lan3" "lan4"]
               ["wan"]
+              ["lan1" "lan2" "lan3" "lan4" "wlan"]
             ];
-            interfaces.eth0 = {
-              addresses = ["192.168.0.101"];
-              network = "router1";
-              physicalConnections = [(mkConnectionRev "router1" "eth2")];
-            };
           };
           networks.router2 = {
             name = "router2";
@@ -121,16 +135,19 @@
           };
 
           nodes.jeeves = {
-            interfaces.eth0 = {
-              addresses = ["192.168.1.210"];
-              network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "lan3")];
+            hardware = {
+              image = images.jeeves;
             };
-            interfaces.wan0 = {
+            interfaces.eth0 = {
+              addresses = ["192.168.0.100"];
+              network = "router1";
+              physicalConnections = [(mkConnectionRev "router1" "eth1")];
+            };
+            interfaces.wlan0 = {
               icon = "interfaces.wifi";
               addresses = ["192.168.1.123"];
               network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "wan")];
+              physicalConnections = [(mkConnectionRev "router2" "wlan")];
             };
           };
           networks.wg0 = {
@@ -139,7 +156,19 @@
             style = {
               primaryColor = "#ff0000";
               secondaryColor = null;
-              pattern = "solid";
+              pattern = "dotted";
+            };
+          };
+
+          nodes.homix = {
+            hardware = {
+              info = "Gaming PC";
+              image = images.homix;
+            };
+            interfaces.eth0 = {
+              addresses = ["192.168.0.101"];
+              network = "router1";
+              physicalConnections = [(mkConnectionRev "router1" "eth2")];
             };
           };
 
@@ -149,11 +178,11 @@
               info = "Google Pixel 7 Pro (cheetah)";
               image = images.cheetah;
             };
-            interfaces.wlan0 = {
+            interfaces.wlan1 = {
               icon = "interfaces.wifi";
               addresses = ["192.168.1.240"];
               network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "wan")];
+              physicalConnections = [(mkConnectionRev "router2" "wlan")];
             };
             interfaces.jeeves = {
               addresses = ["10.100.0.2"];

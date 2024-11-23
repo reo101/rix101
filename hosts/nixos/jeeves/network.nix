@@ -45,13 +45,13 @@
       linkConfig.Name = "eth0"; # "enp8s0";
     };
 
-    networks."15-wan0" = {
-      matchConfig.Name = "wan0";
+    networks."15-wlan0" = {
+      matchConfig.Name = "wlan0";
       networkConfig.DHCP = "yes";
     };
-    links."15-wan0" = {
+    links."15-wlan0" = {
       matchConfig.PermanentMACAddress = "bc:f4:d4:40:5c:ed";
-      linkConfig.Name = "wan0"; # "wlp15s0";
+      linkConfig.Name = "wlan0"; # "wlp15s0";
     };
   };
 

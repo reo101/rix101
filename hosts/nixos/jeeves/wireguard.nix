@@ -1,11 +1,10 @@
 { inputs, lib, pkgs, config, ... }:
 
 let
-  inherit (pkgs.lib) net;
   wireguard-interface = "wg0";
   wireguard-network-cidr = "10.100.0.0/24";
-  wireguard-network-host-cidr = net.cidr.hostCidr 1 wireguard-network-cidr;
-  wireguard-network-gateway = net.cidr.host 1 wireguard-network-cidr;
+  wireguard-network-host-cidr = lib.net.cidr.hostCidr 1 wireguard-network-cidr;
+  wireguard-network-gateway = lib.net.cidr.host 1 wireguard-network-cidr;
 in
 {
   environment.systemPackages = with pkgs; [
@@ -36,7 +35,7 @@ in
   networking.nat = {
     enable = true;
     enableIPv6 = true;
-    # TODO: `vlan` or something to multiplex `eth0` and `wan0` for this
+    # TODO: `vlan` or something to multiplex `eth0` and `wlan0` for this
     externalInterface = "eth0";
     internalInterfaces = [ wireguard-interface ];
   };
@@ -50,21 +49,38 @@ in
   # Local DNS resolving, mainly for `jeeves.lan`
   services.coredns = {
     enable = true;
+    package = pkgs.coredns;
     config = ''
       . {
+        # NOTE: binding on wireguard only
         bind ${wireguard-network-gateway}
 
         # Handle jeeves.lan subdomains locally
         template IN A jeeves.lan {
-          match (.*)\.jeeves\.lan
+          match (.*\.)?jeeves\.lan
           answer "{{ .Name }} 60 IN A ${wireguard-network-gateway}"
           fallthrough
         }
 
-        # Forward everything else to main router
-        forward . 192.168.1.1 {
+        # Forward everything to main router
+        forward . 192.168.0.1 {
           policy sequential
           health_check 5s
+        }
+
+        # Enable logging for debugging
+        log
+        errors
+        cache
+      }
+      . {
+        bind eth0 wlan0
+
+        # Handle jeeves.lan subdomains locally
+        template IN A jeeves.lan {
+          match (.*)\.jeeves\.lan
+          answer "{{ .Name }} 60 IN A 192.168.0.100"
+          fallthrough
         }
 
         # Enable logging for debugging
@@ -92,7 +108,7 @@ in
             (i: peer: {
               inherit (peer) PublicKey;
               AllowedIPs = [
-                (net.cidr.host
+                (lib.net.cidr.host
                   (i + 1)
                   wireguard-network-cidr)
               ];

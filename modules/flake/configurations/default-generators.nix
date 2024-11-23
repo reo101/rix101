@@ -61,7 +61,7 @@ let
       extraSpecialArgs = {
         inherit inputs;
         inherit meta;
-        inherit lib;
+        # inherit lib;
       };
     } // (if builtins.isAttrs users then {
       # Not nixOnDroid
@@ -92,14 +92,6 @@ let
         inherit meta users;
         extraModules = extraHomeModules;
       })
-
-      # (r)agenix && agenix-rekey
-      inputs.ragenix.nixosModules.default
-      inputs.agenix-rekey.nixosModules.default
-      (lib.optionalAttrs (meta.pubkey != null) {
-        age.rekey.hostPubkey = meta.pubkey;
-      })
-      ./agenix-rekey
 
       # nix-topology
       inputs.nix-topology.nixosModules.default
@@ -249,9 +241,11 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = builtins.attrValues config.flake.nixosModules;
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+          extraModules = builtins.attrValues config.flake.nixosModules ++ [
             (agenix-module-for "nixos")
+          ];
+          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+            (agenix-module-for "homeManager")
           ];
         });
       mkDeployNode = ({ meta, configuration }:
