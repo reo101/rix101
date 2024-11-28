@@ -60,7 +60,7 @@
   };
 
   config = {
-    perSystem = { lib, pkgs, system, ... }: let
+    perSystem = { lib, pkgs, system, ... }@perSystemArgs: let
       # NOTE: flake's packages, done here to avoid infinite recursion
       pkgs' = pkgs.extend (final: prev: inputs.self.packages.${system});
       devShells =
@@ -72,7 +72,7 @@
                 pkgs'.callPackage systems { inherit inputs; }))
             (lib.mapAttrs
               (name: { devShell, systems }:
-                pkgs'.callPackage devShell { inherit inputs; }))
+                pkgs'.callPackage devShell { inherit inputs; inherit (perSystemArgs) config; }))
           ];
     in {
       inherit devShells;
