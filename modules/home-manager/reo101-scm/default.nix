@@ -32,7 +32,10 @@ in
     # TODO: module options???
     name = "reo101";
     email = "pavel.atanasov2001@gmail.com";
-    key = "675AA7EF13964ACB";
+    # NOTE: GPG
+    # key = "675AA7EF13964ACB";
+    # NOTE: YubiKey
+    key = "7DA978E6383E5885";
   in {
     home.packages = with pkgs;
       builtins.concatLists [
@@ -99,11 +102,11 @@ in
           log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
         };
         revset-aliases = {
-          "bases" = "dev";
+          "bases" = "master";
           "downstream(x,y)" = "(x::y) & y";
-          "branches" = "downstream(trunk(), branches()) & mine()";
+          "branches" = "downstream(trunk(), bookmarks()) & mine()";
           "branchesandheads" = "branches | (heads(trunk()::) & mine())";
-          "curbranch" = "latest(branches::@- & branches)";
+          "currbranch" = "latest(branches::@- & branches)";
           "nextbranch" = "roots(@:: & branchesandheads)";
         };
       };
