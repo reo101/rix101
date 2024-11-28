@@ -89,40 +89,64 @@
             ;
         in {
           nodes.internet = mkInternet {
-            connections = [(mkConnection "router2" "wan")];
+            connections = [
+              (mkConnection "router2" "wan")
+              (mkConnection "cheetah" "wwan")
+            ];
+          } // {
+            interfaces."*".network = "internet";
+          };
+          networks.internet = {
+            name = "internet";
+            style = {
+              primaryColor = "#b87f0d";
+              secondaryColor = null;
+              pattern = "dashed";
+            };
           };
 
-          nodes.router1 = mkRouter "router1" {
+          nodes.router1 = mkSwitch "router1" {
             info = "TP-Link TL-WR740N";
             image = images.TL-WR740N;
             interfaceGroups = [
               ["wan"]
               ["eth1" "eth2" "eth3" "eth4" "wlan"]
             ];
-            interfaces.wan = {
+            interfaces.eth1 = {
               addresses = ["192.168.1.150"];
               network = "router2";
               physicalConnections = [(mkConnectionRev "router2" "lan2")];
             };
           };
-          networks.router1 = {
-            name = "router1";
-            cidrv4 = "192.168.0.0/24";
-            style = {
-              primaryColor = "#b87f0d";
-              secondaryColor = null;
-              # one of "solid", "dashed", "dotted"
-              pattern = "solid";
-            };
-          };
+          # networks.router1 = {
+          #   name = "router1";
+          #   cidrv4 = "192.168.0.0/24";
+          #   style = {
+          #     primaryColor = "#b87f0d";
+          #     secondaryColor = null;
+          #     # one of "solid", "dashed", "dotted"
+          #     pattern = "solid";
+          #   };
+          # };
 
           nodes.router2 = mkRouter "router2" {
             info = "Zbtlink ZBT-WR8305RT";
             image = images.ZBT-WR8305RT;
             interfaceGroups = [
               ["wan"]
+              ["wwan"]
               ["lan1" "lan2" "lan3" "lan4" "wlan"]
             ];
+            interfaces.wan = {
+              addresses = ["*"];
+              network = "internet";
+              physicalConnections = [(mkConnectionRev "internet" "*")];
+            };
+            interfaces.wwan = {
+              addresses = ["192.168.33.176"];
+              network = "cheetah";
+              physicalConnections = [(mkConnectionRev "cheetah" "ap_br_wlan2")];
+            };
           };
           networks.router2 = {
             name = "router2";
@@ -139,9 +163,9 @@
               image = images.jeeves;
             };
             interfaces.eth0 = {
-              addresses = ["192.168.0.100"];
-              network = "router1";
-              physicalConnections = [(mkConnectionRev "router1" "eth1")];
+              addresses = ["192.168.1.210"];
+              network = "router2";
+              physicalConnections = [(mkConnectionRev "router1" "eth3")];
             };
             interfaces.wlan0 = {
               icon = "interfaces.wifi";
@@ -166,9 +190,9 @@
               image = images.homix;
             };
             interfaces.eth0 = {
-              addresses = ["192.168.0.101"];
-              network = "router1";
-              physicalConnections = [(mkConnectionRev "router1" "eth2")];
+              addresses = ["192.168.1.141"];
+              network = "router2";
+              physicalConnections = [(mkConnectionRev "router1" "eth4")];
             };
           };
 
@@ -188,6 +212,24 @@
               addresses = ["10.100.0.2"];
               network = "wg0";
               physicalConnections = [(mkConnectionRev "jeeves" "wg0")];
+            };
+            interfaces.wwan = {
+              addresses = ["*"];
+              network = "internet";
+              physicalConnections = [(mkConnectionRev "internet" "*")];
+            };
+            interfaces.ap_br_wlan2 = {
+              addresses = ["192.168.33.254"];
+              network = "cheetah";
+            };
+          };
+          networks.cheetah = {
+            name = "cheetah";
+            cidrv4 = "192.168.33.254/24";
+            style = {
+              primaryColor = "#fcf403";
+              secondaryColor = null;
+              pattern = "dashed";
             };
           };
         })

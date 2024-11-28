@@ -79,7 +79,7 @@ in
         # Handle jeeves.lan subdomains locally
         template IN A jeeves.lan {
           match (.*)\.jeeves\.lan
-          answer "{{ .Name }} 60 IN A 192.168.0.100"
+          answer "{{ .Name }} 60 IN A 192.168.1.210"
           fallthrough
         }
 
