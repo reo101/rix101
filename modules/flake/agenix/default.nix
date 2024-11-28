@@ -7,7 +7,9 @@
 
   perSystem = {
     agenix-rekey = {
-      nodes = self.nixosConfigurations // self.darwinConfigurations;
+      nixosConfigurations = self.nixosConfigurations;
+      # TODO:
+      # darwinConfigurations = self.darwinConfigurations;
     };
   };
 
@@ -38,10 +40,11 @@
 
     options.secretsConfig = let
       # HACK: extract types from `agenix-rekey` module definition
-      agenix-rekey-options = (inputs.agenix-rekey.nixosModules.agenix-rekey {
-        inherit lib;
-        config = null;
-        pkgs = null;
+      agenix-rekey-options = (lib.evalModules {
+        modules = [
+          inputs.agenix-rekey.nixosModules.default
+          "${inputs.nixpkgs.outPath}/nixos/modules/misc/assertions.nix"
+        ];
       }).options.age.rekey;
     in {
       masterIdentities = lib.mkOption {
