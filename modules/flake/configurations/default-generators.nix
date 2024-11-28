@@ -56,7 +56,11 @@ let
       useUserPackages = true;
       # Default import provided modules
       # Usually `builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName}`
-      sharedModules = extraModules;
+      sharedModules = extraModules ++ [
+        ({ lib, ... }: {
+          _module.args.lib = lib.extend inputs.nix-lib-net.overlays.raw;
+        })
+      ];
       # Pass in `inputs` and `meta`
       extraSpecialArgs = {
         inherit inputs;

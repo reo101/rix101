@@ -55,11 +55,16 @@
           else
             true;
       };
+
+    # NOTE: all identities, no filter,
+    #       relies on `AGENIX_REKEY_PRIMARY_IDENTITY`
+    rageImportEncrypted = rageImportEncryptedRaw {};
   in {
     inherit
       rageImportEncryptedRaw
       rageImportEncryptedByHostPlatform
       rageImportEncryptedBySystem
+      rageImportEncrypted
       ;
   };
 }
