@@ -113,7 +113,7 @@
   # Fonts
   fonts.fontDir.enable = true;
   fonts.fonts = with pkgs; [
-    (nerdfonts.override { fonts = [ "FiraCode" ]; })
+    nerd-fonts.fira-code
   ];
 
   reo101 = {

@@ -56,12 +56,5 @@
 
   time.timeZone = "Europe/Sofia";
 
-  terminal.font =
-    let
-      firacode = pkgs.nerdfonts.override {
-        fonts = [ "FiraCode" ];
-      };
-      fontPath = "share/fonts/truetype/NerdFonts/FiraCodeNerdFontMono-Regular.ttf";
-    in
-    "${firacode}/${fontPath}";
+  terminal.font = "${pkgs.nerd-fonts.fira-code}/share/fonts/truetype/NerdFonts/FiraCodeNerdFontMono-Regular.ttf";
 }

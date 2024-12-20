@@ -18,7 +18,6 @@
     # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
     package = pkgs.lix-monitored;
 
-
     settings = {
       # Enable flakes and new 'nix' command
       experimental-features = [
@@ -61,7 +60,7 @@
 
   # Fonts
   fonts.packages = with pkgs; [
-    (nerdfonts.override { fonts = [ "FiraCode" ]; })
+    nerd-fonts.fira-code
   ];
 
   reo101 = {

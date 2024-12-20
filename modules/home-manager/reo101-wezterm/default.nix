@@ -28,7 +28,7 @@ in
         builtins.concatLists [
           [
             wezterm
-            (nerdfonts.override { fonts = [ "FiraCode" ]; })
+            nerd-fonts.fira-code
           ]
         ];
 
