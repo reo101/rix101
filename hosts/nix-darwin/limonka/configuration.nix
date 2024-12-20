@@ -3,6 +3,7 @@
 {
   imports = [
     inputs.self.nixosModules.substituters
+    ./darwinModules/arrpc.nix
   ];
 
   environment.systemPackages = with pkgs; [ ];
