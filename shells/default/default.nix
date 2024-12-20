@@ -6,7 +6,8 @@
 }: pkgs.mkShellNoCC {
   nativeBuildInputs = with pkgs; [
     # lix-monitored
-    nix-enraged
+    (nix-enraged.override { monitored = true; })
+    (nixd.override { nix = nix-enraged; })
     home-manager
     git
     wireguard-tools
@@ -22,7 +23,7 @@
       (f: "${f}/pkgs/nix-tools/default.nix")
       import
       (p: pkgs.callPackage p {
-        nixPackage = (nix-enraged.override { monitored = false; });
+        nixPackage = nix-enraged;
       })
       (builtins.getAttr "darwin-rebuild")
     ])

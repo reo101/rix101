@@ -11,7 +11,7 @@
     inherit nix;
     nix-output-monitor = pkgs.nix-output-monitor;
   }
-, monitored ? true
+, monitored ? false
 , nix-plugins ? pkgs.nix-plugins.overrideAttrs (oldAttrs: {
     # Only override `nix`
     buildInputs = lib.pipe oldAttrs.buildInputs [
@@ -62,4 +62,9 @@ in runCommand "nix-enraged${if monitored then "-monitored" else ""}" {
   ln -s ${lib.getExe (if monitored then nix-monitored else nix)} $out/bin/nix
   wrapProgram $out/bin/nix \
     --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
-''
+'' // {
+  passthru = {
+    inherit nix;
+  };
+  inherit (nix) dev;
+}
