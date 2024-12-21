@@ -23,6 +23,7 @@
     ./anki.nix
     ./stirling-pdf.nix
     ./taskwarrior.nix
+    ./nix-ld.nix
   ];
 
   # services.kanidm = { };
