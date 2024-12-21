@@ -1,1 +1,2 @@
-import ./clojure.nix
+# import ./clojure.nix
+import ./fennel.nix
