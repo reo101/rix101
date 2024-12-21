@@ -3,17 +3,13 @@
   environment.systemPackages = with pkgs; [
   ];
 
-  networking.extraHosts = ''
-    # 127.0.0.1 jeeves.local
-  '';
-
   # networking.nftables.enable = true;
 
   age.secrets."home.wifi.env" = {
     rekeyFile = "${inputs.self}/secrets/master/home/wifi/env.age";
   };
   networking.wireless = {
-    iwd.enable = true;
+    iwd.enable = false;
     secretsFile = config.age.secrets."home.wifi.env".path;
     networks = {
       home = {

@@ -63,24 +63,9 @@ in
         }
 
         # Forward everything to main router
-        forward . 192.168.0.1 {
+        forward . 192.168.1.1 {
           policy sequential
           health_check 5s
-        }
-
-        # Enable logging for debugging
-        log
-        errors
-        cache
-      }
-      . {
-        bind eth0 wlan0
-
-        # Handle jeeves.lan subdomains locally
-        template IN A jeeves.lan {
-          match (.*)\.jeeves\.lan
-          answer "{{ .Name }} 60 IN A 192.168.1.210"
-          fallthrough
         }
 
         # Enable logging for debugging

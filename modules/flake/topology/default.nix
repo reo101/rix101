@@ -171,7 +171,9 @@
               icon = "interfaces.wifi";
               addresses = ["192.168.1.123"];
               network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "wlan")];
+              physicalConnections = [
+                # (mkConnectionRev "router2" "wlan")
+              ];
             };
           };
           networks.wg0 = {
