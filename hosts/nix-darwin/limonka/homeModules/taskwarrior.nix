@@ -14,6 +14,6 @@
     enable = true;
     package = pkgs.taskwarrior3;
     colorTheme = "dark-green-256";
-    config = lib.rageImportEncrypted ./taskwarrior-config.nix.age;
+    config = lib.rageImportEncryptedOrDefault ./taskwarrior-config.nix.age {};
   };
 }

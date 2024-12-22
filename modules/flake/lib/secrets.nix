@@ -24,13 +24,15 @@
       # NOTE: cannot use `null` as default, as that might be a valid real default
       # default,
       ...
-    }: importOrDefaultFrom args
-      (lib.pipe identities [
-        (lib.filter filter)
-        (lib.map
-          ({ identity, pubkey }:
-            identity))
-      ]);
+    }:
+      importOrDefaultFrom
+        args
+        (lib.pipe identities [
+          (lib.filter filter)
+          (lib.map
+            ({ identity, pubkey }:
+              identity))
+        ]);
 
     rageImportEncryptedByHostPlatform = hostPlatform:
       rageImportEncryptedRaw {
@@ -59,12 +61,17 @@
     # NOTE: all identities, no filter,
     #       relies on `AGENIX_REKEY_PRIMARY_IDENTITY`
     rageImportEncrypted = rageImportEncryptedRaw {};
+
+    # NOTE: same as `rageImportEncrypted` but provide default
+    rageImportEncryptedOrDefault = file: default:
+      rageImportEncryptedRaw { inherit default; } file;
   in {
     inherit
       rageImportEncryptedRaw
       rageImportEncryptedByHostPlatform
       rageImportEncryptedBySystem
       rageImportEncrypted
+      rageImportEncryptedOrDefault
       ;
   };
 }
