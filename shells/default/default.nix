@@ -2,6 +2,7 @@
 { config # flake-parts `perSystem` config
 , inputs
 , pkgs
+, lib
 , ...
 }: pkgs.mkShellNoCC {
   nativeBuildInputs = with pkgs; [
@@ -34,6 +35,7 @@
     AGENIX_REKEY_ADD_TO_GIT = "always";
   } // lib.optionalAttrs (let platform = pkgs.hostPlatform; in platform.isLinux && platform.isAarch64) {
     # TODO: refer through `inputs`
+    # TODO: move to `cheetah` config
     AGENIX_REKEY_PRIMARY_IDENTITY = "age1m23jgdtkfh6gqnxge88q03yy9exckajmlmx8sw2z9t3t5gpr0c4qxgdtwr";
     AGENIX_REKEY_PRIMARY_IDENTITY_ONLY = true;
   };
