@@ -35,20 +35,27 @@ PYTHON
     mv -v $out/bin/${pname}.py $out/bin/${pname}
   '';
 
-  dependencies = with python3Packages; [
-    music-tag
-    pyarr
+  dependencies = [
+    python3Packages.music-tag
+    python3Packages.pyarr
     (python3Packages.buildPythonPackage rec {
       pname = "slskd-api";
       version = "0.1.5";
+      format = "pyproject";
 
       src = fetchPypi {
         inherit pname version;
         hash = "sha256-LmWP7bnK5IVid255qS2NGOmyKzGpUl3xsO5vi5uJI88=";
       };
 
-      build-system = with python3Packages; [
-        pip
+      build-system = [
+        python3Packages.pip
+        python3Packages.setuptools-git-versioning
+        python3Packages.wheel
+      ];
+
+      propagatedBuildInputs = [
+        python3Packages.requests
       ];
     })
   ];
