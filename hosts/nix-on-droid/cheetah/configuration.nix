@@ -56,5 +56,5 @@
 
   time.timeZone = "Europe/Sofia";
 
-  terminal.font = "${pkgs.nerd-fonts.fira-code}/share/fonts/truetype/NerdFonts/FiraCodeNerdFontMono-Regular.ttf";
+  terminal.font = "${pkgs.nerd-fonts.fira-code}/share/fonts/truetype/NerdFonts/FiraCode/FiraCodeNerdFont-Regular.ttf";
 }
