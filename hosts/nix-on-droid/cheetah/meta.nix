@@ -1,7 +1,7 @@
 {
   system = "aarch64-linux";
-  uid = 10459;
-  gid = 10459;
+  uid = 10626;
+  gid = 10626;
   deploy = {
     hostname = "cheetah.lan";
     sshUser = "nix-on-droid";

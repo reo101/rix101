@@ -101,7 +101,7 @@ in
             [
               {
                 Host = "cheetah";
-                PublicKey = "CFTGvBcly791ClwyS6PzTjmqztvYJW2eklR7it/QhxI=";
+                PublicKey = "HtTZHebAQqpQEkzzQGc+jf8PB7xIpG4tYilSzRpGsxo=";
               }
               {
                 Host = "limonka";
