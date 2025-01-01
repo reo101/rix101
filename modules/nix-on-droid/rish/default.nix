@@ -1,8 +1,10 @@
 { lib, pkgs, config, ... }:
 
 let
+  cfg = config.rish;
+
   dex = pkgs.stdenv.mkDerivation {
-    name = "rish-shizuku-dex";
+    name = "rish-shizuku.dex";
 
     src = pkgs.fetchurl {
       url = "https://github.com/RikkaApps/Shizuku/releases/download/v13.5.4/shizuku-v13.5.4.r1049.0e53409-release.apk";
@@ -46,8 +48,7 @@ let
     #   fi
     # fi
 
-    # Replace "PKG" with the application id of your terminal app
-    [ -z "$RISH_APPLICATION_ID" ] && export RISH_APPLICATION_ID="com.termux.nix"
+    export RISH_APPLICATION_ID="${cfg.applicationId}"
 
     # Restrict `PATH` to root-only binaries
     export PATH="/bin:/system/bin"
@@ -66,17 +67,25 @@ let
     ${lib.getExe rish}
   '';
   sudo = pkgs.writeShellScriptBin "sudo" ''
-    ${lib.getExe rish} -c "''${@}"
+    ${lib.getExe rish} -c "''${*}"
   '';
 in
 {
-  options.rish = lib.mkOption {
-    type = lib.types.bool;
-    description ="Whether to enable `su`/`sudo` wrappers of Shizuku's `rish`";
-    default = true;
+  options.rish = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      description = "Whether to enable `su`/`sudo` wrappers of Shizuku's `rish`";
+      default = true;
+    };
+
+    applicationId = lib.mkOption {
+      type = lib.types.str;
+      description = "Android ID of the target application";
+      default = "com.termux.nix";
+    };
   };
 
-  config = lib.mkIf config.rish {
+  config = lib.mkIf config.rish.enable {
     environment.packages = [
       su
       sudo
