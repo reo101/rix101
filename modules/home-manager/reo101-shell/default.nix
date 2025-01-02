@@ -244,7 +244,7 @@ in
           environmentVariables = { };
         })
         (mkIf cfg.atuin {
-          extraEnv = ''
+          extraEnv = /* nu */ ''
             let atuin_cache = "${config.xdg.cacheHome}/atuin"
             if not ($atuin_cache | path exists) {
                 mkdir $atuin_cache
@@ -252,7 +252,7 @@ in
             ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
           '';
 
-          extraConfig = ''
+          extraConfig = /* nu */ ''
             source ${config.xdg.cacheHome}/atuin/init.nu
 
             # Ctrl-R
