@@ -45,7 +45,7 @@
     builders = ${
       # TODO: <https://nix.dev/manual/nix/2.18/advanced-topics/distributed-builds>
       builtins.concatStringsSep " ; " [
-        "ssh://jeeves                      x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
+        "ssh://jeeves@jeeves.lan           x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
         "ssh://pavelatanasov@limonka.local aarch64-darwin             - 4  3 nixos-test                            -"
       ]
     }

@@ -8,5 +8,6 @@
     user = "nix-on-droid";
     magicRollback = true;
     sshOpts = [ "-p" " 8022" ];
+    remoteBuild = true;
   };
 }
