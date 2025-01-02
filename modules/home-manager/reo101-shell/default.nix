@@ -101,6 +101,11 @@ in
             default = null;
           };
         };
+        zellij = mkOption {
+          description = "Integrate with zellij";
+          type = types.bool;
+          default = true;
+        };
         zoxide = mkOption {
           description = "Integrate with zoxide";
           type = types.bool;
@@ -138,6 +143,9 @@ in
             # FIXME: latest doesn't build on darwin
             nixpkgs.stable.yubikey-manager
             yubikey-personalization
+          ])
+          (optionals cfg.zellij [
+            zellij
           ])
           (optionals cfg.zoxide [
             zoxide
@@ -179,6 +187,20 @@ in
         settings = import ./starship.nix {
           inherit (cfg) username;
         };
+
+        enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+        enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      };
+
+      # Zellij
+      programs.zellij = mkIf cfg.zellij {
+        enable = true;
+
+        package = pkgs.zellij;
+
+        # NOTE: runs inside every shell, not wanted
+        # enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+        # enableZshIntegration = builtins.elem "zsh" cfg.shells;
       };
 
       # Zoxide
