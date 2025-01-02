@@ -49,6 +49,7 @@ in
 
     programs.git = mkIf cfg.git.enable {
       enable = true;
+      package = pkgs.gitFull;
       userName = name;
       userEmail = email;
       signing = {
