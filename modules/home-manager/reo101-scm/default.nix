@@ -79,6 +79,7 @@ in
         git = {
           fetch = ["origin" "upstream"];
           push = "github";
+          private-commits = "description(glob:'wip:*')";
         };
         signing = {
           backend = "gpg";
@@ -86,7 +87,7 @@ in
           # key = "675AA7EF13964ACB";
           # sign-all = config.programs.git.signing.signByDefault;
           # key = config.programs.git.signing.key;
-          sign-all = true;
+          sign-all = false;
           inherit key;
         };
         core = {
@@ -105,17 +106,17 @@ in
             "DiffEditor $left $right $output"
           ];
         };
-        revsets = {
-          log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
-        };
-        revset-aliases = {
-          "bases" = "master";
-          "downstream(x,y)" = "(x::y) & y";
-          "branches" = "downstream(trunk(), bookmarks()) & mine()";
-          "branchesandheads" = "branches | (heads(trunk()::) & mine())";
-          "currbranch" = "latest(branches::@- & branches)";
-          "nextbranch" = "roots(@:: & branchesandheads)";
-        };
+        # revsets = {
+        #   log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
+        # };
+        # revset-aliases = {
+        #   "bases" = "master";
+        #   "downstream(x,y)" = "(x::y) & y";
+        #   "branches" = "downstream(trunk(), bookmarks()) & mine()";
+        #   "branchesandheads" = "branches | (heads(trunk()::) & mine())";
+        #   "currbranch" = "latest(branches::@- & branches)";
+        #   "nextbranch" = "roots(@:: & branchesandheads)";
+        # };
       };
     };
   };
