@@ -44,6 +44,7 @@ in
         ])
         (optionals cfg.jj.enable [
           jujutsu
+          watchman
         ])
       ];
 
@@ -88,7 +89,12 @@ in
           sign-all = true;
           inherit key;
         };
-        core.fsmonitor = "watchman";
+        core = {
+          fsmonitor = "watchman";
+          watchman = {
+            register_snapshot_trigger = true;
+          };
+        };
         ui = {
           color = "always";
           # pager = "nvim";
