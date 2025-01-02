@@ -40,7 +40,7 @@ in
     home.packages = with pkgs;
       builtins.concatLists [
         (optionals cfg.git.enable [
-          git
+          # git
         ])
         (optionals cfg.jj.enable [
           jujutsu
