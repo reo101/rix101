@@ -1,0 +1,84 @@
+--- lua-5.1/src/lua.h	2006-01-10 13:50:13.000000000 +0100
++++ lua-5.1/src/lua.h	2006-01-28 23:05:35.000000000 +0100
+@@ -109,6 +109,7 @@
+ LUA_API lua_State *(lua_newstate) (lua_Alloc f, void *ud);
+ LUA_API void       (lua_close) (lua_State *L);
+ LUA_API lua_State *(lua_newthread) (lua_State *L);
++LUA_API lua_State *lua_clonethread (lua_State *L, lua_State *from);
+ 
+ LUA_API lua_CFunction (lua_atpanic) (lua_State *L, lua_CFunction panicf);
+ 
+--- lua-5.1/src/lapi.c	2006-01-10 13:50:00.000000000 +0100
++++ lua-5.1/src/lapi.c	2006-01-28 23:10:42.000000000 +0100
+@@ -146,6 +146,46 @@
+ }
+ 
+ 
++LUA_API lua_State *lua_clonethread (lua_State *L, lua_State *from) {
++  lua_State *to;
++  lua_lock(L);
++  if (!(from->status == LUA_YIELD ||
++      (from->status == 0 && from->ci == from->base_ci)))
++    luaG_runerror(L, "attempt to clone uncloneable coroutine");
++  lua_unlock(L);
++  to = lua_newthread(L);
++  lua_lock(to);
++  luaD_reallocstack(to, from->stacksize - EXTRA_STACK - 1);
++  luaD_reallocCI(to, from->size_ci);
++  {  /* Copy stack slots. */
++    TValue *f, *t;
++    for (f = from->stack, t = to->stack; f < from->top; f++, t++)
++      setobjs2s(to, t, f);
++    to->top = t;
++    for (; f < from->ci->top; f++, t++)
++      setnilvalue(t);
++    to->base = (from->base - from->stack) + to->stack;
++  }
++  {  /* Copy frames. */
++    CallInfo *f, *t;
++    for (f = from->base_ci, t = to->base_ci; f <= from->ci; f++, t++) {
++      t->base = (f->base - from->stack) + to->stack;
++      t->func = (f->func - from->stack) + to->stack;
++      t->top = (f->top - from->stack) + to->stack;
++      t->nresults = f->nresults;
++      t->savedpc = f->savedpc;
++      t->tailcalls = f->tailcalls;
++    }
++    to->ci = (from->ci - from->base_ci) + to->base_ci;
++  }
++  /* Copy misc fields. Hooks are deliberately not copied. */
++  to->status = from->status;
++  to->savedpc = from->savedpc;
++  lua_unlock(to);
++  return to;
++}
++
++
+ 
+ /*
+ ** basic stack manipulation
+--- lua-5.1/src/lbaselib.c	2006-01-18 12:49:12.000000000 +0100
++++ lua-5.1/src/lbaselib.c	2006-01-28 23:06:34.000000000 +0100
+@@ -592,6 +592,14 @@
+ }
+ 
+ 
++static int luaB_clone (lua_State *L) {
++  lua_State *co = lua_tothread(L, 1);
++  luaL_argcheck(L, co, 1, "coroutine expected");
++  lua_clonethread(L, co);
++  return 1;
++}
++
++
+ static const luaL_Reg co_funcs[] = {
+   {"create", luaB_cocreate},
+   {"resume", luaB_coresume},
+@@ -599,6 +607,7 @@
+   {"status", luaB_costatus},
+   {"wrap", luaB_cowrap},
+   {"yield", luaB_yield},
++  {"clone", luaB_clone},
+   {NULL, NULL}
+ };
+ 
