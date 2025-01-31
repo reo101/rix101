@@ -84,6 +84,7 @@ in
           fetch = ["origin" "upstream"];
           push = "origin";
           private-commits = "description(glob:'wip:*')";
+          auto-local-bookmark = true;
           push-bookmark-prefix = "reo101/";
         };
         signing = {
@@ -101,17 +102,21 @@ in
             register_snapshot_trigger = true;
           };
         };
-        ui = {
-          color = "always";
-        } // mkIf cfg.jj.nvim {
-          # pager = "nvim";
-          editor = "nvim -b";
-          diff-editor = [
-            "nvim"
-            "-c"
-            "DiffEditor $left $right $output"
-          ];
-        };
+        ui = mkMerge [
+          {
+            color = "always";
+            show-cryptographic-signatures = true;
+          }
+          (mkIf cfg.jj.nvim {
+            # pager = "nvim";
+            editor = "nvim -b";
+            diff-editor = [
+              "nvim"
+              "-c"
+              "DiffEditor $left $right $output"
+            ];
+          })
+        ];
         merge-tools = {
           diffconflicts = mkIf cfg.jj.nvim {
             program = "nvim";
@@ -119,7 +124,7 @@ in
               "-c" "let g:jj_diffconflicts_marker_length=$marker_length"
               "-c" "JJDiffConflicts!" "$output" "$base" "$left" "$right"
             ];
-            # NOTE: no history view
+            # NOTE: for no history view
             # merge-args = [
             #   "-c" "JJDiffConflicts!" "$output"
             # ];
@@ -135,18 +140,23 @@ in
           "nextbranch" = "roots(@:: & branchesandheads)";
         };
         aliases = {
-          "dragmain" = ["bookmark" "set" "main" "-r" "@-"];
-          "sync" = ["git" "fetch" "--all-remotes"];
-          "evolve" = ["rebase" "--skip-emptied" "-d" "trunk()"];
-          "pullup" = ["evolve" "-s" "all:stragglers"];
+          s = ["status"];
+          e = ["edit"];
+          l = ["log"];
+          d = ["diff"];
 
-          "xl" = ["log" "-r" "all()"];
-          "pl" = ["obslog" "-p"];
+          dragmain = ["bookmark" "set" "main" "-r" "@-"];
+          sync = ["git" "fetch" "--all-remotes"];
+          evolve = ["rebase" "--skip-emptied" "-d" "trunk()"];
+          pullup = ["evolve" "-s" "all:stragglers"];
 
-          # "cl" = ["git" "push" "-c" "@-"];
-          # "push" = ["git" "push" "--all"];
+          xl = ["log" "-r" "all()"];
+          pl = ["obslog" "-p"];
 
-          "configure" = ["config" "edit" "--repo"];
+          # cl = ["git" "push" "-c" "@-"];
+          # push = ["git" "push" "--all"];
+
+          configure = ["config" "edit" "--repo"];
 
           ".." = ["edit" "-r" "@-"];
           ",," = ["edit" "-r" "@+"];
@@ -157,6 +167,34 @@ in
               ts.after("2 weeks ago"),
               ts.ago(),
               ts.format("%b %d, %Y %H:%M"),
+            )
+          '';
+
+          "format_short_id(id)" = ''
+            id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
+          '';
+          "format_timestamp(timestamp)" = ''
+            timestamp.ago()
+          '';
+          "format_short_signature(signature)" = "signature.email().local()";
+          "format_detailed_signature(signature)" = "signature.email().local()";
+
+          builtin_log_detailed = ''
+            "\n\n\n" ++
+            concat(
+              "Change ID: " ++ format_short_id(change_id) ++ "\n",
+              "Commit ID: " ++ format_short_id(commit_id) ++ "\n",
+              surround("Bookmarks: ", "\n", separate(" ", local_bookmarks, remote_bookmarks)),
+              surround("Tags     : ", "\n", tags),
+              if(config("ui.show-cryptographic-signatures").as_boolean(),
+                "Signature: " ++ format_detailed_cryptographic_signature(signature)
+                "Signature: (not shown)"),
+              "\n",
+              "Author   : " ++ format_detailed_signature(author) ++ "\n",
+              "Committer: " ++ format_detailed_signature(committer)  ++ "\n",
+                indent("    ",
+                coalesce(description, label(if(empty, "empty"), description_placeholder) ++ "\n")),
+              "\n",
             )
           '';
         };
