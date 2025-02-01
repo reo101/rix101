@@ -17,7 +17,6 @@
   home.packages = with pkgs; [
     ## Core
     # neovim
-    git
     gnupg
     pciutils # lspci
     usbutils # lsusb
@@ -46,12 +45,18 @@
   reo101 = {
     shell = {
       enable = true;
+      shells = [ "zsh" "nushell" ];
+      starship = true;
+      atuin = true;
+      carapace = true;
       direnv = true;
+      gpg.enable = true;
+      zellij = true;
       zoxide = true;
-      shells = [
-        "zsh"
-        "nushell"
-      ];
+    };
+    scm = {
+      git.enable = true;
+      jj.enable = true;
     };
   };
 
