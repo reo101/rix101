@@ -37,8 +37,6 @@ in
         lockfiles = false; # Don't save lockfile (since running from anywhere)
       };
       taps = [
-        "homebrew/core"
-        "homebrew/cask"
         "homebrew/cask-fonts"
         "homebrew/services"
         "cmacrae/formulae"
