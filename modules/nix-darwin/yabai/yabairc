@@ -13,6 +13,7 @@ yabai -m signal --add event=window_destroyed action="sketchybar --trigger window
 yabai -m signal --add event=window_destroyed action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
 yabai -m signal --add event=application_terminated action="yabai -m query --windows --window &> /dev/null || yabai -m window --focus mouse"
 yabai -m signal --add event=display_resized action="launchctl stop org.nixos.sketchybar && launchctl start org.nixos.sketchybar"
+yabai -m signal --add event=system_woke action="sh -c 'sleep 1; /opt/homebrew/bin/sketchybar --reload'"
 
 # {
 #     DESIRED_SPACES_PER_DISPLAY=4
