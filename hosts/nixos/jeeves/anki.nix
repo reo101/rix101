@@ -11,7 +11,8 @@
     package = pkgs.anki-sync-server;
     users = [
       {
-        username = "reo101";
+        # username = "reo101";
+        username = "pavel.atanasov2001@gmail.com";
         passwordFile = config.age.secrets."anki.reo101".path;
       }
     ];
