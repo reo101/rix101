@@ -19,15 +19,6 @@
     config.agenix-rekey.package
     age-plugin-yubikey
   ] ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-    # "${inputs.nix-darwin.outPath}/pkgs/nix-tools/default.nix" |> import |> (p: pkgs.callPackage p {}) |> builtins.getAttr "darwin-rebuild"
-    (lib.pipe inputs.nix-darwin.outPath [
-      (f: "${f}/pkgs/nix-tools/default.nix")
-      import
-      (p: pkgs.callPackage p {
-        nixPackage = nix-enraged;
-      })
-      (builtins.getAttr "darwin-rebuild")
-    ])
   ];
 
   env = {
