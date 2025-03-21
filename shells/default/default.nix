@@ -8,7 +8,7 @@
   nativeBuildInputs = with pkgs; [
     # lix-monitored
     (nix-enraged.override { monitored = true; })
-    (nixd.override { nix = nix-enraged; })
+    # (nixd.override { nix = nix-enraged; })
     home-manager
     git
     wireguard-tools
