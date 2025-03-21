@@ -1,4 +1,4 @@
-{ lib, pkgs, config, ... }:
+{ meta, lib, pkgs, config, ... }:
 
 let
   cfg = config.reo101.shell;
@@ -199,8 +199,8 @@ in
         package = pkgs.zellij;
 
         # NOTE: runs inside every shell, not wanted
-        # enableNushellIntegration = builtins.elem "nushell" cfg.shells;
         # enableZshIntegration = builtins.elem "zsh" cfg.shells;
+        enableZshIntegration = false;
       };
 
       # Zoxide
@@ -226,8 +226,8 @@ in
         else if pkgs.hostPlatform.isDarwin then
           pkgs.pinentry_mac
         # TODO: `pinentry` for GUI systems
-        # else if meta.gui then
-        #   pkgs.pinentry-qt
+        else if meta.gui then
+          pkgs.pinentry-qt
         else
           pkgs.pinentry-tty;
         enableSshSupport = true;

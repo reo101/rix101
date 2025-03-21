@@ -238,6 +238,7 @@ in
           metaModules.hostname
           metaModules.pubkey
           metaModules.deploy
+          metaModules.gui
         ];
       };
       mkHost = ({ meta, configurationFiles, ... }:

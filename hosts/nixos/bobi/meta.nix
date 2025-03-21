@@ -1,6 +1,8 @@
 {
   system = "x86_64-linux";
 
+  gui = true;
+
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDuz5UNpLdIfzSyDEbban+2A23ir7Xu4G9O7QfzkQtrp";
 
   deploy = {
