@@ -22,7 +22,7 @@
       identities = "${inputs.self}/secrets/identities";
     in {
       masterIdentities = [
-        "${identities}/age-yubikey-1-identity-9306892a.pub"
+        "${identities}/age-yubikey-1-identity-20250322.pub"
         "${identities}/age-yubikey-2-identity-bb8456bc.pub"
         {
           identity = "${identities}/age-backup-private.age";
