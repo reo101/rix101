@@ -55,14 +55,25 @@ let
     "plugin-files" = "${nix-plugins}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
-in runCommand "nix-enraged${if monitored then "-monitored" else ""}" {
-  buildInputs = [ makeWrapper ];
-} ''
-  mkdir -p $out/bin
-  ln -s ${lib.getExe (if monitored then nix-monitored else nix)} $out/bin/nix
-  wrapProgram $out/bin/nix \
-    --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
-'' // {
+  suffix = if monitored then "-monitored" else "";
+  drv = runCommand "nix-enraged${suffix}" {
+    buildInputs = [ makeWrapper ];
+  } ''
+    mkdir $out
+    cp -r ${if monitored then nix-monitored else nix}/* $out/
+    chmod +w $out/bin
+    chmod +w $out/bin/nix${suffix}
+
+    wrapProgram $out/bin/nix${suffix} \
+      --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
+  '';
+in drv // {
+  out = drv.out // {
+    inherit (nix) version;
+    passthru =  drv.out.passthru // {
+      inherit (nix) version;
+    };
+  };
   passthru = {
     inherit nix;
   };
