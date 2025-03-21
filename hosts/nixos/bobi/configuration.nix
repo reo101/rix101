@@ -8,6 +8,7 @@
   imports = [
     ./hardware-configuration.nix
     inputs.hardware.nixosModules.apple-t2
+    ./modules/wayland.nix
   ];
 
   # Use the systemd-boot EFI boot loader.
@@ -104,11 +105,6 @@
 
   services.pcscd.enable = true;
 
-  programs.river = {
-    enable = true;
-    package = pkgs.river;
-  };
-
   # Enable the X11 windowing system.
   # services.xserver.enable = true;
 
@@ -118,17 +114,6 @@
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
-
-  # Enable sound.
-  # services.pulseaudio.enable = true;
-  # OR
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-  };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.reo101 = {

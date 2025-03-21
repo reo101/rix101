@@ -14,6 +14,16 @@
   boot.kernelParams = [ "intel_pstate=active" ];
   boot.extraModulePackages = [ ];
 
+  hardware.apple.touchBar = {
+    enable = true;
+    settings = {
+      MediaLayerDefault = true;
+      ShowButtonOutlines = false;
+      EnablePixelShift = true;
+    };
+  };
+  hardware.apple-t2 = {};
+
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/8226bbff-1325-4388-aec8-d39e2affb9dc";
       fsType = "btrfs";
