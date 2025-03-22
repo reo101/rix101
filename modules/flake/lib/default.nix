@@ -23,6 +23,9 @@
     # NOTE: using raw `lib` to avoid recursion
     overlay = lib.composeManyExtensions [
       inputs.nix-lib-net.overlays.raw
+      (final: prev: {
+        yants = import "${inputs.yants.outPath}/default.nix" { lib = prev; };
+      })
       # (final: prev: {
       #   utils = config.lib;
       # })

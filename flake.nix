@@ -110,6 +110,12 @@
       url = "github:hraban/mac-app-util";
     };
 
+    yknotify-rs = {
+      url = "github:reo101/yknotify-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     # Home Manager
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -132,6 +138,11 @@
 
     nix-lib-net = {
       url = "github:reo101/nix-lib-net";
+    };
+
+    yants = {
+      url = "git+https://code.tvl.fyi/depot.git:/nix/yants.git";
+      flake = false;
     };
 
     nix-monitored = {
