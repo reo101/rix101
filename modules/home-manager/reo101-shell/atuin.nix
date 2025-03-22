@@ -22,7 +22,8 @@
   update_check = false
 
   ## address of the sync server
-  sync_address = "https://naboo.qtrp.org/atuin"
+  # sync_address = "https://naboo.qtrp.org/atuin"
+  sync_address = "http://atuin.jeeves.lan"
 
   ## how often to sync history. note that this is only triggered when a command
   ## is ran, so sync intervals may well be longer

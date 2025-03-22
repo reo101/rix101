@@ -24,6 +24,7 @@
     ./stirling-pdf.nix
     ./taskwarrior.nix
     ./nix-ld.nix
+    ./atuin.nix
   ];
 
   # services.kanidm = { };
