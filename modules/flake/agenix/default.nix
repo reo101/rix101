@@ -2,7 +2,7 @@
 
 {
   imports = [
-    inputs.agenix-rekey.flakeModule
+    inputs.agenix-rekey.flakeModules.default
   ];
 
   perSystem = {
@@ -39,6 +39,7 @@
     };
 
     options.secretsConfig = let
+      inherit (lib) types;
       # HACK: extract types from `agenix-rekey` module definition
       agenix-rekey-options = (lib.evalModules {
         modules = [
