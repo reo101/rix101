@@ -199,7 +199,7 @@ in
             coalesce(
               if(!self, label("elided", "▪")),
               if(current_working_copy, "●"),
-              if(mutable, "○", "⊗"),
+              if(immutable, "⊗", "○"),
             )
           '';
         };
