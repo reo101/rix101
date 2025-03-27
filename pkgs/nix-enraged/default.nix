@@ -6,7 +6,7 @@
 , writeShellApplication
 
 # NOTE: only works with vanilla `2.24` nix
-, nix ? pkgs.nixVersions.latest
+, nix ? pkgs.nixVersions.nix_2_24
 , nix-monitored ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
     inherit nix;
     nix-output-monitor = pkgs.nix-output-monitor;
