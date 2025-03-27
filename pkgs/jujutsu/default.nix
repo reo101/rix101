@@ -1,21 +1,45 @@
 { lib
 , fetchFromGitHub
+, rustPlatform
 , jujutsu
 }:
 
-jujutsu.overrideAttrs (oldAttrs: rec {
-  version = "0.26.0-dev";
-  src = fetchFromGitHub {
-    owner = "pylbrecht";
-    repo = "jj";
-    rev = "cd53fafb1c14ad139882bd5de9a729d8f9fb5aca";
-    hash = "sha256-G2iw9LJX0/iNlXkZoOMX4lyG8YG2fQaX+BFSTGaSquY=";
+# jujutsu.overrideAttrs (finalAttrs: prevAttrs: {
+#   # version = "0.27.0-dev";
+#   src = fetchFromGitHub {
+#     owner = "jj-vcs";
+#     repo = "jj";
+#     rev = "6261d576da39e5f290b064b850012bfb3c08ad5f";
+#     hash = "sha256-e7/eCIu/GHjMpiOVDUCckx/EyyfIx7n+bJ/d/JX8tRo=";
+#   };
+#   useFetchCargoVendor = true;
+#   cargoHash = "sha256-vq3gH+GGH9vhJx+1kjpy8IQdm/kTctLuyhKa4Zsqbss=";
+#   cargoDepsName = finalAttrs.pname;
+#   # cargoDeps = rustPlatform.fetchCargoVendor {
+#   #   name = "${finalAttrs.pname}-${finalAttrs.version}-vendor.tar.gz";
+#   #   inherit (finalAttrs) src;
+#   #   # hash = lib.fakeHash;
+#   #   hash = "sha256-0iKuQFv9bFk1I2022ysgBCQ2+9nj1EHB6v4VFlNsDxU=";
+#   # };
+#   cargoDeps = rustPlatform.fetchCargoVendor {
+#     inherit (finalAttrs) pname src version;
+#     hash = finalAttrs.cargoHash;
+#   };
+# })
+
+jujutsu.override (old: {
+  rustPlatform = old.rustPlatform // {
+    buildRustPackage = args: old.rustPlatform.buildRustPackage (args // {
+      version = "0.27.0-dev";
+
+      src = fetchFromGitHub {
+        owner = "jj-vcs";
+        repo = "jj";
+        rev = "6261d576da39e5f290b064b850012bfb3c08ad5f";
+        hash = "sha256-e7/eCIu/GHjMpiOVDUCckx/EyyfIx7n+bJ/d/JX8tRo=";
+      };
+
+      cargoHash = "sha256-rnVz7qkgnkGvXt5ENaXdI8EtLoya49WYHnfyKbkZoLM";
+    });
   };
-  cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
-    name = "${oldAttrs.pname}-${version}-vendor.tar.gz";
-    inherit src;
-    outputHash = "sha256-ycSHJv95vLlRqMGlcx6yWjrD3MuaAEoct6oK9WcCSdI=";
-  });
-  # FIXME: manpage doesnt work
-  postInstall = '''';
 })
