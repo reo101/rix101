@@ -19,6 +19,9 @@
     config.agenix-rekey.package
     age-plugin-yubikey
   ] ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
+    (inputs.nix-darwin.packages.aarch64-darwin.darwin-rebuild.overrideAttrs (drv: {
+      path = lib.makeBinPath [ nix-enraged ] + ":" + drv.path;
+    }))
   ];
 
   env = {
