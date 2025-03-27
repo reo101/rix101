@@ -3,6 +3,7 @@
 {
   imports = [
     ../lib
+    ../lib-custom
     ./default-generators.nix
   ];
 

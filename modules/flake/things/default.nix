@@ -1,6 +1,10 @@
 { lib, config, self, inputs, ... }:
 
 {
+  imports = [
+    ../lib
+  ];
+
   config.lib = let
     inherit (config.lib)
       and

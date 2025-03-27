@@ -3,6 +3,7 @@
 {
   imports = [
     ../lib
+    ../things
   ];
 
   options = let

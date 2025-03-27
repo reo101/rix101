@@ -2,7 +2,9 @@
 
 {
   imports = [
+    ../lib
     inputs.agenix-rekey.flakeModules.default
+    ./secrets.nix
   ];
 
   perSystem = {
@@ -19,19 +21,38 @@
     # - (r)age-encrypted nix files, specific to one host
     # - (r)age-encrypted nix files for repository-wide secrets
     config.secretsConfig = let
-      identities = "${inputs.self}/secrets/identities";
-    in {
-      masterIdentities = [
-        "${identities}/age-yubikey-1-identity-20250322.pub"
-        "${identities}/age-yubikey-2-identity-bb8456bc.pub"
-        {
-          identity = "${identities}/age-backup-private.age";
-          pubkey = lib.pipe "${identities}/age-backup.pub" [
+      identities = config.flake.secretsConfig.identities;
+      identityFiles = builtins.readDir identities;
+
+      # Get all .pub files
+      pubFiles = lib.pipe identityFiles [
+        (lib.filterAttrs
+          (name: type:
+            lib.hasSuffix ".pub" name))
+      ];
+
+      # Construct identity maps
+      identityMappings = lib.pipe pubFiles [
+        (lib.filterAttrs (name: _type:
+          lib.hasSuffix ".pub" name))
+        (lib.mapAttrsToList (name: _type: let
+          baseName = lib.removeSuffix ".pub" name;
+          pubFile = "${identities}/${baseName}.pub";
+          ageFile = "${identities}/${baseName}.age";
+          hasAgeFile = builtins.pathExists ageFile;
+        in if hasAgeFile then {
+          identity = ageFile;
+          pubkey = lib.pipe pubFile [
             builtins.readFile
             (lib.removeSuffix "\n")
           ];
-        }
+        } else {
+          identity = pubFile;
+          pubkey = null;
+        }))
       ];
+    in {
+      masterIdentities = identityMappings;
       extraEncryptionPubkeys = [
         # TODO: what exactly does this do
         # "${identities}/age-backup.pub"
@@ -48,6 +69,11 @@
         ];
       }).options.age.rekey;
     in {
+      identities = lib.mkOption {
+        type = types.path;
+        default = "${inputs.self}/secrets/identities";
+        defaultText = "\${inputs.self}/secrets/identities";
+      };
       masterIdentities = lib.mkOption {
         type = agenix-rekey-options.masterIdentities.type;
       };
