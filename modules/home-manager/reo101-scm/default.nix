@@ -74,10 +74,6 @@ in
       package = pkgs.jujutsu;
       settings = {
         user = {
-          # name = "reo101";
-          # email = "pavel.atanasov2001@gmail.com";
-          # name = config.programs.git.userName;
-          # email = config.programs.git.userEmail;
           inherit name email;
         };
         git = {
@@ -89,11 +85,7 @@ in
         };
         signing = {
           backend = "gpg";
-          # sign-all = true;
-          # key = "675AA7EF13964ACB";
-          # sign-all = config.programs.git.signing.signByDefault;
-          # key = config.programs.git.signing.key;
-          sign-all = false;
+          behaviour = "keep";
           inherit key;
         };
         core = {
@@ -162,7 +154,7 @@ in
           ",," = ["edit" "-r" "@+"];
         };
         template-aliases = {
-          "format_timestamp(ts)" = ''
+          "format_timestamp(ts)" = /* jj_template */ ''
             if(
               ts.after("2 weeks ago"),
               ts.ago(),
@@ -170,16 +162,20 @@ in
             )
           '';
 
-          "format_short_id(id)" = ''
+          "format_short_id(id)" = /* jj_template */ ''
             id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
           '';
-          "format_timestamp(timestamp)" = ''
+          "format_timestamp(timestamp)" = /* jj_template */ ''
             timestamp.ago()
           '';
-          "format_short_signature(signature)" = "signature.email().local()";
-          "format_detailed_signature(signature)" = "signature.email().local()";
+          "format_short_signature(signature)" = /* jj_template */ ''
+            signature.name()
+          '';
+          "format_detailed_signature(signature)" = /* jj_template */ ''
+            signature.name() ++ " (" ++ signature.email() ++ ")"
+          '';
 
-          builtin_log_detailed = ''
+          builtin_log_detailed = /* jj_template */ ''
             "\n\n\n" ++
             concat(
               "Change ID: " ++ format_short_id(change_id) ++ "\n",
@@ -187,7 +183,7 @@ in
               surround("Bookmarks: ", "\n", separate(" ", local_bookmarks, remote_bookmarks)),
               surround("Tags     : ", "\n", tags),
               if(config("ui.show-cryptographic-signatures").as_boolean(),
-                "Signature: " ++ format_detailed_cryptographic_signature(signature)
+                "Signature: " ++ format_detailed_cryptographic_signature(signature),
                 "Signature: (not shown)"),
               "\n",
               "Author   : " ++ format_detailed_signature(author) ++ "\n",
@@ -199,10 +195,11 @@ in
           '';
         };
         templates = {
-          log_node = ''
+          log_node = /* jj_template */ ''
             coalesce(
+              if(!self, label("elided", "▪")),
               if(current_working_copy, "●"),
-              if(immutable, "⊗", "○"),
+              if(mutable, "○", "⊗"),
             )
           '';
         };
