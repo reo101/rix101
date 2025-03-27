@@ -62,7 +62,7 @@
     behind = "⇣[\($count\)](green) ";
     diverged = "⇕[\($count\)](green) ";
     untracked = "?[\($count\)](green) ";
-    stashed = "$[\($count\)](green) ";
+    stashed = "\\$[\($count\)](green) ";
     modified = "![\($count\)](green) ";
     staged = "+[\($count\)](green) ";
     renamed = "»[\($count\)](green) ";
