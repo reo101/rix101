@@ -9,7 +9,8 @@
 
   perSystem = {
     agenix-rekey = {
-      nixosConfigurations = self.nixosConfigurations;
+      # NOTE: set by default, should be set by user of the module
+      # nixosConfigurations = self.nixosConfigurations;
       # TODO:
       # darwinConfigurations = self.darwinConfigurations;
     };
@@ -33,9 +34,14 @@
 
       # Construct identity maps
       identityMappings = lib.pipe pubFiles [
-        (lib.filterAttrs (name: _type:
+        (lib.mapAttrsToList (name: _type:
+          name))
+        (lib.filter (name:
           lib.hasSuffix ".pub" name))
-        (lib.mapAttrsToList (name: _type: let
+        (lib.sort (name1: name2:
+          # NOTE: lexicographical ordering
+          name1 < name2))
+        (lib.map (name: let
           baseName = lib.removeSuffix ".pub" name;
           pubFile = "${identities}/${baseName}.pub";
           ageFile = "${identities}/${baseName}.age";
