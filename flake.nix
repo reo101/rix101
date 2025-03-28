@@ -18,6 +18,7 @@
 
       imports = [
         ./modules/flake/lib
+        ./modules/flake/lib-custom
         ./modules/flake/pkgs
         ./modules/flake/modules
         ./modules/flake/configurations
