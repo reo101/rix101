@@ -5,6 +5,7 @@
     inputs.wired.homeManagerModules.default
     ../../../nix-darwin/limonka/homeModules/taskwarrior.nix
     ../homeModules/niri.nix
+    ../homeModules/mpv.nix
   ];
 
   home = {
