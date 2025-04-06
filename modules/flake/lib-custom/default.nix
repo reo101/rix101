@@ -7,10 +7,40 @@
 
   config.lib-overlays =  [
     inputs.nix-lib-net.overlays.raw
+    # Yants
     (final: prev: {
       yants = import "${inputs.yants.outPath}/default.nix" { lib = prev; };
-      # TODO: custom `sugars`
-      infuse = (import "${inputs.infuse.outPath}/default.nix" { lib = prev; }).v1.infuse;
+    })
+    # Infuse
+    (final: prev: let
+      infuse = (import "${inputs.infuse.outPath}/default.nix" {
+        lib = prev;
+        sugars = infuse.v1.default-sugars ++ lib.attrsToList {
+          __concatStringsSep =
+            path: infusion: target:
+              lib.strings.concatStringsSep infusion target;
+          __filter =
+            path: infusion: target:
+              builtins.filter infusion target;
+          __map =
+            path: infusion: target:
+              builtins.map infusion target;
+          __swapOutPackage =
+            path: infusion: target: let
+              # TODO: more validation
+              infusion-name = infusion.pname or infusion.name or "";
+            in builtins.map
+              (pkg: let
+                pkg-name = pkg.pname or pkg.name or "";
+                nonempty = pkg-name != "";
+              in if nonempty && pkg-name == infusion-name
+                 then infusion
+                 else pkg)
+              target;
+        };
+      });
+    in {
+      inherit (infuse.v1) infuse;
     })
   ];
 
