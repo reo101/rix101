@@ -52,6 +52,11 @@
   services.upower = {
     enable = true;
   };
+  services.batteryNotify = {
+    enable = true;
+    batteryName = "macsmc-battery";
+  };
+
   programs.ydotool = {
     enable = true;
   };

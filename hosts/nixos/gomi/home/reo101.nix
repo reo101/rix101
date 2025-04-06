@@ -65,15 +65,6 @@
     };
   };
 
-  services.batsignal = {
-    enable = true;
-    extraArgs = [
-      "-c" "15"
-      "-w" "30"
-      "-f" "97"
-    ];
-  };
-
   services.mako = {
     enable = true;
     layer = "overlay";
