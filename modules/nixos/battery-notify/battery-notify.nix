@@ -38,6 +38,7 @@ stdenvNoCC.mkDerivation {
 
   meta = {
     description = "Battery notification script using Babashka";
+    mainProgram = "battery-notify";
     license = lib.licenses.mit;
     platforms = lib.platforms.unix;
     maintainers = with lib.maintainers; [ reo101 ];
