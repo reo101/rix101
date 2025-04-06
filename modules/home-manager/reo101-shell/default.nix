@@ -241,14 +241,19 @@ in
       };
 
       # Shell
-      home.sessionVariables = {
-        SHELL =
-          let
-            shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
-          in
-          "${shellPackage}/${shellPackage.shellPath}";
-        MANPAGER = "${lib.getExe config.programs.neovim.package} +Man!";
-      };
+      home.sessionVariables = mkMerge [
+        {
+          SHELL =
+            let
+              shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
+            in
+            "${shellPackage}/${shellPackage.shellPath}";
+          MANPAGER = "${lib.getExe config.programs.neovim.package} +Man!";
+        }
+        (mkIf cfg.direnv {
+          DIRENV_WARN_TIMEOUT = "0";
+        })
+      ];
 
       # Nushell
       programs.nushell = mkMerge [
