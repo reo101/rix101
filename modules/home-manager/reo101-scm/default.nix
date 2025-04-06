@@ -126,6 +126,7 @@ in
         revset-aliases = {
           "stragglers" = "(visible_heads() & mine()) ~ trunk()";
           "bases" = "master | main";
+          "closest_bookmark(to)" = "heads(::to & bookmarks())";
           "downstream(x,y)" = "(x::y) & y";
           "branches" = "downstream(trunk(), bookmarks()) & mine()";
           "branchesandheads" = "branches | (heads(trunk()::) & mine())";
@@ -138,7 +139,7 @@ in
           l = ["log"];
           d = ["diff"];
 
-          dragmain = ["bookmark" "set" "main" "-r" "@-"];
+          drag = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
           sync = ["git" "fetch" "--all-remotes"];
           evolve = ["rebase" "--skip-emptied" "-d" "trunk()"];
           pullup = ["evolve" "-s" "all:stragglers"];
