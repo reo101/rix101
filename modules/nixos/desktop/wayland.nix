@@ -87,14 +87,18 @@ in
         enable = true;
       };
       extraPortals = [
-        pkgs.xdg-desktop-portal
-        pkgs.xdg-desktop-portal-gtk
+        # pkgs.xdg-desktop-portal
+        # pkgs.xdg-desktop-portal-gtk
         pkgs.xdg-desktop-portal-gnome
+        # NOTE: enabled from `xdg.wlr.enable`
         # pkgs.xdg-desktop-portal-wlr
       ];
-      config.common.default = [ "gnome" ];
-      # # TODO: research <https://github.com/flatpak/xdg-desktop-portal/blob/1.18.1/doc/portals.conf.rst.in>
-      # config.common.default = "*";
+      config.common = {
+        default = [ "wlr" ];
+
+        "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+        "org.freedesktop.impl.portal.RemoteDesktop" = [ "gnome" ];
+      };
     };
 
     environment.systemPackages = with pkgs; [
