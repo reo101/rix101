@@ -59,6 +59,9 @@
   programs.ydotool = {
     enable = true;
   };
+  services.pcscd = {
+    enable = true;
+  };
 
   networking.hostName = "gomi";
   networking.wireless = {
