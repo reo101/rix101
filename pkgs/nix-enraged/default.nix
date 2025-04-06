@@ -6,9 +6,9 @@
 , writeShellApplication
 
 # NOTE: only works with vanilla `2.24` nix
-, nix ? pkgs.nixVersions.nix_2_24
-, nix-monitored ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
-    inherit nix;
+, nix' ? pkgs.nixVersions.nix_2_24
+, nix-monitored' ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
+    nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
   }
 , monitored ? false
@@ -16,7 +16,7 @@
     # Only override `nix`
     buildInputs = lib.pipe oldAttrs.buildInputs [
       (lib.filter (drv: drv.pname != "nix"))
-      (buildInputs: [ nix ] ++ buildInputs)
+      (buildInputs: [ nix' ] ++ buildInputs)
     ];
   })
 , coreutils
@@ -60,22 +60,22 @@ let
     buildInputs = [ makeWrapper ];
   } ''
     mkdir $out
-    cp -r ${if monitored then nix-monitored else nix}/* $out/
+    cp -r ${if monitored then nix-monitored' else nix'}/* $out/
     chmod +w $out/bin
-    chmod +w $out/bin/nix${suffix}
+    # chmod +w $out/bin/nix${suffix}
 
     wrapProgram $out/bin/nix${suffix} \
       --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
   '';
 in drv // {
   out = drv.out // {
-    inherit (nix) version;
+    inherit (nix') version;
     passthru =  drv.out.passthru // {
-      inherit (nix) version;
+      inherit (nix') version;
     };
   };
   passthru = {
-    inherit nix;
+    inherit nix';
   };
-  inherit (nix) dev;
+  inherit (nix') dev;
 }
