@@ -39,24 +39,6 @@
       enable = false;
       anyInterface = true;
     };
-
-    # networks."10-eth0" = {
-    #   matchConfig.Name = "eth0";
-    #   networkConfig.DHCP = "yes";
-    # };
-    # links."10-eth0" = {
-    #   matchConfig.PermanentMACAddress = "04:7c:16:80:3c:2c";
-    #   linkConfig.Name = "eth0"; # "enp8s0";
-    # };
-    #
-    # networks."15-wlan0" = {
-    #   matchConfig.Name = "wlan0";
-    #   networkConfig.DHCP = "yes";
-    # };
-    # links."15-wlan0" = {
-    #   matchConfig.PermanentMACAddress = "bc:f4:d4:40:5c:ed";
-    #   linkConfig.Name = "wlan0"; # "wlp15s0";
-    # };
   };
 
   nix = {

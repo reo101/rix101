@@ -195,12 +195,22 @@
       url = "github:nix-community/NUR";
     };
 
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
     };
 
     hardware = {
       url = "github:nixos/nixos-hardware";
+    };
+
+    nixos-apple-silicon = {
+      url = "github:tpwrules/nixos-apple-silicon";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-colors = {
