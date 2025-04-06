@@ -16,6 +16,7 @@
         extraDefCfg = ''
           process-unmapped-keys yes
         '';
+        # TODO: add a gaming layer
         config = /* kmonad */ ''
           ;; (defcfg
           ;;   process-unmapped-keys yes
@@ -31,12 +32,12 @@
 
             left-hand-keys (
               q w e r t
-              a s d f g
+                      g
               z x c v b
             )
             right-hand-keys (
               y u i o p
-              h j k l ;
+              h
               n m , . /
             )
           )
@@ -58,15 +59,15 @@
               (on-idle-fakekey to-base tap 20)
             )
 
-            a (tap-hold-release-keys $tap-time $hold-time (multi a @tap) lsft ()) ;; $left-hand-keys)
-            s (tap-hold-release-keys $tap-time $hold-time (multi s @tap) lctl ()) ;; $left-hand-keys)
-            d (tap-hold-release-keys $tap-time $hold-time (multi d @tap) lmet ()) ;; $left-hand-keys)
-            f (tap-hold-release-keys $tap-time $hold-time (multi f @tap) lalt ()) ;; $left-hand-keys)
+            a (tap-hold-release-keys $tap-time $hold-time (multi a @tap) lsft $left-hand-keys)
+            s (tap-hold-release-keys $tap-time $hold-time (multi s @tap) lctl $left-hand-keys)
+            d (tap-hold-release-keys $tap-time $hold-time (multi d @tap) lmet $left-hand-keys)
+            f (tap-hold-release-keys $tap-time $hold-time (multi f @tap) lalt $left-hand-keys)
 
-            j (tap-hold-release-keys $tap-time $hold-time (multi j @tap) ralt ()) ;; $right-hand-keys)
-            k (tap-hold-release-keys $tap-time $hold-time (multi k @tap) rmet ()) ;; $right-hand-keys)
-            l (tap-hold-release-keys $tap-time $hold-time (multi l @tap) rctl ()) ;; $right-hand-keys)
-            ; (tap-hold-release-keys $tap-time $hold-time (multi ; @tap) rsft ()) ;; $right-hand-keys)
+            j (tap-hold-release-keys $tap-time $hold-time (multi j @tap) ralt $right-hand-keys)
+            k (tap-hold-release-keys $tap-time $hold-time (multi k @tap) rmet $right-hand-keys)
+            l (tap-hold-release-keys $tap-time $hold-time (multi l @tap) rctl $right-hand-keys)
+            ; (tap-hold-release-keys $tap-time $hold-time (multi ; @tap) rsft $right-hand-keys)
           )
           (defalias
             caps-ctrl (tap-hold-press $tap-time $caps-hold-time esc caps)
