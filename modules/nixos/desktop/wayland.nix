@@ -90,10 +90,11 @@ in
         pkgs.xdg-desktop-portal
         pkgs.xdg-desktop-portal-gtk
         pkgs.xdg-desktop-portal-gnome
-        pkgs.xdg-desktop-portal-wlr
+        # pkgs.xdg-desktop-portal-wlr
       ];
-      # TODO: research <https://github.com/flatpak/xdg-desktop-portal/blob/1.18.1/doc/portals.conf.rst.in>
-      config.common.default = "*";
+      config.common.default = [ "gnome" ];
+      # # TODO: research <https://github.com/flatpak/xdg-desktop-portal/blob/1.18.1/doc/portals.conf.rst.in>
+      # config.common.default = "*";
     };
 
     environment.systemPackages = with pkgs; [
