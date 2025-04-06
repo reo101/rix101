@@ -9,6 +9,8 @@
     inputs.nix-lib-net.overlays.raw
     (final: prev: {
       yants = import "${inputs.yants.outPath}/default.nix" { lib = prev; };
+      # TODO: custom `sugars`
+      infuse = (import "${inputs.infuse.outPath}/default.nix" { lib = prev; }).v1.infuse;
     })
   ];
 
