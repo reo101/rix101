@@ -221,7 +221,7 @@ in
         enable = true;
         defaultCacheTtl = 86400;
         maxCacheTtl = 86400;
-        pinentryPackage = if cfg.gpg.pinentryPackage != null then
+        pinentry.package = if cfg.gpg.pinentryPackage != null then
           cfg.gpg.pinentryPackage
         else if pkgs.hostPlatform.isDarwin then
           pkgs.pinentry_mac
@@ -332,7 +332,7 @@ in
           path = "${config.xdg.dataHome}/zsh/history";
         };
 
-        initExtra =
+        initContent =
           builtins.concatStringsSep "\n"
             [
               ''
