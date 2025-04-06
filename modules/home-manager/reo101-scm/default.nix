@@ -82,10 +82,11 @@ in
           private-commits = "description(glob:'wip:*')";
           auto-local-bookmark = true;
           push-bookmark-prefix = "reo101/";
+          sign-on-push = true;
         };
         signing = {
           backend = "gpg";
-          behaviour = "keep";
+          behaviour = "drop";
           inherit key;
         };
         core = {
