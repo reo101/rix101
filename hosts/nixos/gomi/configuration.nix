@@ -30,13 +30,9 @@
   hardware.graphics.enable = true;
   # FIXME: `-Dlibgbm-external` fails to build
   # FIXME: `.drivers` does not nothing
-  hardware.graphics.package = lib.mkForce (config.hardware.asahi.pkgs.mesa-asahi-edge.overrideAttrs (oldAttrs: {
-    mesonFlags = lib.pipe oldAttrs.mesonFlags [
-      (builtins.filter
-        (flag:
-          !(lib.hasPrefix "-Dlibgbm-external" flag)))
-    ];
-  }));
+  hardware.graphics.package = lib.mkForce (lib.infuse config.hardware.asahi.pkgs.mesa-asahi-edge {
+    __output.mesonFlags.__filter = (flag: !(lib.hasPrefix "-Dlibgbm-external" flag));
+  });
 
   hardware.asahi = {
     enable = true;
