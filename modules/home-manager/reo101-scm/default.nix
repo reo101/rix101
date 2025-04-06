@@ -91,7 +91,7 @@ in
         core = {
           fsmonitor = "watchman";
           watchman = {
-            register_snapshot_trigger = true;
+            register-snapshot-trigger = true;
           };
         };
         ui = mkMerge [
