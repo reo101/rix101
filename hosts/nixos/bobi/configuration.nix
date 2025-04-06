@@ -8,7 +8,6 @@
   imports = [
     ./hardware-configuration.nix
     inputs.hardware.nixosModules.apple-t2
-    ./modules/wayland.nix
   ];
 
   # Use the systemd-boot EFI boot loader.
@@ -108,6 +107,7 @@
       jujutsu
     ];
   };
+  reo101.wayland.enable = true;
 
   programs.firefox.enable = true;
 

@@ -4,7 +4,6 @@
   imports = [
     ./hardware-configuration.nix
     inputs.nixos-apple-silicon.nixosModules.default
-    ../bobi/modules/wayland.nix
     ./modules/kanata.nix
   ];
 
@@ -123,6 +122,7 @@
       neovim
     ];
   };
+  reo101.wayland.enable = true;
 
   programs.firefox.enable = true;
 
