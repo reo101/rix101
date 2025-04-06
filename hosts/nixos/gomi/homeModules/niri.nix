@@ -88,7 +88,7 @@
           # "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grim} -g $(${slurp}) - | ${wl-copy}; ${killall} wayfreeze";};
           "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grimshot} --notify --cursor copy area; ${killall} wayfreeze";};
 
-          "Mod+Ctrl+Q" = { repeat = false; action = spawn "sh" "-c" "pgrep swaylock || swaylock"; };
+          "Mod+Ctrl+Q" = { repeat = false; action = spawn "sh" "-c" "pgrep swaylock || swaylock --image ${config.stylix.image}"; };
 
           "Mod+Q" = { repeat = false; action = close-window; };
           "Mod+S".action = switch-preset-column-width;
@@ -152,12 +152,13 @@
         border = {
           enable = true;
           width = 1;
-          active = {
-            color = "#5767FF";
-          };
-          inactive = {
-            color = "#5F5A65";
-          };
+          # NOTE: set from `stylix`
+          # active = {
+          #   color = "#5767FF";
+          # };
+          # inactive = {
+          #   color = "#5F5A65";
+          # };
         };
         focus-ring = {
           enable = false;
@@ -251,17 +252,17 @@
             "^(notification)"
           ];
 
-        floatingRules = openFloatingApps ++ [
-          # FIXME: normal `Firefox` window doesn't set a title either
-          # (mkMatchRule {
-          #   appId = "firefox";
-          #   # `Web Scrobbler` plugin doesn't set a title
-          #   title = "";
-          #   openFloating = true;
-          # })
-        ];
+        floatingRules = openFloatingApps ++ [ ];
 
         windowRules = [
+          # Float is Baba
+          {
+            matches = [
+              { is-floating = true; }
+            ];
+            baba-is-float = true;
+          }
+
           # Rounded corners
           {
             geometry-corner-radius = let

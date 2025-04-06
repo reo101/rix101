@@ -3,6 +3,40 @@
 {
   imports = [
     # inputs.niri.nixosModules.niri
+    inputs.stylix.nixosModules.stylix
+  ];
+
+  stylix = {
+    enable = true;
+    image = pkgs.fetchurl {
+      url = "https://w.wallhaven.cc/full/0p/wallhaven-0p52o3.jpg";
+      hash = "sha256-nmbu6KOm8ypgZVKg1KnGcbC5AfX/df2CeTjZUyLpG04=";
+    };
+    cursor = {
+      name = "Ukiyo";
+      package = inputs.ukiyo.packages.${pkgs.hostPlatform.system}.default;
+      size = 32;
+    };
+    fonts = {
+      monospace = {
+        package = pkgs.nerd-fonts.fira-code;
+        name = "FiraCode Nerd Font Mono";
+      };
+      serif = config.stylix.fonts.monospace;
+      sansSerif = config.stylix.fonts.monospace;
+      # emoji = config.stylix.fonts.monospace;
+      emoji = {
+        package = pkgs.noto-fonts-emoji;
+        name = "Noto Color Emoji";
+      };
+    };
+  };
+
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+    nerd-fonts.fira-code
   ];
 
   environment.sessionVariables = {

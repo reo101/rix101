@@ -200,6 +200,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    ukiyo = {
+      url = "github:74k1/ukiyo";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
     };
@@ -210,6 +215,11 @@
 
     nixos-apple-silicon = {
       url = "github:tpwrules/nixos-apple-silicon";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    stylix = {
+      url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
