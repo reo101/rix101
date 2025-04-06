@@ -32,6 +32,7 @@
         # QT_QPA_PLATFORM = "wayland;xcb";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         # SDL_VIDEODRIVER = "wayland";
+        # XDG_SESSION_TYPE = "wayland";
       };
       spawn-at-startup = lib.map (command: {
         command = lib.toList command;
@@ -45,9 +46,14 @@
       clipboard.disable-primary = true;
       hotkey-overlay.skip-at-startup = true;
       # screenshot-path = "~/%Y%m%d%H%M%S_Screenshot.png";
+      # NOTE: set from `stylix`
+      # cursor = {
+      #   theme = "Ukiyo";
+      #   size = 48;
+      # };
       binds = let
         playerctl = lib.getExe pkgs.playerctl;
-        wpctl = lib.getExe' pkgs.pipewire "wpctl";
+        wpctl = lib.getExe' pkgs.wireplumber "wpctl";
         brightnessctl = lib.getExe pkgs.brightnessctl;
         foot = lib.getExe pkgs.foot;
         ghostty = lib.getExe pkgs.ghostty;
@@ -59,6 +65,7 @@
         killall = lib.getExe pkgs.killall;
         grim = lib.getExe pkgs.grim;
         slurp = lib.getExe pkgs.slurp;
+        tesseract = lib.getExe pkgs.tesseract;
       in lib.mergeAttrsList (with config.lib.niri.actions; [
         # Multimedia
         {
@@ -87,6 +94,7 @@
 
           # "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grim} -g $(${slurp}) - | ${wl-copy}; ${killall} wayfreeze";};
           "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grimshot} --notify --cursor copy area; ${killall} wayfreeze";};
+          "Mod+Shift+D" = { repeat = false; action = spawn "sh" "-c" "${grim} -g '$(${slurp})' - | ${tesseract} - - -l jpn | ${wl-copy}"; };
 
           "Mod+Ctrl+Q" = { repeat = false; action = spawn "sh" "-c" "pgrep swaylock || swaylock --image ${config.stylix.image}"; };
 
@@ -357,7 +365,7 @@
           }
         ];
       in windowRules ++ floatingRules;
-      # TODO: https://github.com/YaLTeR/niri/wiki/Configuration:-Named-Workspaces
+      # TODO: <https://github.com/YaLTeR/niri/wiki/Configuration:-Named-Workspaces>
       workspaces = {
         "main" = {
           open-on-output = "eDP-1"; # "HDMI-A-1" (external)
@@ -387,10 +395,13 @@
           repeat-delay = 200;
           repeat-rate = 50;
           track-layout = "global";
+          # NOTE: using `fcitx5` `mozc`
           xkb = {
             layout = "us,bg";
             variant = ",phonetic";
-            options = "grp:lalt_lshift_toggle";
+            # NOTE: no longer using right shift for Wezterm zooming,
+            #       thus no need for `l` only modifiers
+            options = let side = ""; in "grp:${side}alt_${side}shift_toggle";
           };
         };
         mouse = {
@@ -399,13 +410,49 @@
         };
         touchpad = {
           click-method = "clickfinger";
-          dwt = true;
-          dwtp = true;
+          dwt = false;
           natural-scroll = true;
           scroll-method = "two-finger";
           tap = false;
         };
       };
+      animations.shaders.window-resize = /* glsl */ ''
+        vec4 resize_color(vec3 coords_curr_geo, vec3 size_curr_geo) {
+          vec3 coords_next_geo = niri_curr_geo_to_next_geo * coords_curr_geo;
+
+          vec3 coords_stretch = niri_geo_to_tex_next * coords_curr_geo;
+          vec3 coords_crop = niri_geo_to_tex_next * coords_next_geo;
+
+          // We can crop if the current window size is smaller than the next window
+          // size. One way to tell is by comparing to 1.0 the X and Y scaling
+          // coefficients in the current-to-next transformation matrix.
+          bool can_crop_by_x = niri_curr_geo_to_next_geo[0][0] <= 1.0;
+          bool can_crop_by_y = niri_curr_geo_to_next_geo[1][1] <= 1.0;
+
+          vec3 coords = coords_stretch;
+          if (can_crop_by_x)
+              coords.x = coords_crop.x;
+          if (can_crop_by_y)
+              coords.y = coords_crop.y;
+
+          vec4 color = texture2D(niri_tex_next, coords.st);
+
+          // However, when we crop, we also want to crop out anything outside the
+          // current geometry. This is because the area of the shader is unspecified
+          // and usually bigger than the current geometry, so if we don't fill pixels
+          // outside with transparency, the texture will leak out.
+          //
+          // When stretching, this is not an issue because the area outside will
+          // correspond to client-side decoration shadows, which are already supposed
+          // to be outside.
+          if (can_crop_by_x && (coords_curr_geo.x < 0.0 || 1.0 < coords_curr_geo.x))
+              color = vec4(0.0);
+          if (can_crop_by_y && (coords_curr_geo.y < 0.0 || 1.0 < coords_curr_geo.y))
+              color = vec4(0.0);
+
+          return color;
+        }
+      '';
     };
   };
 }
