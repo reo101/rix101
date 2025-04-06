@@ -53,6 +53,7 @@
 
       experimental-features = [
         "ca-derivations"        # Content-Addressable Derivations
+        "dynamic-derivations"   # Dynamic Derivations
         "recursive-nix"         # Recursive Nix
         "flakes"                # Flakes and related commands
         "nix-command"           # Experimental Nix commands
