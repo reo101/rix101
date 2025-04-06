@@ -48,7 +48,7 @@
       binds = let
         playerctl = lib.getExe pkgs.playerctl;
         wpctl = lib.getExe' pkgs.pipewire "wpctl";
-        brillo = lib.getExe pkgs.brillo;
+        brightnessctl = lib.getExe pkgs.brightnessctl;
         foot = lib.getExe pkgs.foot;
         ghostty = lib.getExe pkgs.ghostty;
         wofi = lib.getExe pkgs.wofi;
@@ -72,8 +72,8 @@
           "XF86AudioRaiseVolume".action = spawn "${wpctl}" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+";
           "XF86AudioLowerVolume".action = spawn "${wpctl}" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
 
-          "XF86MonBrightnessUp".action = spawn "${brillo}" "-q" "-u" "300000" "-A" "5";
-          "XF86MonBrightnessDown".action = spawn "${brillo}" "-q" "-u" "300000" "-U" "5";
+          "XF86MonBrightnessUp".action = spawn "${brightnessctl}" "set" "10%+";
+          "XF86MonBrightnessDown".action =spawn "${brightnessctl}" "set" "10%-";
         }
 
         # Bindings
