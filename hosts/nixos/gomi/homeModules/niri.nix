@@ -79,8 +79,13 @@
           "XF86AudioRaiseVolume".action = spawn "${wpctl}" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+";
           "XF86AudioLowerVolume".action = spawn "${wpctl}" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
 
+          # Screen
           "XF86MonBrightnessUp".action = spawn "${brightnessctl}" "set" "10%+";
-          "XF86MonBrightnessDown".action =spawn "${brightnessctl}" "set" "10%-";
+          "XF86MonBrightnessDown".action = spawn "${brightnessctl}" "set" "10%-";
+
+          # Keyboard
+          "Shift+XF86MonBrightnessUp".action = spawn "${brightnessctl}" "--device=kbd_backlight" "set" "10%+";
+          "Shift+XF86MonBrightnessDown".action = spawn "${brightnessctl}" "--device=kbd_backlight" "set" "10%-";
         }
 
         # Bindings
