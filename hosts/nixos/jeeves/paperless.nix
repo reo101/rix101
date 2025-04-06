@@ -5,7 +5,7 @@ let
 in
 {
   age.secrets."paperless.password" = {
-    rekeyFile = "${inputs.self}/secrets/master/home/jeeves/paperless/password.age";
+    rekeyFile = lib.repoSecret "home/jeeves/paperless/password.age";
     # generator.script = "alnum";
     mode = "440";
     # NOTE: `passwordFile` needs to be read by the `paperless-scheduler` service, which is run as the user `config.services.paperless.user`

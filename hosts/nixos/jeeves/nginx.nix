@@ -2,7 +2,7 @@
 
 {
   # age.secrets."nextcloud.adminpass" = {
-  #   rekeyFile = "${inputs.self}/secrets/master/home/jeeves/nextcloud/adminpass.age";
+  #   rekeyFile = lib.repoSecret "home/jeeves/nextcloud/adminpass.age";
   #   mode = "770";
   #   owner = "nextcloud";
   #   group = "nextcloud";

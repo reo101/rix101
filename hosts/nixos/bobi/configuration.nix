@@ -19,7 +19,7 @@
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # age.secrets."home.wifi.env" = {
-  #   rekeyFile = "${inputs.self}/secrets/master/home/wifi/env.age";
+  #   rekeyFile = lib.repoSecret "home/wifi/env.age";
   # };
   networking.wireless = {
     iwd.enable = true;

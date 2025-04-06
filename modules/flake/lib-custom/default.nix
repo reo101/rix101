@@ -15,6 +15,9 @@
   ];
 
   config.lib = rec {
+    # Secrets Helpers
+    repoSecret = lib.path.append ../../../secrets/master;
+
     # Boolean helpers
     and = lib.all lib.id;
     eq = x: y: x == y;
