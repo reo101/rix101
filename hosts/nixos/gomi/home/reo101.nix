@@ -34,6 +34,7 @@
     pamixer
     playerctl
     brightnessctl
+    pavucontrol
 
     ## Shell
     # zsh
@@ -46,6 +47,17 @@
 
     ## Torrents
     tremc
+
+    ## Anki
+    anki
+
+    # Gaming
+    prismlauncher
+    discord-rpc
+
+    # Fluff
+    btop
+    fastfetch
   ];
 
   reo101 = {
