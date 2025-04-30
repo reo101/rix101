@@ -25,6 +25,22 @@
           $out
       '';
     images = {
+      TL-SG1008D = removebg {
+        image = pkgs.fetchurl {
+          name = "TL-SG1008D.jpg";
+          url = "https://static.tp-link.com/TL-SG1008D%28UN%298.0-02_1499930968314l.jpg";
+          hash = "sha256-14wf9WM3HmPF1rel6+LPKP4XofuHuJMegXQ1JrX0Qkk=";
+        };
+        fuzz = 15;
+      };
+      AX4200 = removebg {
+        image = pkgs.fetchurl {
+          name = "AX4200.jpg";
+          url = "https://openwrt.org/_media/media/asus/asustuf-ax4200-front.jpg";
+          hash = "sha256-inohanbD0c+5Sl/VcbqGOpscBOe0LKvPkH4YutniFSI=";
+        };
+        fuzz = 15;
+      };
       TL-WR740N = removebg {
         image = pkgs.fetchurl {
           name = "TL-WR740N.jpg";
@@ -44,15 +60,15 @@
       jeeves = removebg {
         image = pkgs.fetchurl {
           url = "https://www.fractal-design.com/app/uploads/2019/06/Define-R2-XL_BK_2-1440x1440.jpg";
-          hash = "sha256-x0kxRVTZT6xBxEtClCyQGxvS/Rs3/iXkbJEl6VHdtdU=";
+          hash = "sha256-VvPsfRaoSNV5fxPxLA9lk9HI+osibdJLiaEHUV8pXQM=";
         };
         fuzz = 1;
       };
       homix = removebg {
         image = pkgs.fetchurl {
           name = "homix.jpg";
-          url = "https://pcbuild.bg/assets/products/000/000/209/000000209949--kutiya-nzxt-h510-flow-matte-black.jpeg";
-          hash = "sha256-elyj+/MDwoRHVg8usFzQEwuUwRC/0/lY6+f3a50TP+g=";
+          url = "https://www.speedcomputers.biz/wa-data/public/shop/products/64/56/195664/images/315307/315307.970x0.jpg";
+          hash = "sha256-eVfyt0vJKRLyBIGXomVT3xJ/nhZctGMaBsYfoQSnSNQ=";
         };
         fuzz = 10;
       };
@@ -90,7 +106,7 @@
         in {
           nodes.internet = mkInternet {
             connections = [
-              (mkConnection "router2" "wan")
+              (mkConnection "router0" "wan")
               (mkConnection "cheetah" "wwan")
             ];
           } // {
@@ -105,36 +121,23 @@
             };
           };
 
-          nodes.router1 = mkSwitch "router1" {
-            info = "TP-Link TL-WR740N";
-            image = images.TL-WR740N;
+          nodes.switch0 = mkSwitch "switch0" {
+            info = "TP-Link TL-SG1008D V10";
+            image = images.TL-SG1008D;
             interfaceGroups = [
-              ["wan"]
-              ["eth1" "eth2" "eth3" "eth4" "wlan"]
+              ["eth1" "eth2" "eth3" "eth4" "eth5" "eth6" "eth7" "eth8"]
             ];
             interfaces.eth1 = {
-              addresses = ["192.168.1.150"];
-              network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "lan2")];
+              network = "router0";
+              physicalConnections = [(mkConnectionRev "router0" "lan4")];
             };
           };
-          # networks.router1 = {
-          #   name = "router1";
-          #   cidrv4 = "192.168.0.0/24";
-          #   style = {
-          #     primaryColor = "#b87f0d";
-          #     secondaryColor = null;
-          #     # one of "solid", "dashed", "dotted"
-          #     pattern = "solid";
-          #   };
-          # };
 
-          nodes.router2 = mkRouter "router2" {
-            info = "Zbtlink ZBT-WR8305RT";
-            image = images.ZBT-WR8305RT;
+          nodes.router0 = mkRouter "router0" {
+            info = "ASUS TUF-AX4200";
+            image = images.AX4200;
             interfaceGroups = [
-              ["wan"]
-              ["wwan"]
+              ["wan" "wwan"]
               ["lan1" "lan2" "lan3" "lan4" "wlan"]
             ];
             interfaces.wan = {
@@ -142,14 +145,14 @@
               network = "internet";
               physicalConnections = [(mkConnectionRev "internet" "*")];
             };
-            interfaces.wwan = {
-              addresses = ["192.168.33.176"];
-              network = "cheetah";
-              physicalConnections = [(mkConnectionRev "cheetah" "ap_br_wlan2")];
-            };
+            # interfaces.wwan = {
+            #   addresses = ["192.168.33.176"];
+            #   network = "cheetah";
+            #   physicalConnections = [(mkConnectionRev "cheetah" "ap_br_wlan2")];
+            # };
           };
-          networks.router2 = {
-            name = "router2";
+          networks.router0 = {
+            name = "router0";
             cidrv4 = "192.168.1.0/24";
             style = {
               primaryColor = "#0dd62e";
@@ -163,18 +166,21 @@
               image = images.jeeves;
             };
             interfaces.eth0 = {
-              addresses = ["192.168.1.210"];
-              network = "router2";
-              physicalConnections = [(mkConnectionRev "router1" "eth3")];
-            };
-            interfaces.wlan0 = {
-              icon = "interfaces.wifi";
-              addresses = ["192.168.1.123"];
-              network = "router2";
-              physicalConnections = [
-                # (mkConnectionRev "router2" "wlan")
+              addresses = [
+                "jeeves.lan"
+                "192.168.1.210"
               ];
+              network = "router0";
+              physicalConnections = [(mkConnectionRev "switch0" "eth2")];
             };
+            # interfaces.wlan0 = {
+            #   icon = "interfaces.wifi";
+            #   addresses = ["192.168.1.123"];
+            #   network = "router0";
+            #   physicalConnections = [
+            #     # (mkConnectionRev "router0" "wlan")
+            #   ];
+            # };
           };
           networks.wg0 = {
             name = "wg0";
@@ -192,9 +198,12 @@
               image = images.homix;
             };
             interfaces.eth0 = {
-              addresses = ["192.168.1.141"];
-              network = "router2";
-              physicalConnections = [(mkConnectionRev "router1" "eth4")];
+              addresses = [
+                "homix.lan"
+                "192.168.1.141"
+              ];
+              network = "router0";
+              physicalConnections = [(mkConnectionRev "switch0" "eth3")];
             };
           };
 
@@ -206,9 +215,12 @@
             };
             interfaces.wlan1 = {
               icon = "interfaces.wifi";
-              addresses = ["192.168.1.240"];
-              network = "router2";
-              physicalConnections = [(mkConnectionRev "router2" "wlan")];
+              addresses = [
+                "cheetah.lan"
+                "192.168.1.240"
+              ];
+              network = "router0";
+              physicalConnections = [(mkConnectionRev "router0" "wlan")];
             };
             interfaces.jeeves = {
               addresses = ["10.100.0.2"];
