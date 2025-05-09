@@ -5,9 +5,9 @@
 
   services.ollama = {
     enable = true;
+    package = pkgs.ollama-rocm;
     host = "0.0.0.0";
     port = 11434;
-    acceleration = "rocm";
     environmentVariables = {
       # NOTE: no need now (nginx), should be only `127.0.0.1`
       OLLAMA_ORIGINS = "*";
