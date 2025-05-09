@@ -32,14 +32,18 @@ in
       type = tomlFormat.type;
       default = { };
       apply = c: lib.mkMerge [
-        # NOTE: Always inject the module-defined port
-        #       unless the user explicitly sets it here too
-        { server.port = cfg.port; }
+        {
+          # NOTE: Always inject the module-defined port
+          #       unless the user explicitly sets it here too
+          server.port = cfg.port;
+          # NOTE: `Nix` managed the package and service, no need for update checks
+          checkForUpdates = false;
+        }
         c
       ];
       description = ''
-        Full declarative configuration for `SyncYomi`, written to
-        `${cfg.configDir}/config.toml` on activation.
+        Full declarative configuration for SyncYomi.
+        Written once to `${cfg.configDir}/config.toml` if it does not exist.
 
         The `server.port` is automatically set from `services.syncyomi.port`
         unless overridden here.
@@ -116,10 +120,14 @@ in
         WorkingDirectory = cfg.dataDir;
 
         # NOTE: Override `config.toml` directly every time
-        ExecStartPre = ''
-          ${lib.getExe' pkgs.coreutils "install"} -m0640 -o ${cfg.user} -g ${cfg.group} \
-            ${lib.escapeShellArg (tomlFormat.generate "syncyomi-config.toml" cfg.config)} \
-            ${lib.escapeShellArg "${cfg.configDir}/config.toml"}
+        ExecStartPre = pkgs.writeShellScript "syncyomi-config-toml-generation" ''
+          if [ ! -e ${lib.escapeShellArg "${cfg.configDir}/config.toml"} ]; then
+            ${lib.getExe' pkgs.coreutils "install"} -m0640 -o ${cfg.user} -g ${cfg.group} \
+              ${lib.escapeShellArg (tomlFormat.generate "syncyomi-initial-config.toml" cfg.config)} \
+              ${lib.escapeShellArg "${cfg.configDir}/config.toml"}
+            # Generate a random sessionSecret and append it
+            ${lib.getExe' pkgs.util-linux "uuidgen"} >> ${cfg.configDir}/config.toml
+          fi
         '';
 
         ExecStart = ''
