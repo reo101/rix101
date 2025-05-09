@@ -95,9 +95,7 @@
                   description = ''
                     Function for filtering configurations
                   '';
-                  # FIXME: `merge` of `functionTo` type causes a stray `passthru` to attempt getting evaluated
-                  # type = types.functionTo types.anything;
-                  type = types.unspecified;
+                  type = types.functionTo types.anything;
                   example = /* nix */ ''
                     { host, configurationFiles, ... }:
                       # Utils from `./modules/flake/lib/default.nix`
@@ -164,8 +162,15 @@
                   description = ''
                     The resulting automatic host && deploy-rs configurations
                   '';
-                  # TODO: specify
-                  type = types.unspecified;
+                  type = types.attrsOf (types.attrsOf types.unspecified) // {
+                    # Custom merge to avoid the module system trying to interpret
+                    # attributes from nixosSystem results (e.g. `passthru`) as options.
+                    # Without this, the module system's default merge would attempt to
+                    # recursively evaluate all attributes as if they were module options,
+                    # causing "passthru was accessed but has no value defined" errors.
+                    merge = loc: defs:
+                      lib.foldl' (acc: def: lib.recursiveUpdate acc def.value) {} defs;
+                  };
                   readOnly = true;
                   default =
                     lib.pipe dir [

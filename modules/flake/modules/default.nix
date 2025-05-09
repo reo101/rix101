@@ -84,10 +84,9 @@
                 };
                 resultModules = lib.mkOption {
                   description = ''
-                    The resulting automatic packages
+                    The resulting automatic modules
                   '';
-                  # TODO: specify
-                  type = types.unspecified;
+                  type = types.attrsOf types.deferredModule;
                   readOnly = true;
                   internal = true;
                   default =
