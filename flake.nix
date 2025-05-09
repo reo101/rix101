@@ -45,7 +45,7 @@
         apps = import ./apps { inherit pkgs; };
 
         # Formatter (`nix fmt`)
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
       };
 
       flake = {
@@ -136,11 +136,14 @@
 
     impermanence = {
       url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
 
     nix-topology = {
       url = "github:oddlama/nix-topology";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     nix-lib-net = {
@@ -213,6 +216,7 @@
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs-stable";
     };
 
     ukiyo = {
