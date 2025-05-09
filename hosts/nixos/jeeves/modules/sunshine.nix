@@ -1,175 +1,179 @@
 { config, pkgs, lib, ... }:
 
 let
-  displayId = "99";
-  sunshine-xorg-dir = "/var/lib/sunshine-xorg/";
-  xauthority = "${sunshine-xorg-dir}/Xauthority";
+  # NOTE: GPU and display configuration
+  #
+  # card0 / renderD129 = iGPU (AMD Raphael integrated)
+  # card1 / renderD128 = dGPU (AMD RX 7900 XTX) with DP-1, DP-2, DP-3, HDMI-A-1
+  #
+  # We use EDID firmware injection on an unused port of the dGPU to create
+  # a virtual display that the real GPU can render to with full acceleration.
+  gpuCards = {
+    igpu = {
+      card = "card0";
+      render = "renderD129";
+    };
+    dgpu = {
+      card = "card1";
+      render = "renderD128";
+    };
+  };
 
-  # NOTE: Generate an `Xauthority` for the `Xorg` server
-  sunshineXorgPre = pkgs.writeShellScript "sunshine-xorg-prestart" ''
-    set -euo pipefail
+  # The unused port on the dGPU we'll use for virtual display
+  # Using DP-3 so DP-1 and HDMI-A-1 remain available for real monitors
+  virtualDisplayPort = "DP-3";
 
-    rm -f ${xauthority}
-    : > ${xauthority}
+  # Static paths for niri state
+  # NOTE: niri doesn't support custom socket paths - it uses niri.{wayland-N}.{PID}.sock
+  # We create a symlink to the dynamic socket after niri starts
+  sunshineNiriDir = "/var/lib/sunshine-niri";
+  niriSocket = "${sunshineNiriDir}/niri.sock";
 
-    cookie="$(${lib.getExe' pkgs.util-linux "mcookie"})"
-    xauth=${lib.getExe' pkgs.xorg.xauth "xauth"}
-    hn="$(${lib.getExe pkgs.hostname})"
+  # EDID file for virtual display (1080p 60Hz)
+  edid1080p = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/akatrevorjay/edid-generator/master/1920x1080.bin";
+    hash = "sha256-vMG3e1FFSVChV2zuIw2Yur7K1OjMOliEmeIK3DpsR/Q=";
+  };
 
-    $xauth -f ${xauthority} add ":${displayId}" . "$cookie"
-    $xauth -f ${xauthority} add "unix:${displayId}" . "$cookie"
-    $xauth -f ${xauthority} add "$hn/unix:${displayId}" . "$cookie"
+  # Niri config for persistent session with named workspaces
+  niriConfig = pkgs.writeText "niri-sunshine.kdl" /* kdl */ ''
+    debug {
+      // Force rendering on the dGPU
+      render-drm-device "/dev/dri/${gpuCards.dgpu.render}"
+      // Ignore the iGPU
+      ignore-drm-device "/dev/dri/${gpuCards.igpu.render}"
+      // Enable overlay planes for better performance
+      enable-overlay-planes
+    }
 
-    chown root:users ${xauthority}
-    chmod 0640 ${xauthority}
+    // Disable physical outputs so niri only uses the virtual display DP-3
+    // NOTE: This prevents fbcon from using DP-1 while niri is running
+    output "DP-1" {
+      off
+    }
+    output "DP-2" {
+      off
+    }
+    output "HDMI-A-1" {
+      off
+    }
+
+    // Named workspaces
+    workspace "desktop" {
+      open-on-output "${virtualDisplayPort}"
+    }
+    workspace "steam" {
+      open-on-output "${virtualDisplayPort}"
+    }
+
+    // Window rule: gamescope (Steam Big Picture) always goes to "steam" workspace
+    window-rule {
+      match app-id="gamescope"
+      open-on-workspace "steam"
+      open-maximized true
+    }
+
+    // Spawn foot on desktop workspace at startup
+    spawn-at-startup "${lib.getExe pkgs.foot}"
+
+    // Spawn gamescope+steam on steam workspace at startup
+    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "-W" "1920" "-H" "1080" "-r" "144" "-f" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot"
   '';
 
-  modulePath = lib.pipe [
-    "xorgserver"
-    "xf86inputlibinput"
-    "xf86inputevdev"
-  ] [
-    (lib.map (lib.flip lib.pipe [
-      (lib.flip lib.getAttr pkgs.xorg)
-      (p: "${p}/lib/xorg/modules")
-    ]))
-    (lib.concatStringsSep ",")
-  ];
-
-  # TODO: Create predicible name for the VKMS Card
-  vkmsCard = if false then "vkms" else "card2";
-
-  # NOTE: Generate a configuration for the `Xorg` server
-  #       (consits of screen and input settings)
-  xorgConfDir = pkgs.runCommand "sunshine-xorg-confdir" {} ''
-    mkdir -p $out
-
-    ${lib.getExe' pkgs.libxcvt "cvt"} 3120 1440 60
-
-    # Headless screen setup
-    cat > $out/10-screen.conf <<XF86CONF
-    Section "Device"
-      Identifier  "vkms"
-      Driver      "modesetting"
-      Option      "kmsdev" "/dev/dri/${vkmsCard}"
-    EndSection
-
-    Section "Monitor"
-      Identifier "Monitor0"
-
-      $(${lib.getExe' pkgs.libxcvt "cvt"} 3120 1440 60)
-    EndSection
-
-    Section "Screen"
-      Identifier "Screen0"
-      Device "vkms"
-      Monitor "Monitor0"
-      DefaultDepth 24
-
-      SubSection "Display"
-        Depth 24
-
-        # NOTE: 1080p is default (first entry)
-        Modes "1920x1080" "3120x1440_60.00"
-
-        # Set maximum framebuffer size (needed when starting in a smaller one)
-        Virtual 3120 1440
-      EndSubSection
-    EndSection
-
-    Section "ServerLayout"
-      Identifier "Layout0"
-      Screen "Screen0"
-    EndSection
-
-    Section "ServerFlags"
-      Option "AutoAddDevices" "true"
-      Option "AutoEnableDevices" "true"
-    EndSection
-    XF86CONF
-
-    # `libinput` catchall (device-path based)
-    cat > $out/40-libinput.conf <<'XF86CONF'
-    Section "InputClass"
-      Identifier "libinput catchall"
-      MatchDevicePath "/dev/input/event*"
-      Driver "libinput"
-    EndSection
-    XF86CONF
+  # Helper to run niri msg with the static socket symlink
+  niriMsg = pkgs.writeShellScript "niri-msg" ''
+    if [ -S ${niriSocket} ]; then
+      NIRI_SOCKET="${niriSocket}" ${lib.getExe pkgs.niri} msg "$@"
+    else
+      echo "niri socket not found at ${niriSocket}" >&2
+      exit 1
+    fi
   '';
 in
 {
+  # NOTE: EDID firmware injection for virtual display on dGPU
+  #
+  # This makes the GPU think a 1080p monitor is connected to DP-3,
+  # allowing GPU-accelerated rendering without a physical display.
+
+  boot.kernelParams = [
+    # Load custom EDID for the virtual display port
+    "drm.edid_firmware=${virtualDisplayPort}:edid/sunshine-1080p.bin"
+    # Enable the display (the 'e' suffix means "enable")
+    "video=${virtualDisplayPort}:1920x1080@60e"
+  ];
+
+  # EDID firmware package for both runtime and initramfs
+  # Using a derivation that copies the file so it can be included in initrd
+  hardware.firmware = let
+    edidFirmware = pkgs.runCommand "sunshine-edid-firmware" {} ''
+      mkdir -p $out/lib/firmware/edid
+      cp ${edid1080p} $out/lib/firmware/edid/sunshine-1080p.bin
+    '';
+  in [ edidFirmware ];
+
+  # Include EDID firmware in initramfs so it's available during early boot
+  # This is critical - without this, the kernel can't find the EDID when
+  # amdgpu initializes, potentially causing display initialization to fail
+  boot.initrd = {
+    availableKernelModules = [ "drm" "amdgpu" ];
+    # Prepend a cpio archive containing the EDID firmware
+    prepend = [
+      "${pkgs.runCommand "edid-initrd" {} ''
+        mkdir -p lib/firmware/edid
+        cp ${edid1080p} lib/firmware/edid/sunshine-1080p.bin
+        find lib -print0 | ${lib.getExe pkgs.cpio} -o -H newc --null --quiet | ${lib.getExe pkgs.zstd} -19 > $out
+      ''}"
+    ];
+  };
+
   # NOTE: Base `sunshine` service configuration
 
   services.sunshine = {
     enable = true;
     autoStart = true;
     openFirewall = true;
-    # NOTE: Needed if caputring real screen
-    capSysAdmin = false;
+    capSysAdmin = true;  # Required for KMS capture
     settings = {
       # HACK: Default is `47989`, which `+21` (done by the `sunshine` module) overlaps with `OpenCloud`'s `48010`
       port = 47689;
-      # NOTE: Using headless `Xorg` server
-      capture = "x11";
+      # KMS capture from the virtual display on the real GPU
+      capture = "kms";
+      # adapter_name is for VAAPI encoding
+      adapter_name = "/dev/dri/${gpuCards.dgpu.render}";
+      # NOTE: output_name is NOT set - Sunshine auto-selects the first available
+      # display which will be DP-3 (connector 110) since it's the only virtual display
     };
     applications = {
       env = {
         PATH = "$(PATH):$(HOME)/.local/bin";
-        # NOTE: These technically get inherited from the `sunshine` service,
-        #       but it does not hurt to have them here as well
-        DISPLAY = ":${displayId}";
-        XAUTHORITY = "${xauthority}";
+        # Tell wlroots-based compositors (cage) to use the dGPU
+        WLR_DRM_DEVICES = "/dev/dri/${gpuCards.dgpu.card}";
+        # Use seatd for seat management (required for headless SSH launch)
+        LIBSEAT_BACKEND = "seatd";
+        # Only use the virtual display (DP-3), not the physical one
+        WLR_DRM_CONNECTORS = virtualDisplayPort;
+        # Expose niri socket for IPC commands (e.g., `niri msg`)
+        NIRI_SOCKET = niriSocket;
       };
       apps = [
         {
           name = "Steam Big Picture";
           image-path = "steam.png";
-          detached = [
-            # TODO: Better WM/DE, look into the autogenerated `gamescopeSession`
-            "${lib.getExe' pkgs.openbox "openbox"}"
-            # HACK: Pray to the `steam-run` gods
-            "${lib.getExe config.programs.steam.package.run-free} ${lib.getExe config.programs.steam.package}"
+          prep-cmd = [
+            {
+              do = "${niriMsg} action focus-workspace steam";
+              undo = "${niriMsg} action focus-workspace desktop";
+            }
           ];
         }
         {
           name = "Desktop";
           image-path = "desktop.png";
-        }
-        {
-          name = "Cheetah Desktop";
-          image-path = let
-            # TODO: Extract function from the `topology` config and expose through `lib`
-            removebg = { image, fuzz ? 10, ... }:
-              pkgs.runCommand "${image.name}.png" {
-                buildInputs = [
-                  pkgs.imagemagick
-                ];
-              } ''
-                magick ${image} \
-                  -monitor \
-                  -bordercolor white \
-                  -border 1x1 \
-                  -alpha set \
-                  -channel RGBA \
-                  -fuzz ${builtins.toString fuzz}% \
-                  -fill none \
-                  -floodfill +0+0 white \
-                  -shave 1x1 \
-                  $out
-              '';
-          in removebg {
-            image = pkgs.fetchurl {
-              name = "cheetah.jpg";
-              url = "https://m.media-amazon.com/images/I/51OFxuD1GgL._AC_SL1000_.jpg";
-              hash = "sha256-Lvylh1geh81FZpqK1shj108M217zobWRgR4mEfbvKrc=";
-            };
-            fuzz = 20;
-          };
           prep-cmd = [
             {
-              do = "${lib.getExe pkgs.xrandr} --output Virtual-1 --mode 3120x1440_60.00";
-              undo = "${lib.getExe pkgs.xrandr} --output Virtual-1 --mode 1920x1080";
+              do = "${niriMsg} action focus-workspace desktop";
+              undo = "";
             }
           ];
         }
@@ -190,62 +194,101 @@ in
     # NOTE: As noted in <https://myme.no/posts/2025-12-11-hifi-sunshine-on-nixos.html>
     ''KERNEL=="uhid",   MODE="0660", GROUP="input"''
     ''KERNEL=="uinput", MODE="0660", GROUP="input", SYMLINK+="uinput"''
-    # FIXME: Does not get created
-    # ''SUBSYSTEM=="drm", KERNEL=="card*", DRIVER=="vkms", SYMLINK+="dri/vkms"''
   ];
 
-  users.users.jeeves.extraGroups = [
-    "input"
-    "uinput"
-    "video"
-    "render"
-  ];
+  users.users.jeeves = {
+    extraGroups = [
+      "input"
+      "uinput"
+      "video"
+      "render"
+      "tty"      # Required for libseat/VT access
+      "seat"     # Required for seatd
+    ];
+    packages = [
+      pkgs.niri  # For `niri msg` IPC commands
+    ];
+  };
 
-  # NOTE: Custom Xorg Server configuration
-
-  # For `sunshineXorgPre`
-  systemd.tmpfiles.rules = [
-    "d ${sunshine-xorg-dir} 2775 root users - -"
-  ];
-
-  systemd.services.sunshine-xorg = {
-    description = "Headless Xorg (:${displayId}) for Sunshine (dummy + libinput)";
-    after = [ "network.target" ];
+  # Enable seatd for seat management (required for headless compositor launch via SSH)
+  services.seatd = {
+    enable = true;
+    user = "jeeves";
+  };
+  
+  # Keep getty on tty1 and tty2 for console access
+  # Disable getty on tty3 so niri can use it via seatd
+  systemd.services."getty@tty3".enable = false;
+  systemd.services."autovt@tty3".enable = false;
+  
+  # Unbind fbcon from the dGPU so compositors can acquire DRM master
+  # Without this, fbcon holds the framebuffer and blocks other DRM clients
+  systemd.services.unbind-fbcon = {
+    description = "Unbind fbcon to allow headless compositors";
     wantedBy = [ "multi-user.target" ];
-
+    after = [ "systemd-vconsole-setup.service" ];
     serviceConfig = {
-      Type = "simple";
-      Restart = "always";
-      RestartSec = 2;
-
-      ExecStartPre = sunshineXorgPre;
-
-      ExecStart = ''
-        ${lib.getExe' pkgs.xorg.xorgserver "Xorg"} :${displayId} \
-          -modulepath ${modulePath} \
-          -configdir ${xorgConfDir} \
-          -auth ${xauthority} \
-          -noreset -nolisten tcp \
-          -logfile ${sunshine-xorg-dir}/Xorg.${displayId}.log
-      '';
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${lib.getExe pkgs.bash} -c 'echo 0 > /sys/class/vtconsole/vtcon1/bind || true'";
     };
   };
 
-  # NOTE: Augemntation of the `sunshine` user service (generated by the module)
+  # NOTE: Augmentation of the `sunshine` user service (generated by the module)
 
   systemd.user.services.sunshine = {
-    after = [ "sunshine-xorg.service" ];
-    wants = [ "sunshine-xorg.service" ];
-
-    # TODO: (somehow) restart when configuration files change
-    # reloadIfChanged = true;
-
-    environment = {
-      DISPLAY = ":${displayId}";
-      XAUTHORITY = "${xauthority}";
-    };
     serviceConfig = {
       PrivateDevices = false;
+    };
+  };
+
+  # NOTE: Persistent niri session for Sunshine streaming
+  # Starts automatically with sunshine and provides workspaces for Steam and Desktop
+
+  # Ensure state directory exists
+  systemd.tmpfiles.settings."sunshine-niri" = {
+    "${sunshineNiriDir}".d = {
+      user = "jeeves";
+      group = "users";
+      mode = "0755";
+    };
+  };
+
+  systemd.user.services.sunshine-niri = {
+    description = "Niri compositor for Sunshine streaming";
+    wantedBy = [ "sunshine.service" ];
+    after = [ "sunshine.service" ];
+
+    environment = {
+      WLR_DRM_DEVICES = "/dev/dri/${gpuCards.dgpu.card}";
+      LIBSEAT_BACKEND = "seatd";
+      WLR_DRM_CONNECTORS = virtualDisplayPort;
+      # NOTE: Use VT3 so tty1/tty2 remain available for console
+      XDG_VTNR = "3";
+    };
+
+    serviceConfig = {
+      Type = "simple";
+      ExecStartPre = "${lib.getExe pkgs.bash} -c 'echo 0 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true'";
+      ExecStart = "${lib.getExe pkgs.niri} -c ${niriConfig}";
+      ExecStartPost = pkgs.writeShellScript "niri-save-socket" ''
+        # Wait for niri to create socket
+        sleep 2
+        SOCKET=$(ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
+        if [ -n "$SOCKET" ]; then
+          unlink ${niriSocket} 2>/dev/null || true
+          ln -s "$SOCKET" ${niriSocket}
+        fi
+      '';
+      ExecStopPost = pkgs.writeShellScript "niri-cleanup" ''
+        unlink ${niriSocket} 2>/dev/null || true
+        # Rebind fbcon to restore console on DP-1 (unbind then bind to re-initialize)
+        echo 0 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+        sleep 0.5
+        echo 1 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+      '';
+      Restart = "on-failure";
+      RestartSec = "5s";
     };
   };
 
