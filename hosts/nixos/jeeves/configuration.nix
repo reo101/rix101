@@ -28,6 +28,7 @@
     ./modules/monero.nix
     ./modules/syncyomi.nix
     ./modules/vaultwarden.nix
+    ./modules/opencloud.nix
   ];
 
   # services.kanidm = { };
