@@ -42,6 +42,10 @@
     in {
       inherit (infuse.v1) infuse;
     })
+    # Alloc
+    (final: prev: {
+      alloc = import "${inputs.alloc.outPath}/default.nix" { lib = prev; };
+    })
   ];
 
   config.lib = rec {

@@ -157,6 +157,11 @@
       flake = false;
     };
 
+    alloc = {
+      url = "github:Aleksanaa/alloc.nix";
+      flake = false;
+    };
+
     nix-monitored = {
       url = "github:ners/nix-monitored";
       inputs.nixpkgs.follows = "nixpkgs";
