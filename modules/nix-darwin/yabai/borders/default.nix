@@ -1,6 +1,6 @@
-{ lib, fetchFromGitHub, darwin, ... }:
+{ lib, stdenv, fetchFromGitHub, ... }:
 
-darwin.apple_sdk.stdenv.mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "JankyBorders";
   version = "dev";
 

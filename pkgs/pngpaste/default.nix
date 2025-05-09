@@ -1,6 +1,6 @@
-{ lib, darwin, fetchFromGitHub, ... }:
+{ lib, stdenv, fetchFromGitHub, ... }:
 
-darwin.apple_sdk.stdenv.mkDerivation rec {
+stdenv.mkDerivation rec {
   name = "pngpaste";
   version = "0.2.3";
 

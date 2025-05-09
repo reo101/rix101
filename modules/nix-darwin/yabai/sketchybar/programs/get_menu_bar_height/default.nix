@@ -1,6 +1,6 @@
-{ lib, darwin, ... }:
+{ lib, stdenv, ... }:
 
-darwin.apple_sdk.stdenv.mkDerivation {
+stdenv.mkDerivation {
   name = "get_menu_bar_height";
   version = "0.0.1";
 

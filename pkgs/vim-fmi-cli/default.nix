@@ -1,4 +1,4 @@
-{ lib, stdenv, darwin, fetchFromGitHub, rustPlatform, ... }:
+{ lib, stdenv, fetchFromGitHub, rustPlatform, ... }:
 
 rustPlatform.buildRustPackage rec {
   pname = "vim-fmi-cli";
