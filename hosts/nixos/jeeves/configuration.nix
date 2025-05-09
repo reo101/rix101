@@ -27,6 +27,7 @@
     ./modules/atuin.nix
     ./modules/monero.nix
     ./modules/syncyomi.nix
+    ./modules/vaultwarden.nix
   ];
 
   # services.kanidm = { };

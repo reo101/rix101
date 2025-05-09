@@ -1,15 +1,7 @@
 { inputs, lib, pkgs, config, ... }:
 
 {
-  # age.secrets."nextcloud.adminpass" = {
-  #   rekeyFile = lib.repoSecret "home/jeeves/nextcloud/adminpass.age";
-  #   mode = "770";
-  #   owner = "nextcloud";
-  #   group = "nextcloud";
-  # };
-
   environment.systemPackages = [
-    # config.services.nextcloud.package
   ];
 
   networking.firewall.allowedTCPPorts = [ 80 443 ];
@@ -17,16 +9,36 @@
   services.nginx = {
     enable = true;
     package = pkgs.openresty;
-    # virtualHosts."_.${config.networking.hostName}.local" = {
-    #   # listen = [
-    #   #   {
-    #   #     addr = "127.0.0.1";
-    #   #     port = 1234;
-    #   #   }
-    #   # ];
-    #   enableACME = false;
-    #   forceSSL = false;
-    #   locations."/".proxyPass = "http://127.0.0.1:1234";
-    # };
+  };
+
+  age.secrets."epik.api.secrets" = {
+    rekeyFile = lib.repoSecret "epik/api/secrets.env.age";
+  };
+
+  security.acme = {
+    acceptTerms = true;
+    defaults = {
+      email = "${pkgs.lib.maintainers.reo101.email}";
+      group = "nginx";
+    };
+    certs =
+      let
+        domain = "jeeves.reo101.xyz";
+      in
+      {
+        "${domain}" = {
+          domain = "${domain}";
+          dnsProvider = "epik";
+          environmentFile = config.age.secrets."epik.api.secrets".path;
+          # NOTE: as per <https://go-acme.github.io/lego/dns/epik>
+          # credentialFiles = {
+          #   "EPIK_SIGNATURE" = "";
+          # };
+          extraDomainNames = [
+            "*.${domain}"
+          ];
+          webroot = null;
+        };
+      };
   };
 }
