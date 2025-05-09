@@ -88,8 +88,8 @@ in
           behaviour = "drop";
           inherit key;
         };
-        core = {
-          fsmonitor = "watchman";
+        fsmonitor = {
+          backend = "watchman";
           watchman = {
             register-snapshot-trigger = true;
           };
@@ -154,8 +154,10 @@ in
         aliases = {
           s = ["status"];
           e = ["edit"];
-          l = ["log"];
           d = ["diff"];
+          l  = [ "log" ];
+          ls = [ "log" "--summary" ];
+          la = [ "log" "--revisions" "::" ];
 
           drag = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
           sync = ["git" "fetch" "--all-remotes"];
@@ -167,8 +169,8 @@ in
             "sh" "-c" /* sh */ "jj diff -r @ --name-only --no-pager | xargs pre-commit run --files"
           ];
 
-          xl = ["log" "-r" "all()"];
           pl = ["obslog" "-p"];
+          # xl = ["log" "-r" "all()"];
 
           # cl = ["git" "push" "-c" "@-"];
           # push = ["git" "push" "--all"];
@@ -231,9 +233,10 @@ in
             "reo101/" ++ change_id.short()
           '';
         };
-        # revsets = {
-        #   log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
-        # };
+        revsets = {
+          # log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
+          log = "present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)";
+        };
       };
     };
   };
