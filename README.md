@@ -63,7 +63,7 @@
   - Check [`./modules/flake/overlays`](./modules/flake/overlays) for more info on what is extracted from that directory
 - Shells can be found under `./shells/...`
   - Check [`./modules/flake/shells`](./modules/flake/shells) for more info on what is extracted from that directory
-  - Default one puts a recent `nix` (as of recently - `lix`) together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
+  - Default one puts a recent `nix` together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
 
 # Topology
 
