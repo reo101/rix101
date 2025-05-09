@@ -1,7 +1,7 @@
 { lib, python3Packages, fetchFromGitHub }:
 
 python3Packages.buildPythonApplication rec {
-  pname = "ha-ledvance-tuya-resync-localkey";
+  pname = "hass-ledvance-tuya-resync-localkey";
   version = "0.1.0";
 
   src = fetchFromGitHub {

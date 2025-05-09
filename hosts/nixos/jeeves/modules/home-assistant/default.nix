@@ -106,7 +106,7 @@ in
           # Tuya-enabled appliances (LED lamps, power tool batteries)
           pkgs.home-assistant-custom-components.tuya_local
           # Philips AirPurifier devices
-          pkgs.custom.philips-airplus
+          pkgs.custom.hass-philips-airplus
         ];
         extraComponents = [
           # Enables a bunch of standard integrations (history, logbook, automation, etc.)
