@@ -31,7 +31,11 @@ let
   agenix-module-for = host-type: { meta, ... }: {
     imports = [
       inputs.ragenix."${config.lib.kebabToCamel host-type}Modules".default
-      inputs.agenix-rekey."${config.lib.kebabToCamel host-type}Modules".default
+      # FIXME: <https://github.com/oddlama/agenix-rekey/blob/42362b12f59978aabf3ec3334834ce2f3662013d/flake.nix#L62>
+      #        is marked `_class = "nixos"` automatically by `flake-parts`
+      (lib.pipe inputs.agenix-rekey."${config.lib.kebabToCamel host-type}Modules".default [
+        (module: module // { _class = host-type; })
+      ])
       (lib.optionalAttrs (meta.pubkey != null) {
         age.rekey.hostPubkey = meta.pubkey;
       })
