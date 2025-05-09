@@ -81,8 +81,10 @@ in
           fetch = ["origin" "upstream"];
           push = "origin";
           private-commits = "description(glob:'wip:*')";
-          auto-local-bookmark = true;
           sign-on-push = true;
+        };
+        remotes = {
+          origin.auto-track-bookmarks = "glob:*";
         };
         signing = {
           backend = "gpg";
@@ -190,8 +192,9 @@ in
             )
           '';
 
+          # id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
           "format_short_id(id)" = /* jj_template */ ''
-            id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
+            id.shortest(12).prefix() ++ id.shortest(12).rest()
           '';
           "format_timestamp(timestamp)" = /* jj_template */ ''
             timestamp.ago()
