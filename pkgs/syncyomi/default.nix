@@ -1,22 +1,24 @@
-{ lib
-, buildGoModule
-, fetchFromGitHub
-, sqlite
-, nodejs_20
-, pnpm
-, fetchPnpmDeps
-, pnpmConfigHook
-, pkg-config
+{
+  lib,
+  fetchFromGitHub,
+  buildGoModule,
+  fetchPnpmDeps,
+  pnpmConfigHook,
+  writableTmpDirAsHomeHook,
+  sqlite,
+  nodejs_20,
+  pnpm,
+  pkg-config,
 }:
 
-buildGoModule rec {
+buildGoModule (finalAttrs: {
   pname = "syncyomi";
   version = "1.1.4";
 
   src = fetchFromGitHub {
     owner = "syncyomi";
     repo = "syncyomi";
-    rev = "v${version}";
+    rev = "v${finalAttrs.version}";
     hash = "sha256-pU3zxzixKoYnJsGpfvC/SVWIu0adsaiiVcLn0IZe64w=";
   };
 
@@ -24,9 +26,9 @@ buildGoModule rec {
 
   # NOTE: `pnpm` building of the `web` directory
   env.pnpmDeps = fetchPnpmDeps {
-    pname = "${pname}-web";
-    version = version;
-    src = "${src}/web";
+    pname = "${finalAttrs.pname}-web";
+    inherit (finalAttrs) version;
+    src = "${finalAttrs.src}/web";
     fetcherVersion = 2;
     hash = "sha256-jZi2b+Ng3ebz1xCuEJ+yg52RQTxTytiIanAwq/TH6Xc=";
   };
@@ -34,10 +36,11 @@ buildGoModule rec {
 
   nativeBuildInputs = [
     nodejs_20
+    pkg-config
     pnpm
     # NOTE: uses `env.pnpmDeps` and `env.pnpmRoot` to wire up `PNPM_HOME` and offline store
     pnpmConfigHook
-    pkg-config
+    writableTmpDirAsHomeHook
   ];
 
   buildInputs = [
@@ -46,27 +49,27 @@ buildGoModule rec {
 
   # NOTE: because of `pnpm.configHook` and `pnpmDeps`, we can now build `web` in the derivation (offilne)
   preBuild = ''
-    export HOME="$TMPDIR"
     CI= pnpm --dir web run build
   '';
 
   # NOTE: embed version info like the upstream GoReleaser config
   #       (not strictly needed but it's a nice-to-have)
   ldflags = [
-    "-s" "-w"
-    "-X main.version=v${version}"
-    "-X main.commit=${src.rev}"
+    "-s"
+    "-w"
+    "-X main.version=v${finalAttrs.version}"
+    "-X main.commit=${finalAttrs.src.rev}"
   ];
 
   # NOTE: the `go.mod` is at the repo root
   subPackages = [ "." ];
 
-  meta = with lib; {
-    description = "A self-hosted, FOSS, MangaDex-syncing-and-serving application";
+  meta = {
+    description = "Self-hosted, FOSS synchronization server for Tachiyomi manga reading progress and library across multiple devices.";
     homepage = "https://github.com/syncyomi/syncyomi";
-    license = licenses.mit;
-    maintainers = with maintainers; [ reo101 ];
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ reo101 ];
+    platforms = lib.platforms.linux;
     mainProgram = "SyncYomi";
   };
-}
+})
