@@ -23,11 +23,11 @@ in
         url = "https://media.baraag.net/media_attachments/files/114/343/416/726/247/325/original/202ab96f97ed846a.jpg";
         hash = "sha256-3h7A8NKJ045NZ+RSaPNnWDyfA7+W5RbUzCJTEJWhKlY=";
       };
-      cursor = {
-        name = "Ukiyo";
-        package = inputs.ukiyo.packages.${pkgs.hostPlatform.system}.default;
-        size = 32;
-      };
+      # cursor = {
+      #   name = "Ukiyo";
+      #   package = inputs.ukiyo.packages.${pkgs.hostPlatform.system}.default;
+      #   size = 32;
+      # };
       fonts = {
         monospace = {
           package = pkgs.nerd-fonts.fira-code;
