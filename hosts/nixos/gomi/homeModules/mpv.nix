@@ -34,10 +34,14 @@
       "WHEEL_DOWN" = "seek -10";
       "Alt+0" = "set window-scale 0.5";
       "h" = "seek -5";
-      "j" = "seek -60";
-      "k" = "seek 60";
+      "j" = "seek 60";
+      "k" = "seek -60";
       "l" = "seek 5";
       "S" = "cycle sub";
+      "z" = "add sub-delay -0.1";
+      "Z" = "add sub-delay +0.1";
+      "x" = "add secondary-sub-delay -0.1";
+      "X" = "add secondary-sub-delay +0.1";
     };
   };
 }
