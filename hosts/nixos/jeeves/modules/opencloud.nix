@@ -7,8 +7,22 @@ let
   cfg = config.services.opencloud;
 in
 {
+  # NOTE: for mounting `OpenCloud`'s `Space`s
+  services.davfs2 = {
+    enable = true;
+    settings = {
+      globalSection = {
+        use_locks = false;
+        delay_upload = 0;
+        cache_size = 0;
+      };
+    };
+  };
+
   services.opencloud = {
     enable = true;
+
+    stateDir = "/data/opencloud";
 
     url = "${protocol}://${domain}";
     port = 9200;
@@ -17,6 +31,8 @@ in
       proxy = {
         # NOTE: handled by `nginx`
         tls = false;
+        # NOTE: for WebDAV
+        enable_basic_auth = true;
       };
       csp = {
         directives = {
