@@ -124,14 +124,33 @@ in
           };
         };
         revset-aliases = {
-          "stragglers" = "(visible_heads() & mine()) ~ trunk()";
-          "bases" = "master | main";
-          "closest_bookmark(to)" = "heads(::to & bookmarks())";
-          "downstream(x,y)" = "(x::y) & y";
-          "branches" = "downstream(trunk(), bookmarks()) & mine()";
-          "branchesandheads" = "branches | (heads(trunk()::) & mine())";
-          "currbranch" = "latest(branches::@- & branches)";
-          "nextbranch" = "roots(@:: & branchesandheads)";
+          "stragglers" = /* jj_revset */ ''
+            (visible_heads() & mine()) ~ trunk()
+          '';
+          "bases" = /* jj_revset */ ''
+            master | main
+          '';
+          "closest_bookmark(to)" = /* jj_revset */ ''
+            heads(::to & bookmarks())
+          '';
+          "closest_pushable(to)" = /* jj_revset */ ''
+            heads(::to & mutable() & ~description(exact:"") & (~empty() | merges()))
+          '';
+          "downstream(x,y)" = /* jj_revset */ ''
+            (x::y) & y
+          '';
+          "branches" = /* jj_revset */ ''
+            downstream(trunk(), bookmarks()) & mine()
+          '';
+          "branchesandheads" = /* jj_revset */ ''
+            branches | (heads(trunk()::) & mine())
+          '';
+          "currbranch" = /* jj_revset */ ''
+            latest(branches::@- & branches)
+          '';
+          "nextbranch" = /* jj_revset */ ''
+            roots(@:: & branchesandheads)
+          '';
         };
         aliases = {
           s = ["status"];
