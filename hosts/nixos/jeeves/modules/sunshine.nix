@@ -42,8 +42,6 @@ let
       render-drm-device "/dev/dri/${gpuCards.dgpu.render}"
       // Ignore the iGPU
       ignore-drm-device "/dev/dri/${gpuCards.igpu.render}"
-      // Enable overlay planes for better performance
-      enable-overlay-planes
     }
 
     // Disable physical outputs so niri only uses the virtual display DP-3
@@ -58,11 +56,11 @@ let
       off
     }
 
-    // Named workspaces
-    workspace "desktop" {
+    // Named workspaces (steam first = top row)
+    workspace "steam" {
       open-on-output "${virtualDisplayPort}"
     }
-    workspace "steam" {
+    workspace "desktop" {
       open-on-output "${virtualDisplayPort}"
     }
 
@@ -73,11 +71,18 @@ let
       open-maximized true
     }
 
+    // Keybinds (Alt as modifier)
+    binds {
+      Alt+Return { spawn "${lib.getExe pkgs.ghostty}"; }
+      Alt+Up { toggle-overview; }
+    }
+
     // Spawn foot on desktop workspace at startup
     spawn-at-startup "${lib.getExe pkgs.foot}"
 
     // Spawn gamescope+steam on steam workspace at startup
-    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "-W" "1920" "-H" "1080" "-r" "144" "-f" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot"
+    // --steam enables Steam integration for controller passthrough
+    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "--output-width" "1920" "--output-height" "1080" "--nested-refresh" "144" "--fullscreen" "--steam" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot"
   '';
 
   # Helper to run niri msg with the static socket symlink
