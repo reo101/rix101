@@ -71,8 +71,8 @@
         {
           "XF86AudioPlay".action  = spawn "${playerctl}" "play-pause";
           "XF86AudioPause".action = spawn "${playerctl}" "pause";
-          "XF86AudioNext".action  = spawn "${playerctl}" "next_track";
-          "XF86AudioPrev".action  = spawn "${playerctl}" "prev_track";
+          "XF86AudioNext".action  = spawn "${playerctl}" "next";
+          "XF86AudioPrev".action  = spawn "${playerctl}" "previous";
 
           "XF86AudioMute".action = spawn "${wpctl}" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
 
