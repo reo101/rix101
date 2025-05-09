@@ -5,18 +5,23 @@
 , makeWrapper
 , writeShellApplication
 
-# NOTE: only works with vanilla `2.24` nix
-, nix' ? pkgs.nixVersions.nix_2_24
+# NOTE: normally only works with vanilla `2.24` nix
+#       using a patched `nix-plugins` here
+, nix' ? pkgs.nixVersions.nix_2_29
 , nix-monitored' ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
     nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
   }
 , monitored ? false
-, nix-plugins ? pkgs.nix-plugins.overrideAttrs (oldAttrs: {
+, nix-plugins' ? pkgs.nix-plugins.overrideAttrs (oldAttrs: {
     # Only override `nix`
-    buildInputs = lib.pipe oldAttrs.buildInputs [
+    buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
       (lib.filter (drv: drv.pname != "nix"))
       (buildInputs: [ nix' ] ++ buildInputs)
+    ];
+
+    patches = (oldAttrs.patches or []) ++ [
+      ./fix.patch
     ];
   })
 , coreutils
@@ -52,7 +57,7 @@ let
       "flakes"
       "pipe-operators"
     ];
-    "plugin-files" = "${nix-plugins}/lib/nix/plugins";
+    "plugin-files" = "${nix-plugins'}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
   suffix = if monitored then "-monitored" else "";
