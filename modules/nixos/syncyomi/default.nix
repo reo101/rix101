@@ -1,9 +1,16 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  options,
+  ...
+}:
 
 let
   inherit (lib) types;
 
   cfg = config.services.syncyomi;
+  opt = options.services.syncyomi;
   tomlFormat = pkgs.formats.toml { };
 in
 {
@@ -31,16 +38,18 @@ in
     config = lib.mkOption {
       type = tomlFormat.type;
       default = { };
-      apply = c: lib.mkMerge [
-        {
-          # NOTE: Always inject the module-defined port
-          #       unless the user explicitly sets it here too
-          server.port = cfg.port;
-          # NOTE: `Nix` managed the package and service, no need for update checks
-          checkForUpdates = false;
-        }
-        c
-      ];
+      apply =
+        c:
+        lib.mkMerge [
+          {
+            # NOTE: Always inject the module-defined port
+            #       unless the user explicitly sets it here too
+            server.port = lib.mkDefault cfg.port;
+            # NOTE: `Nix` managed the package and service, no need for update checks
+            checkForUpdates = lib.mkDefault false;
+          }
+          c
+        ];
       description = ''
         Full declarative configuration for SyncYomi.
         Written once to `${cfg.configDir}/config.toml` if it does not exist.
@@ -89,18 +98,34 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    users.users.${cfg.user} = {
-      isSystemUser = true;
-      group = cfg.group;
+    users = {
+      users = lib.mkIf (cfg.user == opt.user.default) {
+        ${cfg.user} = {
+          isSystemUser = true;
+          inherit (cfg) group;
+        };
+      };
+
+      groups = lib.mkIf (cfg.group == opt.group.default) {
+        ${cfg.group} = { };
+      };
     };
-    users.groups.${cfg.group} = { };
 
     # NOTE: Create dataDir + configDir with correct ownership & perms
-    systemd.tmpfiles.rules = [
-      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} -"
-      "d '${cfg.configDir}' 0750 ${cfg.user} ${cfg.group} -"
-      "f '${cfg.configDir}/config.toml' 0640 ${cfg.user} ${cfg.group} -"
-    ];
+    systemd.tmpfiles.settings."syncyomi" = {
+      "${cfg.dataDir}".d = {
+        inherit (cfg) user group;
+        mode = "0750";
+      };
+      "${cfg.configDir}".d = {
+        inherit (cfg) user group;
+        mode = "0750";
+      };
+      "${cfg.configDir}/config.toml".f = {
+        inherit (cfg) user group;
+        mode = "0640";
+      };
+    };
 
     # NOTE: Open firewall if requested
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.port ];
@@ -116,7 +141,7 @@ in
         User = cfg.user;
         Group = cfg.group;
 
-        StateDirectory = lib.mkIf (cfg.dataDir == "/var/lib/syncyomi") "syncyomi";
+        StateDirectory = lib.mkIf (cfg.dataDir == opt.dataDir.default) "syncyomi";
         WorkingDirectory = cfg.dataDir;
 
         # NOTE: Override `config.toml` directly every time
@@ -172,9 +197,10 @@ in
         ReadWritePaths = [ cfg.dataDir ];
       };
 
-      environment =
-        { TZ = config.time.timeZone or "UTC"; }
-        // cfg.environment;
+      environment = {
+        TZ = config.time.timeZone or "UTC";
+      }
+      // cfg.environment;
     };
   };
 }
