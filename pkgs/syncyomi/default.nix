@@ -4,6 +4,8 @@
 , sqlite
 , nodejs_20
 , pnpm
+, fetchPnpmDeps
+, pnpmConfigHook
 , pkg-config
 }:
 
@@ -21,7 +23,7 @@ buildGoModule rec {
   vendorHash = "sha256-fzPEljXFskr1/qzTsnASFNNc+8vA7kqO21mhMqwT44w=";
 
   # NOTE: `pnpm` building of the `web` directory
-  env.pnpmDeps = pnpm.fetchDeps {
+  env.pnpmDeps = fetchPnpmDeps {
     pname = "${pname}-web";
     version = version;
     src = "${src}/web";
@@ -34,7 +36,7 @@ buildGoModule rec {
     nodejs_20
     pnpm
     # NOTE: uses `env.pnpmDeps` and `env.pnpmRoot` to wire up `PNPM_HOME` and offline store
-    pnpm.configHook
+    pnpmConfigHook
     pkg-config
   ];
 
