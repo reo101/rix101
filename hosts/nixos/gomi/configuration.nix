@@ -72,7 +72,7 @@
   };
 
   nix = {
-    package = pkgs.nix-enraged.override { monitored = true; };
+    package = pkgs.custom.nix-enraged.override { monitored = true; };
 
     settings = {
       trusted-users = [

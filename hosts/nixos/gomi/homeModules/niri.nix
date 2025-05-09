@@ -12,7 +12,7 @@
 
   services.swww = {
     enable = true;
-    package = pkgs.swww;
+    package = pkgs.custom.swww;
   };
 
   programs.niri = {

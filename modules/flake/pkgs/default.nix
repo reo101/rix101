@@ -21,8 +21,10 @@
       overlays = lib.concatLists [
         # NOTE: packages from flake outputs
         [
-          (_: _: (config.perSystem system).packages)
-          # (_: _: self.packages.${system})
+          (_: _: {
+            custom = (config.perSystem system).packages;
+            # custom = self'.packages;
+          })
         ]
 
         # NOTE: overlays from flake outputs

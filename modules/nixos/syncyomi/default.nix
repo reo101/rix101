@@ -17,7 +17,7 @@ in
   options.services.syncyomi = {
     enable = lib.mkEnableOption "the SyncYomi server";
 
-    package = lib.mkPackageOption pkgs "syncyomi" { };
+    package = lib.mkPackageOption pkgs.custom "syncyomi" { };
 
     dataDir = lib.mkOption {
       type = types.path;
