@@ -28,9 +28,9 @@
         substituter = "https://nixpkgs-cross-overlay.cachix.org";
         public-key = "nixpkgs-cross-overlay.cachix.org-1:TjKExGN4ys960TlsGqNOI/NBdoz2Jdr2ow1VybWV5JM=";
       }
-      {
-        substituter = "https://cache.ngi0.nixos.org";
-        public-key = "cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=";
-      }
+      # {
+      #   substituter = "https://cache.ngi0.nixos.org";
+      #   public-key = "cache.ngi0.nixos.org-1:KqH5CBLNSyX184S9BKZJo1LxrxJ9ltnY2uAs5c/f1MA=";
+      # }
     ];
 }
