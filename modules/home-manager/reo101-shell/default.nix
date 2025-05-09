@@ -140,8 +140,7 @@ in
           ])
           (optionals cfg.gpg.enable [
             gnupg
-            # FIXME: latest doesn't build on darwin
-            nixpkgs.stable.yubikey-manager
+            yubikey-manager
             yubikey-personalization
           ])
           (optionals cfg.zellij [
