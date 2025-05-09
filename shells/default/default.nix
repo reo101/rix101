@@ -7,7 +7,7 @@
 }: pkgs.mkShellNoCC {
   nativeBuildInputs = with pkgs; [
     # lix-monitored
-    (nix-enraged.override { monitored = true; })
+    (config.legacyPackages.nix-enraged.override { monitored = true; })
     # (nixd.override { nix = nix-enraged; })
     home-manager
     git
