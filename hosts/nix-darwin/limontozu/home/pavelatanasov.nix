@@ -79,17 +79,6 @@
     };
   };
 
-  programs.git = {
-    enable = true;
-    userName = "reo101";
-    # userEmail = "pavel.atanasov@limechain.tech";
-    userEmail = "pavel.atanasov2001@gmail.com";
-    signing = {
-      signByDefault = true;
-      key = "675AA7EF13964ACB";
-    };
-  };
-
   home.file.".gnupg/gpg-agent.conf" = {
     text = ''
       allow-preset-passphrase

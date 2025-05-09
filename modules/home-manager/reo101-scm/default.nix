@@ -55,8 +55,6 @@ in
     programs.git = mkIf cfg.git.enable {
       enable = true;
       package = pkgs.gitFull;
-      userName = name;
-      userEmail = email;
       signing = {
         signByDefault = true;
         inherit key;
@@ -64,7 +62,10 @@ in
       lfs = {
         enable = true;
       };
-      extraConfig = {
+      settings = {
+        user = {
+          inherit name email;
+        };
         init.defaultBranch = "master";
       };
     };

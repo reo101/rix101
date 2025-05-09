@@ -84,12 +84,6 @@
     enableSshSupport = true;
   };
 
-  programs.git = {
-    enable = true;
-    userName = "reo101";
-    userEmail = "pavel.atanasov2001@gmail.com";
-  };
-
   reo101 = {
     shell = {
       enable = true;

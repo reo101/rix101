@@ -23,16 +23,6 @@
     # inputs.zls-overlay.packages.x86_64-darwin.default
   ];
 
-  programs.git = {
-    enable = true;
-    userName = "apavel";
-    userEmail = "apavel@vmware.com";
-    signing = {
-      signByDefault = true;
-      key = "0x52F3E1D376F692C0";
-    };
-  };
-
   # services.gpg-agent = {
   #   enable = true;
   #   defaultCacheTtl = 1800;
