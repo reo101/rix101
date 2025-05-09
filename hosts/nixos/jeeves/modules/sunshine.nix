@@ -191,8 +191,8 @@ in
     openFirewall = true;
     capSysAdmin = true;  # Required for KMS capture
     settings = {
-      # HACK: Default is `47989`, which `+21` (done by the `sunshine` module) overlaps with `OpenCloud`'s `48010`
-      port = 47689;
+      # WARN: Default is `47989`, which `+21` (done by the `sunshine` module) overlaps with `OpenCloud`'s `48010`
+      port = 47989;
       # KMS capture from the virtual display on the real GPU
       capture = "kms";
       # adapter_name is for VAAPI encoding
@@ -271,12 +271,12 @@ in
     enable = true;
     user = "jeeves";
   };
-  
+
   # Keep getty on tty1 and tty2 for console access
   # Disable getty on tty3 so niri can use it via seatd
   systemd.services."getty@tty3".enable = false;
   systemd.services."autovt@tty3".enable = false;
-  
+
   # Unbind fbcon from the dGPU so compositors can acquire DRM master
   # Without this, fbcon holds the framebuffer and blocks other DRM clients
   systemd.services.unbind-fbcon = {
