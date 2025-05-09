@@ -2,8 +2,9 @@
 
 final: prev:
 {
+  # TODO: begs for `infuse`
   lib = prev.lib // {
-    maintainers = {
+    maintainers = prev.lib.maintainers // {
       reo101 = {
         name = "Pavel Atanasov";
         email = "pavel.atanasov2001@gmail.com";
