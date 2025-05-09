@@ -2,7 +2,6 @@
 
 (ns battery.notify
   (:require [clojure.string :as str]
-            [clojure.core.async :as async]
             [babashka.process :refer [shell]]
             [babashka.cli :as cli]
             [babashka.fs :as fs]))
@@ -22,7 +21,8 @@
   {:battery {:desc "Battery name (e.g. BAT0 or macsmc-battery)"}
    :critical {:desc "Critical battery threshold" :coerce :long}
    :low {:desc "Low battery threshold" :coerce :long}
-   :mid {:desc "Mid battery threshold" :coerce :long}})
+   :mid {:desc "Mid battery threshold" :coerce :long}
+   :debug-level {:desc "Debug: hardcoded battery level (0-100)" :coerce :long}})
 
 (def opts
   (merge default-opts (cli/parse-opts *command-line-args* {:spec cli-spec})))
@@ -35,7 +35,7 @@
        (map fs/file-name)))
 
 (defn has-capacity-file? [dev]
-  (fs/exists? (str "/sys/class/power_supply/" dev "/capacity")))
+  (fs/exists? (fs/path "/sys/class/power_supply" dev "capacity")))
 
 (defn detect-battery []
   (or
@@ -52,11 +52,23 @@
 (def battery-name
   (or (:battery opts) (detect-battery)))
 
+(when (nil? battery-name)
+  (println "ERROR: No battery detected!")
+  (System/exit 1))
+
 (def battery-path
-  (str "/sys/class/power_supply/" battery-name))
+  (str (fs/path "/sys/class/power_supply" battery-name)))
 
 (defn read-battery-file [file]
-  (-> (slurp (str battery-path "/" file)) str/trim))
+  (try
+    (-> (fs/path battery-path file)
+        str
+        slurp
+        str/trim)
+    (catch Exception _
+      (do
+        (println (str "ERROR: Cannot read " file " from " battery-path))
+        nil))))
 
 (defn notify
   [urgency title message]
@@ -71,54 +83,73 @@
 (defn handle-critical [level]
   (notify :critical "CRITICAL" "Battery level critical, plug it in now!")
 
-  ;; Use a promise to block the main thread until our monitoring completes
-  (let [done-promise (promise)
-        timeout-channel (async/timeout (* (:timeout opts) 1000))]
+  ;; Poll battery status every second for timeout period
+  (let [second-ms  1000
+        timeout-ms (* (:timeout opts) second-ms)
+        start-time (System/currentTimeMillis)]
+    (loop []
+      (let [elapsed (- (System/currentTimeMillis) start-time)
+            status (read-battery-file "status")]
 
-    ;; Start the monitoring process in a go block
-    (async/go
-      (loop []
-        ;; Create a new check interval for each iteration
-        (let [check-interval (async/timeout 1000)
-              [_ channel] (async/alts! [timeout-channel check-interval])]
+        (if (>= elapsed timeout-ms)
+          ;; Timeout reached
+          (notify :critical "CRITICAL" "Laptop will die in 3, 2, 1, ...")
 
-          (if (= channel timeout-channel)
-            ;; Timeout reached - the overall waiting period has expired
+          ;; Check if charging
+          (if (= "Charging" status)
+            ;; Laptop is now charging - notify and exit
+            (notify :normal
+                    "Achievement unlocked: living on the edge"
+                    (str "Plug your laptop in on "
+                         (:critical opts)
+                         "% or less battery-capacity"))
+
+            ;; Still discharging - sleep 1s and retry
             (do
-              (notify :critical "CRITICAL" "Laptop will die in 3, 2, 1, ...")
-              (deliver done-promise false))
-
-            ;; Check interval completed - check battery status and maybe continue
-            (let [status (read-battery-file "status")]
-              (if (= "Charging" status)
-                ;; Laptop is now charging - notify and exit
-                (do
-                  (notify :low
-                          "Achievement unlocked: living on the edge"
-                          (str "Plug your laptop in on "
-                               (:critical opts)
-                               "% or less battery-capacity"))
-                  (deliver done-promise true))
-                ;; Still discharging - continue the loop for another check
-                (recur)))))))
-
-    ;; Block until our promise is delivered (monitoring completes)
-    @done-promise))
+              (Thread/sleep second-ms)
+              (recur))))))))
 
 (defn handle-low [level]
   (notify :critical "Battery getting real low now..." (str level "% remaining. Time to charge!")))
 
 (defn handle-mid [level]
-  (notify :critical "Battery starting to get low..." (str level "% remaining. Consider charging soon.")))
+  (notify :normal "Battery starting to get low..." (str level "% remaining. Consider charging soon.")))
+
+(defn handle-plugged-not-charging [level]
+  (notify :critical "Plugged in but not charging!" (str "System overloaded at " level "% battery. Let it cool down.")))
+
+(defn is-plugged-in? []
+  (try
+    (let [acad-path (str (fs/path "/sys/class/power_supply" "ACAD" "online"))]
+      (= "1" (str/trim (slurp acad-path))))
+    (catch Exception _
+      false)))
 
 (defn battery-notify []
-  (let [status (read-battery-file "status")
-        level  (parse-long (read-battery-file "capacity"))]
-    (println {:status status :level level})
-    (when (= status "Discharging")
-      (cond
-        (<= level (:critical opts)) (handle-critical level)
-        (<= level (:low opts))      (handle-low level)
-        (<= level (:mid opts))      (handle-mid level)))))
+  (let [level (if-let [debug (:debug-level opts)]
+                (do (println (str "DEBUG: Using hardcoded level " debug)) debug)
+                (when-let [capacity-str (read-battery-file "capacity")]
+                  (parse-long capacity-str)))
+        status (if (:debug-level opts) "Discharging" (read-battery-file "status"))
+        plugged (is-plugged-in?)]
+    (cond
+      (nil? status)
+      (println "ERROR: Cannot read battery status")
+
+      (nil? level)
+      (println "ERROR: Cannot read battery capacity")
+
+      (and plugged (not= "Charging" status) (< level 95))
+      (do
+        (println {:status status :level level :plugged true})
+        (handle-plugged-not-charging level))
+
+      (= status "Discharging")
+      (do
+        (println {:status status :level level})
+        (cond
+          (<= level (:critical opts)) (handle-critical level)
+          (<= level (:low opts))      (handle-low level)
+          (<= level (:mid opts))      (handle-mid level))))))
 
 (battery-notify)
