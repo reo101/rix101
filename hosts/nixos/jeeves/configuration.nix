@@ -29,7 +29,7 @@
     ./modules/monero.nix
     ./modules/syncyomi.nix
     ./modules/vaultwarden.nix
-    ./modules/opencloud.nix
+    # ./modules/opencloud.nix
     ./modules/microvm.nix
     ./modules/home-assistant
   ];
