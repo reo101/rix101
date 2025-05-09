@@ -71,11 +71,13 @@
         config = {
           # NOTE: for some packages with non-free licenses
           allowUnfree = true;
-          overlays = [
-            # NOTE: for overlayed `maintainers` and `net`
-            (prev: _: prev.lib.overlay (_: _: config.lib))
-          ];
         };
+        overlays = [
+          # NOTE: for overlayed `maintainers`, `net`, `infuse`, etc.
+          (final: prev: {
+            inherit (config) lib;
+          })
+        ];
       };
       legacyPackages =
         lib.pipe

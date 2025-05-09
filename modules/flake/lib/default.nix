@@ -9,6 +9,14 @@
     lib = lib.mkOption {
       internal = true;
       type = types.unspecified;
+      apply = lib': let
+        extensions = lib.composeManyExtensions ([
+          # (final: prev: {
+          #   utils = lib';
+          # })
+          (final: prev: lib')
+        ] ++ config.lib-overlays);
+      in lib.extend extensions;
     };
     lib-overlays = lib.mkOption {
       type = types.listOf types.unspecified;
@@ -18,13 +26,5 @@
 
   # NOTE: expose flake's `lib` augmentations to everybody
   #       (including configurations, check <../configurations/default-generators.nix>)
-  config._module.args.lib = let
-    # NOTE: using raw `lib` to avoid recursion
-    overlay = lib.composeManyExtensions ([
-      # (final: prev: {
-      #   utils = config.lib;
-      # })
-      (final: prev: config.lib)
-    ] ++ config.lib-overlays);
-  in lib.extend overlay;
+  config._module.args.lib = config.lib;
 }

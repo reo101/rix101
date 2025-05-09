@@ -5,7 +5,7 @@
     ../lib
   ];
 
-  config.lib-overlays =  [
+  config.lib-overlays = [
     inputs.nix-lib-net.overlays.raw
     # Yants
     (final: prev: {
