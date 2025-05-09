@@ -248,7 +248,7 @@ in
               shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
             in
             "${shellPackage}/${shellPackage.shellPath}";
-          MANPAGER = "${lib.getExe config.programs.neovim.package} +Man!";
+          MANPAGER = "nvim +Man!";
         }
         (mkIf cfg.direnv {
           DIRENV_WARN_TIMEOUT = "0";
