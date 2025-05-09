@@ -13,7 +13,9 @@
 
   services.samba = {
     enable = true;
-    package = pkgs.sambaFull;
+    package = pkgs.sambaFull.override {
+      inherit (pkgs.nixpkgs.staging-next) ceph;
+    };
     openFirewall = true;
     settings = {
       global = {

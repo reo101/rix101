@@ -3,28 +3,28 @@
   imports = [
     inputs.hardware.nixosModules.common-cpu-amd
     inputs.hardware.nixosModules.common-gpu-amd
-    ./disko.nix
-    ./network.nix
-    ./wireguard.nix
-    ./nginx.nix
-    ./jellyfin.nix
-    ./transmission.nix
-    ./mindustry.nix
-    # ./home-assistant
-    ./samba.nix
-    # ./steam.nix
-    ./ollama.nix
-    # ./sunshine.nix
-    # ./photoprism.nix
-    ./immich.nix
-    # ./nextcloud.nix
-    ./paperless.nix
-    ./podman.nix
-    ./anki.nix
-    ./stirling-pdf.nix
-    ./taskwarrior.nix
-    ./nix-ld.nix
-    ./atuin.nix
+    ./modules/disko.nix
+    ./modules/network.nix
+    ./modules/wireguard.nix
+    ./modules/nginx.nix
+    ./modules/jellyfin.nix
+    ./modules/transmission.nix
+    ./modules/mindustry.nix
+    # ./modules/home-assistant
+    ./modules/samba.nix
+    # ./modules/steam.nix
+    ./modules/ollama.nix
+    # ./modules/sunshine.nix
+    # ./modules/photoprism.nix
+    ./modules/immich.nix
+    # ./modules/nextcloud.nix
+    ./modules/paperless.nix
+    ./modules/podman.nix
+    ./modules/anki.nix
+    ./modules/stirling-pdf.nix
+    ./modules/taskwarrior.nix
+    ./modules/nix-ld.nix
+    ./modules/atuin.nix
   ];
 
   # services.kanidm = { };

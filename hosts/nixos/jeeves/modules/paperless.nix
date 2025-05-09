@@ -1,8 +1,5 @@
 { inputs, lib, pkgs, config, ... }:
 
-let
-  paperlessDomain = "paperless.jeeves.lan";
-in
 {
   age.secrets."paperless.password" = {
     rekeyFile = lib.repoSecret "home/jeeves/paperless/password.age";
@@ -23,20 +20,20 @@ in
     passwordFile = config.age.secrets."paperless.password".path;
     address = "0.0.0.0";
     port = 28981;
+    domain = "paperless.jeeves.lan";
     dataDir = "/data/paperless";
     consumptionDirIsPublic = true;
     settings = rec {
       PAPERLESS_ADMIN_USER = "jeeves";
 
       # TODO: kanidm and https
-      PAPERLESS_URL = "http://${paperlessDomain}";
       PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
         # For `nginx`
         "127.0.0.1"
-        paperlessDomain
+        config.services.paperless.domain
       ];
       PAPERLESS_CORS_ALLOWED_HOSTS = lib.concatStringsSep "," [
-        "http://${paperlessDomain}"
+        "http://${config.services.paperless.domain}"
       ];
 
       PAPERLESS_CONSUMER_IGNORE_PATTERN = [
@@ -61,7 +58,7 @@ in
   };
 
   services.nginx = {
-    virtualHosts.${paperlessDomain} = {
+    virtualHosts.${config.services.paperless.domain} = {
       enableACME = false;
       forceSSL = false;
       locations."/" = {

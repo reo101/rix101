@@ -10,7 +10,7 @@
     acceleration = "rocm";
     environmentVariables = {
       # NOTE: no need now (nginx), should be only `127.0.0.1`
-      # OLLAMA_ORIGINS = "*";
+      OLLAMA_ORIGINS = "*";
     };
   };
 
