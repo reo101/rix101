@@ -250,6 +250,9 @@ in
             "${shellPackage}/${shellPackage.shellPath}";
           MANPAGER = "nvim +Man!";
         }
+        (mkIf cfg.carapace {
+          CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash";
+        })
         (mkIf cfg.direnv {
           DIRENV_WARN_TIMEOUT = "0";
         })
