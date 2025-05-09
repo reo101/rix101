@@ -6,7 +6,6 @@
 , ...
 }: pkgs.mkShellNoCC {
   nativeBuildInputs = with pkgs; [
-    # lix-monitored
     (config.legacyPackages.nix-enraged.override { monitored = true; })
     # (nixd.override { nix = nix-enraged; })
     home-manager

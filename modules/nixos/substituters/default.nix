@@ -21,10 +21,6 @@
         public-key = "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=";
       }
       {
-        substituter = "https://cache.lix.systems";
-        public-key = "cache.lix.systems:aBnZUw8zA7H35Cz2RyKFVs3H4PlGTLawyY5KRbvJR8o=";
-      }
-      {
         substituter = "https://lean4.cachix.org";
         public-key = "lean4.cachix.org-1:mawtxSxcaiWE24xCXXgh3qnvlTkyU7evRRnGeAhD4Wk=";
       }

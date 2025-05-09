@@ -27,14 +27,15 @@
   # Read the changelog before changing this value
   system.stateVersion = "22.11";
 
+  nix.package = pkgs.nixVersions.latest;
+
   nix.extraOptions = ''
     experimental-features = ${
       builtins.concatStringsSep " " [
         "nix-command"
         "flakes"
         "recursive-nix"
-        # NOTE: not in `lix`, yet
-        # "pipe-operators"
+        "pipe-operators"
       ]
     }
 
@@ -51,8 +52,6 @@
     }
     builders-use-substitutes = true
   '';
-
-  nix.package = pkgs.lix-monitored;
 
   time.timeZone = "Europe/Sofia";
 

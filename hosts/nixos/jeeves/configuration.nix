@@ -51,7 +51,7 @@
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
   nix = {
-    package = pkgs.lix-monitored;
+    package = pkgs.nixVersions.latest;
 
     settings = {
       trusted-users = [

@@ -74,9 +74,12 @@
       url = "github:nixos/nixpkgs/nixos-24.05";
     };
 
-    lix-module = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.91.0.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs-staging = {
+      url = "github:nixos/nixpkgs/staging";
+    };
+
+    nixpkgs-staging-next = {
+      url = "github:nixos/nixpkgs/staging-next";
     };
 
     flake-parts = {

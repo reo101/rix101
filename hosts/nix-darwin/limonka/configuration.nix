@@ -17,7 +17,7 @@
     # Ensure we can work with flakes
     # TODO: add to `README.md`
     # NOTE: run `sudo -i nix-env --uninstall nix` to uninstall the global `nix`
-    package = pkgs.lix-monitored;
+    package = pkgs.nixVersions.latest;
 
     settings = {
       # Enable flakes and new 'nix' command
