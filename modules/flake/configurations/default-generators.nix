@@ -28,12 +28,10 @@ let
             }))
     ];
 
-  # HACK: `agenix-rekey`'s `nixosModules.default` module
-  #       actually works everywhere where `(r)agenix` works
   agenix-module-for = host-type: { meta, ... }: {
     imports = [
       inputs.ragenix."${config.lib.kebabToCamel host-type}Modules".default
-      inputs.agenix-rekey.nixosModules.default
+      inputs.agenix-rekey."${config.lib.kebabToCamel host-type}Modules".default
       (lib.optionalAttrs (meta.pubkey != null) {
         age.rekey.hostPubkey = meta.pubkey;
       })
