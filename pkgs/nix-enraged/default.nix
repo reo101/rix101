@@ -6,7 +6,7 @@
 , writeShellApplication
 
 , nix' ? pkgs.nixVersions.nix_2_30
-, nix-monitored' ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
+, nix-monitored' ? inputs.nix-monitored.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
     nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
   }

@@ -12,8 +12,8 @@
     git
     wireguard-tools
     deploy-rs
-    # inputs.agenix.packages.${pkgs.hostPlatform.system}.agenix
-    # inputs.ragenix.packages.${pkgs.hostPlatform.system}.ragenix
+    # inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.agenix
+    # inputs.ragenix.packages.${pkgs.stdenv.hostPlatform.system}.ragenix
     rage
     config.agenix-rekey.package
     age-plugin-yubikey

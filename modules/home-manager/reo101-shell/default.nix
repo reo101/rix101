@@ -18,7 +18,7 @@ let
             let
               inherit (lib.strings)
                 hasInfix;
-              inherit (pkgs.hostPlatform)
+              inherit (pkgs.stdenv.hostPlatform)
                 isx86_64 isAarch64
                 isLinux isDarwin;
             in
@@ -222,7 +222,7 @@ in
         maxCacheTtl = 86400;
         pinentry.package = if cfg.gpg.pinentryPackage != null then
           cfg.gpg.pinentryPackage
-        else if pkgs.hostPlatform.isDarwin then
+        else if pkgs.stdenv.hostPlatform.isDarwin then
           pkgs.pinentry_mac
         # TODO: `pinentry` for GUI systems
         else if meta.gui then
