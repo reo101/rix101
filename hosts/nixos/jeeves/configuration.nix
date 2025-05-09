@@ -25,6 +25,7 @@
     ./modules/taskwarrior.nix
     ./modules/nix-ld.nix
     ./modules/atuin.nix
+    ./modules/monero.nix
   ];
 
   # services.kanidm = { };
