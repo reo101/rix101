@@ -47,6 +47,12 @@
     enable = true;
   };
 
+  # Better scheduling for gaming
+  services.scx = {
+    enable = true;
+    scheduler = "scx_lavd";
+  };
+
   # VR
   programs.alvr = {
     enable = true;
