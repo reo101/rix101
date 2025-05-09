@@ -143,6 +143,11 @@ in
           sync = ["git" "fetch" "--all-remotes"];
           evolve = ["rebase" "--skip-emptied" "-d" "trunk()"];
           pullup = ["evolve" "-s" "all:stragglers"];
+          touch = ["describe" "--reset-author" "--no-edit"];
+          pre-commit = [
+            "util" "exec" "--"
+            "sh" "-c" /* sh */ "jj diff -r @ --name-only --no-pager | xargs pre-commit run --files"
+          ];
 
           xl = ["log" "-r" "all()"];
           pl = ["obslog" "-p"];
