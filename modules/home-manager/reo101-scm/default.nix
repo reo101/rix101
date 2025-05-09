@@ -81,7 +81,6 @@ in
           push = "origin";
           private-commits = "description(glob:'wip:*')";
           auto-local-bookmark = true;
-          push-bookmark-prefix = "reo101/";
           sign-on-push = true;
         };
         signing = {
@@ -227,6 +226,9 @@ in
               if(current_working_copy, "●"),
               if(immutable, "⊗", "○"),
             )
+          '';
+          git_push_bookmark = /* jj_template */ ''
+            "reo101/" ++ change_id.short()
           '';
         };
         # revsets = {
