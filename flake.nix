@@ -271,4 +271,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
+
+  nixConfig = {
+    commit-lockfile-summary = "chore(flake): update `flake.lock`";
+  };
 }
