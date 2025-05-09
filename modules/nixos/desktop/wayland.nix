@@ -77,7 +77,7 @@ in
 
     programs.river = {
       enable = true;
-      package = pkgs.river;
+      package = pkgs.river-classic;
     };
 
     # Enable desktop portals
