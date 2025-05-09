@@ -28,7 +28,12 @@ let
   forwardedIPs = lib.map (lib.flip lib.net.cidr.hostCidr host-network-cidr) [
     # Ledvance Lamp
     178
-    # TODO: TV
+    # Air Purifier
+    110
+    # Samsung TV
+    125
+    # Chromecast
+    116
   ];
 in
 {
@@ -100,6 +105,8 @@ in
         customComponents = [
           # Tuya-enabled appliances (LED lamps, power tool batteries)
           pkgs.home-assistant-custom-components.tuya_local
+          # Philips AirPurifier devices
+          pkgs.custom.philips-airplus
         ];
         extraComponents = [
           # Enables a bunch of standard integrations (history, logbook, automation, etc.)
@@ -122,6 +129,10 @@ in
           "openrgb"
           # Android sleep tracking app
           "sleep_as_android"
+          # Jellyfin
+          "jellyfin"
+          # Chromecast
+          "cast"
         ];
         config = {
           default_config = { };
@@ -131,7 +142,8 @@ in
             time_zone = "Europe/Sofia";
           };
           http = {
-            server_host = "0.0.0.0";
+            # WARN: deprecated option, listening on all interface by default now
+            # server_host = "0.0.0.0";
             server_port = 8123;
             use_x_forwarded_for = true;
             trusted_proxies = [
