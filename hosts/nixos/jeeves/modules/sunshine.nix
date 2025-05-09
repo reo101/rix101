@@ -23,17 +23,83 @@ let
   # Using DP-3 so DP-1 and HDMI-A-1 remain available for real monitors
   virtualDisplayPort = "DP-3";
 
+  # Virtual display configurations
+  # For non-standard aspect ratios, specify `ratio` (e.g., "16:9") to avoid EDID generation failure
+  virtualDisplays = [
+    {
+      width = 1920;
+      height = 1080;
+      refresh = 60;
+    }
+    {
+      name = "cheetah";
+      width = 3120;
+      height = 1440;
+      refresh = 120;
+    }
+  ];
+
+  # Generate EDID name from display config (max 12 chars for EDID compatibility)
+  mkEdidName = d: let name = d.name or "${builtins.toString d.height}p";
+    in assert (builtins.stringLength name) <= 12; name;
+
+  # Generate EDID binaries using edid-generator with cvt-generated modelines
+  generatedEdids = pkgs.edid-generator.overrideAttrs (old: {
+    nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.libxcvt ];
+    clean = true;
+    passAsFile = [ ];
+    modelines = null;
+    # Skip validation for non-standard aspect ratios
+    doCheck = false;
+
+    # Patch modeline2edid to use closest ratio instead of failing on unknown
+    postPatch = (old.postPatch or "") + /* bash */ ''
+      substituteInPlace modeline2edid \
+        --replace-fail "[[ \$ratio != 'UNKNOWN' ]] || return 1" \
+                       ": # Allow unknown ratios - will use closest match"
+      # Change default from 'UNKNOWN' to '16:9' (most common for modern displays)
+      substituteInPlace modeline2edid \
+        --replace-fail "find-supported-ratio \$hdisp \$vdisp 'UNKNOWN'" \
+                       "find-supported-ratio \$hdisp \$vdisp '16:9'"
+    '';
+
+    preConfigure = ''
+      # Generate modeline from width, height, refresh, name, and optional ratio
+      gen_modeline() {
+        local width="$1" height="$2" refresh="$3" name="$4" ratio="$5"
+        local modeline
+        modeline=$(cvt "$width" "$height" "$refresh" | grep Modeline | sed 's/"[^"]*"/"'"$name"'/')
+        # Append ratio override if provided
+        [[ -n "$ratio" ]] && modeline="$modeline ratio=$ratio"
+        echo "$modeline"
+      }
+
+      # Generate modelines for all virtual displays
+      {
+        ${lib.concatMapStringsSep "\n" (
+          { width
+          , height
+          , refresh ? "60"
+          , ratio ? "16:9"
+          , name ? "${builtins.toString height}p"
+          }: /* bash */ ''
+            gen_modeline ${lib.escapeShellArgs [width height refresh name ratio]}
+          ''
+        ) virtualDisplays}
+      } > "$NIX_BUILD_TOP/modelines"
+      export modelinesPath="$NIX_BUILD_TOP/modelines"
+    '';
+  });
+
+  # Primary virtual display (first in list)
+  virtualDisplay = builtins.head virtualDisplays;
+  edidName = mkEdidName virtualDisplay;
+
   # Static paths for niri state
   # NOTE: niri doesn't support custom socket paths - it uses niri.{wayland-N}.{PID}.sock
   # We create a symlink to the dynamic socket after niri starts
   sunshineNiriDir = "/var/lib/sunshine-niri";
   niriSocket = "${sunshineNiriDir}/niri.sock";
-
-  # EDID file for virtual display (1080p 60Hz)
-  edid1080p = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/akatrevorjay/edid-generator/master/1920x1080.bin";
-    hash = "sha256-vMG3e1FFSVChV2zuIw2Yur7K1OjMOliEmeIK3DpsR/Q=";
-  };
 
   # Niri config for persistent session with named workspaces
   niriConfig = pkgs.writeText "niri-sunshine.kdl" /* kdl */ ''
@@ -100,37 +166,22 @@ in
   #
   # This makes the GPU think a 1080p monitor is connected to DP-3,
   # allowing GPU-accelerated rendering without a physical display.
+  # Uses pkgs.edid-generator to create the EDID from a modeline.
 
-  boot.kernelParams = [
-    # Load custom EDID for the virtual display port
-    "drm.edid_firmware=${virtualDisplayPort}:edid/sunshine-1080p.bin"
-    # Enable the display (the 'e' suffix means "enable")
-    "video=${virtualDisplayPort}:1920x1080@60e"
-  ];
+  hardware.display = {
+    edid.packages = [ generatedEdids ];
 
-  # EDID firmware package for both runtime and initramfs
-  # Using a derivation that copies the file so it can be included in initrd
-  hardware.firmware = let
-    edidFirmware = pkgs.runCommand "sunshine-edid-firmware" {} ''
-      mkdir -p $out/lib/firmware/edid
-      cp ${edid1080p} $out/lib/firmware/edid/sunshine-1080p.bin
-    '';
-  in [ edidFirmware ];
+    outputs.${virtualDisplayPort} = {
+      edid = "${edidName}.bin";
+      # Enable the display
+      mode = "e";
+    };
+  };
 
   # Include EDID firmware in initramfs so it's available during early boot
   # This is critical - without this, the kernel can't find the EDID when
   # amdgpu initializes, potentially causing display initialization to fail
-  boot.initrd = {
-    availableKernelModules = [ "drm" "amdgpu" ];
-    # Prepend a cpio archive containing the EDID firmware
-    prepend = [
-      "${pkgs.runCommand "edid-initrd" {} ''
-        mkdir -p lib/firmware/edid
-        cp ${edid1080p} lib/firmware/edid/sunshine-1080p.bin
-        find lib -print0 | ${lib.getExe pkgs.cpio} -o -H newc --null --quiet | ${lib.getExe pkgs.zstd} -19 > $out
-      ''}"
-    ];
-  };
+  boot.initrd.availableKernelModules = [ "drm" "amdgpu" ];
 
   # NOTE: Base `sunshine` service configuration
 
@@ -274,12 +325,15 @@ in
 
     serviceConfig = {
       Type = "simple";
-      ExecStartPre = "${lib.getExe pkgs.bash} -c 'echo 0 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true'";
+      ExecStartPre = "${lib.getExe pkgs.bash} -c 'echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true'";
       ExecStart = "${lib.getExe pkgs.niri} -c ${niriConfig}";
       ExecStartPost = pkgs.writeShellScript "niri-save-socket" ''
-        # Wait for niri to create socket
-        sleep 2
-        SOCKET=$(ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
+        # Wait for niri to create socket (poll up to 10 seconds)
+        for i in $(seq 1 20); do
+          SOCKET=$(ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
+          [ -n "$SOCKET" ] && break
+          sleep 0.5
+        done
         if [ -n "$SOCKET" ]; then
           unlink ${niriSocket} 2>/dev/null || true
           ln -s "$SOCKET" ${niriSocket}
@@ -288,9 +342,9 @@ in
       ExecStopPost = pkgs.writeShellScript "niri-cleanup" ''
         unlink ${niriSocket} 2>/dev/null || true
         # Rebind fbcon to restore console on DP-1 (unbind then bind to re-initialize)
-        echo 0 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+        echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
         sleep 0.5
-        echo 1 | sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+        echo 1 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
       '';
       Restart = "on-failure";
       RestartSec = "5s";
