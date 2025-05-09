@@ -230,7 +230,7 @@
                             inherit meta;
                           })
                         configurationTypeConfig.result)))
-                 ] ++ lib.optional new (modules: { inherit modules; }));
+                 ] ++ lib.optional new (configurations: { inherit configurations; }));
               in {
                 # NOTE: old:  ${name}Configurations.${configuration}
                 #       new: configurations.${name}.${configuration}
