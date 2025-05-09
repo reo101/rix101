@@ -21,6 +21,9 @@
     "ext4"
   ];
 
+  # HACK: `mdadm: No mail address or alert command - not monitoring.`
+  boot.swraid.mdadmConf = "MAILADDR root";
+
   # HACK: for troubleshooting
   # see https://github.com/NixOS/nixpkgs/blob/9d6655c6222211adada5eeec4a91cb255b50dcb6/nixos/modules/system/boot/stage-1-init.sh#L45-L49
   boot.initrd.preFailCommands = ''
