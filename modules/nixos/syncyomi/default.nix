@@ -121,12 +121,24 @@ in
 
         # NOTE: Override `config.toml` directly every time
         ExecStartPre = pkgs.writeShellScript "syncyomi-config-toml-generation" ''
-          if [ ! -e ${lib.escapeShellArg "${cfg.configDir}/config.toml"} ]; then
-            ${lib.getExe' pkgs.coreutils "install"} -m0640 -o ${cfg.user} -g ${cfg.group} \
+          set -eu
+
+          CONFIG_FILE=${lib.escapeShellArg "${cfg.configDir}/config.toml"}
+
+          if [ ! -e "$CONFIG_FILE" ]; then
+            echo "Generating initial \`SyncYomi\` config at $CONFIG_FILE"
+
+            # NOTE: Write Nix-provided TOML config
+            install -m0640 -o ${cfg.user} -g ${cfg.group} \
               ${lib.escapeShellArg (tomlFormat.generate "syncyomi-initial-config.toml" cfg.config)} \
-              ${lib.escapeShellArg "${cfg.configDir}/config.toml"}
-            # Generate a random sessionSecret and append it
-            ${lib.getExe' pkgs.util-linux "uuidgen"} >> ${cfg.configDir}/config.toml
+              "$CONFIG_FILE"
+
+            # NOTE: Append a random sessionSecret line (in correct TOML syntax)
+            SESSION_SECRET=$(${lib.getExe' pkgs.util-linux "uuidgen"} | tr -d '\n')
+            echo "sessionSecret = \"$SESSION_SECRET\"" >> "$CONFIG_FILE"
+
+            # NOTE: Make sure file ownership is correct (just in case)
+            chown ${cfg.user}:${cfg.group} "$CONFIG_FILE"
           fi
         '';
 
