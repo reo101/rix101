@@ -35,6 +35,11 @@ let
     # Chromecast
     116
   ];
+
+  # Theme packages to install (symlinked into writable themes dir)
+  hass-theme-packages = [
+    pkgs.custom.hass-frosted-glass-theme
+  ];
 in
 {
   # Declarative Home Assistant MicroVM
@@ -107,6 +112,14 @@ in
           pkgs.home-assistant-custom-components.tuya_local
           # Philips AirPurifier devices
           pkgs.custom.hass-philips-airplus
+          # Frosted Glass theme manager (customize colors/backgrounds via UI)
+          pkgs.custom.hass-frosted-glass-manager
+        ];
+        customLovelaceModules = [
+          # Required for Frosted Glass theme blur effects
+          pkgs.home-assistant-custom-lovelace-modules.card-mod
+          # Bottom/side navigation bar
+          pkgs.home-assistant-custom-lovelace-modules.navbar-card
         ];
         extraComponents = [
           # Enables a bunch of standard integrations (history, logbook, automation, etc.)
@@ -150,7 +163,22 @@ in
               microvm-network-gateway
             ];
           };
-          frontend = { };
+          frontend = {
+            themes = "!include_dir_merge_named themes";
+            extra_module_url = [
+              "/local/nixos-lovelace-modules/card-mod.js"
+            ];
+          };
+          lovelace = {
+            mode = "yaml";
+            resources = [
+              {
+                url = "/local/nixos-lovelace-modules/navbar-card.js";
+                type = "module";
+              }
+            ];
+          };
+
           mobile_app = { };
           map = { };
 
@@ -178,7 +206,21 @@ in
           inherit (cfg) user group;
           mode = "0644";
         };
-      };
+        "/var/lib/hass/ui-lovelace.yaml".f = {
+          inherit (cfg) user group;
+          mode = "0644";
+        };
+        "/var/lib/hass/themes".d = {
+          inherit (cfg) user group;
+          mode = "0755";
+        };
+
+      } // lib.pipe hass-theme-packages [
+        (lib.concatMap (pkg: lib.map
+          (file: lib.nameValuePair "/var/lib/hass/themes/${file}" { L.argument = "${pkg}/themes/${file}"; })
+          (lib.attrNames (builtins.readDir "${pkg}/themes"))))
+        lib.listToAttrs
+      ];
 
       # SSH for debugging
       services.openssh = {
