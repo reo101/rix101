@@ -25,7 +25,7 @@ in
       };
       # cursor = {
       #   name = "Ukiyo";
-      #   package = inputs.ukiyo.packages.${pkgs.hostPlatform.system}.default;
+      #   package = inputs.ukiyo.packages.${pkgs.stdenv.hostPlatform.system}.default;
       #   size = 32;
       # };
       fonts = {
@@ -62,15 +62,15 @@ in
 
     services.greetd = {
       enable = true;
-      package = pkgs.greetd.tuigreet;
+      package = pkgs.tuigreet;
       settings = {
         terminal = {
           vt = 1;
         };
         default_session = {
           user = "reo101";
-          command = "${lib.getExe pkgs.greetd.tuigreet} --cmd ${lib.getExe' pkgs.niri "niri-session"}";
-          # command = "${lib.getExe pkgs.greetd.tuigreet} --cmd ${lib.getExe' config.programs.river.package "river"}";
+          command = "${lib.getExe pkgs.tuigreet} --cmd ${lib.getExe' pkgs.niri "niri-session"}";
+          # command = "${lib.getExe pkgs.tuigreet} --cmd ${lib.getExe' config.programs.river.package "river"}";
         };
       };
     };
