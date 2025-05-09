@@ -4,7 +4,7 @@
     enable = true;
     enable32Bit = true;
     extraPackages = with pkgs; [
-      vaapiVdpau
+      libva-vdpau-driver
       libva1
       vulkan-loader
       vulkan-validation-layers
