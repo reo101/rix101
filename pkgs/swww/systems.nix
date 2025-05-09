@@ -1,3 +1,3 @@
-{ lib, hostPlatform, buildPlatform, targetPlatform, ... }:
+{ lib, stdenv, ... }:
 # BUG: does not build
 false

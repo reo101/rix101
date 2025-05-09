@@ -75,9 +75,7 @@
                 systems {
                   inherit (pkgsPure)
                     lib
-                    hostPlatform
-                    buildPlatform
-                    targetPlatform
+                    stdenv
                     ;
                 }))
             (lib.mapAttrs

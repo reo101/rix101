@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     name = "source-${name}-${coreutils_version}.tar.xz";
     url = "ftp://ftp.gnu.org/gnu/${coreutils_upstream}/${coreutils_upstream}-${coreutils_version}.tar.xz";
-    sha256 = "sha256-YaH0ENeLp+fzelpPUObRMgrKMzdUhKMlXt3xejhYBCM=";
+    hash = "sha256-YaH0ENeLp+fzelpPUObRMgrKMzdUhKMlXt3xejhYBCM=";
   };
 
   patches = [

@@ -51,7 +51,7 @@
         apps = import ./apps { inherit pkgs; };
 
         # Formatter (`nix fmt`)
-        formatter = pkgs.nixpkgs-fmt;
+        formatter = pkgs.nixfmt-rfc-style;
       };
 
       flake = {

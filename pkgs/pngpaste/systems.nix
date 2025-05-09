@@ -1,3 +1,3 @@
-{ lib, hostPlatform, buildPlatform, targetPlatform, ... }:
-hostPlatform.isDarwin && hostPlatform.isAarch64 &&
-buildPlatform.isDarwin && buildPlatform.isAarch64
+{ lib, stdenv, ... }:
+stdenv.hostPlatform.isDarwin && stdenv.hostPlatform.isAarch64 &&
+stdenv.buildPlatform.isDarwin && stdenv.buildPlatform.isAarch64

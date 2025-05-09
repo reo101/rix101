@@ -1,2 +1,2 @@
-{ lib, hostPlatform, buildPlatform, targetPlatform, ... }:
-buildPlatform.isDarwin
+{ lib, stdenv, ... }:
+stdenv.buildPlatform.isDarwin

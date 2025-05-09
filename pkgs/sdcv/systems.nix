@@ -1,3 +1,3 @@
-{ lib, hostPlatform, buildPlatform, targetPlatform, ... }:
+{ lib, stdenv, ... }:
 # FIXME: does not build
 false

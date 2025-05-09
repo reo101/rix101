@@ -1,2 +1,2 @@
-{ lib, hostPlatform, buildPlatform, targetPlatform, ... }:
+{ lib, stdenv, ... }:
 false
