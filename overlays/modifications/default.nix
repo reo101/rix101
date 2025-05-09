@@ -77,6 +77,14 @@ final: prev:
     withVencord = true;
   };
 
+  legcord = prev.legcord.overrideAttrs (oldAttrs: {
+    postInstallPhase = /* bash */ ''
+      mv $out/legcord $out/legcord_broken_ime
+      makeShellWrapper "$out/legcord_broken_ime" "$out/legcord" \
+        --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--wayland-text-input-version=3}}"
+    '';
+  });
+
   prismlauncher = prev.prismlauncher.overrideAttrs (oldAttrs: {
     patches = (oldAttrs.patches or [ ]) ++ [
       ./offline-mode-prism-launcher.diff
