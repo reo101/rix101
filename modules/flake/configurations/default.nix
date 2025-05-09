@@ -39,7 +39,7 @@
             '';
             type = types.path;
             default = "${self}/hosts";
-            defaultText = ''''${self}/hosts'';
+            defaultText = ''${self}/hosts'';
           };
           configurationTypes = lib.mkOption {
             # TODO: better merging (test on separate flake)
@@ -69,19 +69,27 @@
                   type = types.str;
                   default = "${kebabToCamel name}Hosts";
                 };
-                configurationsNameOld = lib.mkOption {
+                configurationsName = lib.mkOption {
                   description = ''
-                    Name of the `''${configurationType}Configurations` output
+                    Name(s) for the configurations output.
+                    Can be a string (used as `old`, with `new = null`) or an attrset with `old` and/or `new`.
+                    - `old`: Name for the `''${configurationType}Configurations` output (null to skip)
+                    - `new`: Name for the `configurations.''${configurationType}` output (null to skip)
                   '';
-                  type = types.str;
-                  default = "${kebabToCamel name}Configurations";
-                };
-                configurationsNameNew = lib.mkOption {
-                  description = ''
-                    Name of the `configurations.''${configurationType}` output
-                  '';
-                  type = types.str;
-                  default = name;
+                  type = types.either types.str (types.submodule {
+                    options = {
+                      old = lib.mkOption {
+                        type = types.nullOr types.str;
+                        default = null;
+                      };
+                      new = lib.mkOption {
+                        type = types.nullOr types.str;
+                        default = null;
+                      };
+                    };
+                  });
+                  default = { old = "${kebabToCamel name}Configurations"; new = name; };
+                  apply = v: if builtins.isString v then { old = v; new = null; } else v;
                 };
                 predicate = lib.mkOption {
                   description = ''
@@ -219,17 +227,19 @@
             default = {
               configurations = let
                 mkResultConfigurations = new: lib.pipe configurationTypes ([
-                  (lib.mapAttrs'
-                    (configurationType: configurationTypeConfig:
-                      lib.nameValuePair
-                      configurationTypeConfig."configurationsName${if new then "New" else "Old"}"
-                      (lib.mapAttrs
-                        (host: { configuration, meta, ... }:
-                          configuration // {
-                            # NOTE: for introspection
-                            inherit meta;
-                          })
-                        configurationTypeConfig.result)))
+                  (lib.concatMapAttrs
+                    (_configurationType: configurationTypeConfig:
+                      let name = configurationTypeConfig.configurationsName.${if new then "new" else "old"};
+                      in lib.optionalAttrs (name != null) {
+                        ${name} =
+                          lib.mapAttrs
+                            (_host: { configuration, meta, ... }:
+                              configuration // {
+                                # NOTE: for introspection
+                                inherit meta;
+                              })
+                            configurationTypeConfig.result;
+                      }))
                  ] ++ lib.optional new (configurations: { inherit configurations; }));
               in {
                 # NOTE: old:  ${name}Configurations.${configuration}

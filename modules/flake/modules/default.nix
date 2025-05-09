@@ -60,19 +60,27 @@
                   type = types.path;
                   default = "${baseDir}/${name}";
                 };
-                modulesNameOld = lib.mkOption {
+                modulesName = lib.mkOption {
                   description = ''
-                    Name of the `''${moduleType}Modules` output
+                    Name(s) for the modules output.
+                    Can be a string (used as `old`, with `new = null`) or an attrset with `old` and/or `new`.
+                    - `old`: Name for the `''${moduleType}Modules` output (null to skip)
+                    - `new`: Name for the `modules.''${moduleType}` output (null to skip)
                   '';
-                  type = types.str;
-                  default = "${kebabToCamel name}Modules";
-                };
-                modulesNameNew = lib.mkOption {
-                  description = ''
-                    Name of the `modules.''${moduleType}` output
-                  '';
-                  type = types.str;
-                  default = name;
+                  type = types.either types.str (types.submodule {
+                    options = {
+                      old = lib.mkOption {
+                        type = types.nullOr types.str;
+                        default = null;
+                      };
+                      new = lib.mkOption {
+                        type = types.nullOr types.str;
+                        default = null;
+                      };
+                    };
+                  });
+                  default = { old = "${kebabToCamel name}Modules"; new = name; };
+                  apply = v: if builtins.isString v then { old = v; new = null; } else v;
                 };
                 resultModules = lib.mkOption {
                   description = ''
@@ -95,14 +103,15 @@
             default = {
               modules = let
                 mkResultModules = new: lib.pipe moduleTypes ([
-                  (lib.mapAttrs'
-                    (moduleType: moduleTypeConfig:
-                      lib.nameValuePair
-                      moduleTypeConfig."modulesName${if new then "New" else "Old"}"
-                      (lib.mapAttrs
-                        (host: module:
-                          module)
-                        moduleTypeConfig.resultModules)))
+                  (lib.concatMapAttrs
+                    (_moduleType: moduleTypeConfig:
+                      let name = moduleTypeConfig.modulesName.${if new then "new" else "old"};
+                      in lib.optionalAttrs (name != null) {
+                        ${name} =
+                          lib.mapAttrs
+                            (_host: module: module)
+                            moduleTypeConfig.resultModules;
+                      }))
                 ] ++ lib.optional new (modules: { inherit modules; }));
               in {
                 # NOTE: old:  ${name}Modules.${module}
@@ -123,8 +132,7 @@
       nixos = {};
       nix-on-droid = {};
       nix-darwin = {
-        modulesNameOld = "darwinModules";
-        modulesNameNew = "darwin";
+        modulesName = { old = "darwinModules"; new = "darwin"; };
       };
       home-manager = {};
       flake = {};

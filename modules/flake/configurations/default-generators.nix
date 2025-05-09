@@ -57,7 +57,7 @@ let
       # Do not keep packages in ${HOME}
       useUserPackages = true;
       # Default import provided modules
-      # Usually `builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName}`
+      # Usually `builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName.old}`
       sharedModules = extraModules ++ [
         ({ lib, ... }: {
           _module.args.lib = lib.extend inputs.nix-lib-net.overlays.raw;
@@ -314,8 +314,7 @@ in
     };
     nix-darwin = {
       hostsName = "darwinHosts";
-      configurationsNameOld = "darwinConfigurations";
-      configurationsNameNew = "darwin";
+      configurationsName = { old = "darwinConfigurations"; new = "darwin"; };
       predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
@@ -355,8 +354,7 @@ in
     };
     home-manager = {
       hostsName = "homeHosts";
-      configurationsNameOld = "homeConfigurations";
-      configurationsNameNew = "home";
+      configurationsName = { old = "homeConfigurations"; new = "home"; };
       predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
