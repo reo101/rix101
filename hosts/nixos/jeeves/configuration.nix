@@ -98,6 +98,7 @@
         hashedPasswordFile = config.age.secrets."jeeves.user.password".path;
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBj8ZGcvI80WrJWV+dNy1a3L973ydSNqtwcVHzurDUaW (none)"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBc0G9jbQYzwWqIzj504MrxsamFBzbISltpTrLaFUg1 cardno:31_228_281"
         ];
         extraGroups = [
           "wheel"
