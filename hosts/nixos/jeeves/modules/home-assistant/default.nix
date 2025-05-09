@@ -153,15 +153,10 @@ in
           frontend = { };
           mobile_app = { };
           map = { };
-          automation = /* yaml */ ''
-            !include automations.yaml
-          '';
-          script = /* yaml */ ''
-            !include scripts.yaml
-          '';
-          scene = /* yaml */ ''
-            !include scenes.yaml
-          '';
+
+          "automation ui" = "!include automations.yaml";
+          "scene ui" = "!include scenes.yaml";
+          "script ui" = "!include scripts.yaml";
         };
       };
 
