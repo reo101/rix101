@@ -69,12 +69,19 @@
                   type = types.str;
                   default = "${kebabToCamel name}Hosts";
                 };
-                configurationsName = lib.mkOption {
+                configurationsNameOld = lib.mkOption {
                   description = ''
-                    Name of the `configurations` output
+                    Name of the `''${configurationType}Configurations` output
                   '';
                   type = types.str;
                   default = "${kebabToCamel name}Configurations";
+                };
+                configurationsNameNew = lib.mkOption {
+                  description = ''
+                    Name of the `configurations.''${configurationType}` output
+                  '';
+                  type = types.str;
+                  default = name;
                 };
                 predicate = lib.mkOption {
                   description = ''
@@ -210,12 +217,12 @@
           result = lib.mkOption {
             readOnly = true;
             default = {
-              configurations =
-                lib.pipe configurationTypes [
+              configurations = let
+                mkResultConfigurations = new: lib.pipe configurationTypes ([
                   (lib.mapAttrs'
                     (configurationType: configurationTypeConfig:
                       lib.nameValuePair
-                      configurationTypeConfig.configurationsName
+                      configurationTypeConfig."configurationsName${if new then "New" else "Old"}"
                       (lib.mapAttrs
                         (host: { configuration, meta, ... }:
                           configuration // {
@@ -223,7 +230,13 @@
                             inherit meta;
                           })
                         configurationTypeConfig.result)))
-                ];
+                 ] ++ lib.optional new (modules: { inherit modules; }));
+              in {
+                # NOTE: old:  ${name}Configurations.${configuration}
+                #       new: configurations.${name}.${configuration}
+                old = mkResultConfigurations false;
+                new = mkResultConfigurations true;
+              };
               deployNodes =
                 lib.pipe configurationTypes [
                   (lib.concatMapAttrs
@@ -247,7 +260,8 @@
 
   config = {
     flake = let
-      configurations = config.auto.configurations.result.configurations;
+      configurationsOld = config.auto.configurations.result.configurations.old;
+      configurationsNew = config.auto.configurations.result.configurations.new;
       deployNodes = {
         deploy.nodes = config.auto.configurations.result.deployNodes;
       };
@@ -260,6 +274,6 @@
             inputs.deploy-rs.lib;
       };
       # TODO: lib.something for merging (asserting for no overwrites)
-    in configurations // deployNodes // deployChecks;
+    in configurationsOld // configurationsNew // deployNodes // deployChecks;
   };
 }

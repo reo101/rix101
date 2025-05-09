@@ -312,7 +312,8 @@ in
     };
     nix-darwin = {
       hostsName = "darwinHosts";
-      configurationsName = "darwinConfigurations";
+      configurationsNameOld = "darwinConfigurations";
+      configurationsNameNew = "darwin";
       predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
@@ -352,7 +353,8 @@ in
     };
     home-manager = {
       hostsName = "homeHosts";
-      configurationsName = "homeConfigurations";
+      configurationsNameOld = "homeConfigurations";
+      configurationsNameNew = "home";
       predicate = ({ meta, configurationFiles, ... }:
         and [
           meta.enable
