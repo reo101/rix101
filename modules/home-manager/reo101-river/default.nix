@@ -26,7 +26,7 @@ in
       home.packages = with pkgs;
         builtins.concatLists [
           [
-            river
+            river-classic
             # FIXME: does not build
             # swww # wallpaper deamon
             waybar # status bar

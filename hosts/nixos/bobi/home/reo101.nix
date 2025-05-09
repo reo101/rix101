@@ -28,7 +28,7 @@
     wezterm
 
     ## WM
-    river
+    river-classic
     pamixer
     playerctl
     brightnessctl

@@ -122,7 +122,7 @@
     displayManager = {
       defaultSession = "river";
       sessionPackages = with pkgs; [
-        river
+        river-classic
       ];
       gdm = {
         enable = true;
@@ -203,7 +203,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    river
+    river-classic
     xdg-desktop-portal
     xdg-desktop-portal-wlr
     neovim
