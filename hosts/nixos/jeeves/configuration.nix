@@ -14,7 +14,8 @@
     ./modules/samba.nix
     # ./modules/steam.nix
     ./modules/ollama.nix
-    # ./modules/sunshine.nix
+    ./modules/steam.nix
+    ./modules/sunshine.nix
     # ./modules/photoprism.nix
     ./modules/immich.nix
     # ./modules/nextcloud.nix
