@@ -5,9 +5,7 @@
 , makeWrapper
 , writeShellApplication
 
-# NOTE: normally only works with vanilla `2.24` nix
-#       using a patched `nix-plugins` here
-, nix' ? pkgs.nixVersions.nix_2_29
+, nix' ? pkgs.nixVersions.nix_2_30
 , nix-monitored' ? inputs.nix-monitored.packages.${pkgs.hostPlatform.system}.default.override {
     nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
@@ -18,10 +16,6 @@
     buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
       (lib.filter (drv: drv.pname != "nix"))
       (buildInputs: [ nix' ] ++ buildInputs)
-    ];
-
-    patches = (oldAttrs.patches or []) ++ [
-      ./fix.patch
     ];
   })
 , coreutils
