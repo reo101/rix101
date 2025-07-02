@@ -83,4 +83,5 @@ in drv // {
     inherit nix';
   };
   inherit (nix') dev;
+  inherit (nix') version;
 }
