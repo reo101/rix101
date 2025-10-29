@@ -18,7 +18,7 @@ process_identities() {
     local primary_only="${AGENIX_REKEY_PRIMARY_IDENTITY_ONLY:-false}"
 
     # If primary_only is true, replace the entire identities array with the primary identity
-    if [[ "${primary_only}" == "true" ]]; then
+    if [[ -n "${primary_only}" ]]; then
         if [[ -z "${primary_identity}" ]]; then
             echo "Error: AGENIX_REKEY_PRIMARY_IDENTITY_ONLY is true, but AGENIX_REKEY_PRIMARY_IDENTITY is not set" >&2
             exit 1
