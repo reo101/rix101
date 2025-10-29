@@ -7,8 +7,8 @@ let
     name = "rish-shizuku.dex";
 
     src = pkgs.fetchurl {
-      url = "https://github.com/RikkaApps/Shizuku/releases/download/v13.5.4/shizuku-v13.5.4.r1049.0e53409-release.apk";
-      hash = "sha256-oFgyzjcWr7H8zPRvNIAG0qKWynd+H/PSI3l9x00Gsx8=";
+      url = "https://github.com/RikkaApps/Shizuku/releases/download/v13.6.0/shizuku-v13.6.0.r1086.2650830c-release.apk";
+      hash = "sha256-bic6sOmRxOebyLG7ubndc5zKwahxKlQaIUB4iGt7eQ8=";
     };
 
     unpackPhase = ''
