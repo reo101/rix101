@@ -9,9 +9,14 @@ python3Packages.buildPythonPackage rec {
     sha256 = "sha256-B8srOXQBUxK6dZ6GhDA5fYvxUBxHVcrSO/z+UWyF+qI=";
   };
 
-  propagatedBuildInputs = with python3Packages; [
-    numpy
-    wand
+  pyproject = true;
+  build-system = [
+    python3Packages.setuptools
+  ];
+
+  propagatedBuildInputs = [
+    python3Packages.numpy
+    python3Packages.wand
   ];
 
   meta = with lib; {

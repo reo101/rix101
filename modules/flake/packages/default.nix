@@ -61,12 +61,23 @@
   };
 
   config = {
-    perSystem = { lib, pkgs, system, ... }: let
+    perSystem = { lib, pkgs, system, ... }@perSystemArgs: let
       # NOTE: evaluate packages in isolation, which allows
       #       merging them back into the global `pkgs` later
       # NOTE: also faster than `import nixpkgs { inherit system; }`
-      pkgsPure = inputs.nixpkgs.legacyPackages.${system};
-      packages =
+      # pkgsPure = inputs.nixpkgs.legacyPackages.${system};
+      pkgsPure = import inputs.nixpkgs {
+        inherit system;
+        config = {
+          # NOTE: for some packages with non-free licenses
+          allowUnfree = true;
+          overlays = [
+            # NOTE: for overlayed `maintainers` and `net`
+            (prev: _: prev.lib.overlay (_: _: config.lib))
+          ];
+        };
+      };
+      legacyPackages =
         lib.pipe
           config.auto.packages.result
           [
@@ -102,17 +113,20 @@
                       }
                     ];
                     specialArgs = {
-                      # NOTE: for overlayed `maintainers` and `net`
-                      inherit (pkgs) lib;
                       inherit inputs;
                     };
                   }
                 else
                   # TODO: only inherit `input` if requested
-                  pkgsPure.callPackage package { /* inherit inputs; */ }))
+                  pkgsPure.callPackage package {
+                    # inherit inputs;
+                  }))
           ];
     in {
-      inherit packages;
+      packages = lib.pipe legacyPackages [
+        (lib.filterAttrs (lib.const lib.isDerivation))
+      ];
+      inherit legacyPackages;
     };
   };
 }

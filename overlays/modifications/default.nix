@@ -69,7 +69,7 @@ final: prev:
       );
   };
 
-  river = prev.river.overrideAttrs (oldAttrs: rec {
+  river-classic = prev.river-classic.overrideAttrs (oldAttrs: rec {
     xwaylandSupport = true;
   });
 

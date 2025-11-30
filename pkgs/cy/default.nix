@@ -19,6 +19,9 @@ buildGoModule rec {
 
   nativeBuildInputs = [
     pkg-config
+  ];
+
+  buildInputs = [
     xorg.libX11
   ];
 

@@ -2,7 +2,7 @@
 
 {
   imports = [
-    inputs.self.nixosModules.substituters
+    (inputs.self.nixosModules.substituters // { _class = "darwin"; })
     ./darwinModules/arrpc.nix
   ];
 

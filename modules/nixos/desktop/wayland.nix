@@ -37,7 +37,7 @@ in
         sansSerif = config.stylix.fonts.monospace;
         # emoji = config.stylix.fonts.monospace;
         emoji = {
-          package = pkgs.noto-fonts-emoji;
+          package = pkgs.noto-fonts-color-emoji;
           name = "Noto Color Emoji";
         };
       };
@@ -46,7 +46,7 @@ in
     fonts.packages = with pkgs; [
       noto-fonts
       noto-fonts-cjk-sans
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       nerd-fonts.fira-code
     ];
 

@@ -18,24 +18,22 @@ buildGoModule rec {
     hash = "sha256-pU3zxzixKoYnJsGpfvC/SVWIu0adsaiiVcLn0IZe64w=";
   };
 
-  # Go modules vendoring (for buildGoModule)
   vendorHash = "sha256-fzPEljXFskr1/qzTsnASFNNc+8vA7kqO21mhMqwT44w=";
 
-  # ---- Frontend vendoring (pnpm) in a separate fixed-output derivation ----
-  # This prefetches the pnpm store for web/pnpm-lock.yaml
-  pnpmDeps = pnpm.fetchDeps {
+  # NOTE: `pnpm` building of the `web` directory
+  env.pnpmDeps = pnpm.fetchDeps {
     pname = "${pname}-web";
     version = version;
     src = "${src}/web";
     fetcherVersion = 2;
     hash = "sha256-jZi2b+Ng3ebz1xCuEJ+yg52RQTxTytiIanAwq/TH6Xc=";
   };
-  pnpmRoot = "web";
+  env.pnpmRoot = "web";
 
   nativeBuildInputs = [
     nodejs_20
     pnpm
-    # NOTE: uses `pnpmDeps` and `pnpmRoot` to wire up `PNPM_HOME` and offline store
+    # NOTE: uses `env.pnpmDeps` and `env.pnpmRoot` to wire up `PNPM_HOME` and offline store
     pnpm.configHook
     pkg-config
   ];
@@ -44,34 +42,29 @@ buildGoModule rec {
     sqlite
   ];
 
-  # buildGoModule sets GOPATH, etc. We just need to build the web assets before `go build`.
-  # With pnpm.configHook and pnpmDeps, this runs fully offline.
+  # NOTE: because of `pnpm.configHook` and `pnpmDeps`, we can now build `web` in the derivation (offilne)
   preBuild = ''
     export HOME="$TMPDIR"
     CI= pnpm --dir web run build
   '';
 
-  # Embed version info like the upstream GoReleaser config
+  # NOTE: embed version info like the upstream GoReleaser config
+  #       (not strictly needed but it's a nice-to-have)
   ldflags = [
     "-s" "-w"
     "-X main.version=v${version}"
     "-X main.commit=${src.rev}"
   ];
 
-  # The go.mod is at repo root
+  # NOTE: the `go.mod` is at the repo root
   subPackages = [ "." ];
-
-  # NOTE: could be needed because of `sqlite`
-  # CGO_ENABLED = 1;
-
-  doCheck = false;  # often disabled for binaries that don’t ship tests in tree; flip if tests exist
 
   meta = with lib; {
     description = "A self-hosted, FOSS, MangaDex-syncing-and-serving application";
     homepage = "https://github.com/syncyomi/syncyomi";
     license = licenses.mit;
     maintainers = with maintainers; [ reo101 ];
-    platforms = platforms.linux; # realistically, since sqlite/cgo
+    platforms = platforms.linux;
     mainProgram = "SyncYomi";
   };
 }

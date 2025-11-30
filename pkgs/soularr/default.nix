@@ -35,6 +35,12 @@ PYTHON
     mv -v $out/bin/${pname}.py $out/bin/${pname}
   '';
 
+  pyproject = true;
+
+  build-system = [
+    python3Packages.setuptools
+  ];
+
   dependencies = [
     python3Packages.music-tag
     python3Packages.pyarr
