@@ -1,4 +1,4 @@
-{ lib, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
+{ lib, fetchFromGitHub, rustPlatform, ... }:
 
 rustPlatform.buildRustPackage rec {
   pname = "circom";
@@ -12,15 +12,6 @@ rustPlatform.buildRustPackage rec {
   };
 
   cargoHash = "sha256-ovPHMFYbzEhHbmtVhTjxlrUYF7fH0fhoznnd0F2cKUQ=";
-
-  nativeBuildInputs = [
-    pkg-config
-  ];
-
-  buildInputs = [ ];
-
-  PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
-  LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
 
   doCheck = false;
 

@@ -1,4 +1,4 @@
-{ lib, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
+{ lib, fetchFromGitHub, rustPlatform, ... }:
 
 rustPlatform.buildRustPackage rec {
   pname = "parinfer-rust";
@@ -12,15 +12,6 @@ rustPlatform.buildRustPackage rec {
   };
 
   cargoHash = "sha256-w/GMjNtKiMGYOfzSl5IZTeHBSp4C9Mu6+oogCqHxdb4=";
-
-  nativeBuildInputs = [
-    pkg-config
-  ];
-
-  buildInputs = [ ];
-
-  PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
-  LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
 
   doCheck = false;
 

@@ -11,11 +11,6 @@ darwin.apple_sdk.stdenv.mkDerivation rec {
     hash = "sha256-rYA6b6d3c4pJVUIV77z/JMcgKbZ+4qZdxkI21LwZcG4=";
   };
 
-  buildInputs = with darwin.apple_sdk.frameworks; [
-    AppKit
-    SkyLight
-  ];
-
   installPhase = ''
     mkdir -p $out/bin
     cp ./bin/borders $out/bin/

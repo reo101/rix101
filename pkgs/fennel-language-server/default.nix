@@ -1,4 +1,4 @@
-{ lib, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
+{ lib, fetchFromGitHub, rustPlatform, ... }:
 
 rustPlatform.buildRustPackage rec {
   pname = "fennel-language-server";
@@ -12,10 +12,6 @@ rustPlatform.buildRustPackage rec {
   };
 
   cargoHash = "sha256-iqw5syEqdTIuOrzt7SApqks1AliZ6lUwvvX1tkAZ3Y0=";
-
-  nativeBuildInputs = [ ];
-
-  buildInputs = [ ];
 
   doCheck = false;
 

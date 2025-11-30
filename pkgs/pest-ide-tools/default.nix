@@ -1,35 +1,23 @@
-{ lib, stdenv, darwin, fetchFromGitHub, rustPlatform, openssl, pkg-config, libxkbcommon }:
+{ lib, stdenv, fetchFromGitHub, rustPlatform }:
 
 rustPlatform.buildRustPackage rec {
   pname = "pest-ide-tools";
-  version = "8de1ee91765b0257c2ccfbf48f6b5bd39158bc2c";
+  version = "0.3.11";
 
   src = fetchFromGitHub {
     owner = "pest-parser";
     repo = pname;
-    rev = "${version}";
-    hash = "sha256-PSYbmFEYGGDPvHl9AjDSoedRx1Y7A5HT1gqPcGeVkv4=";
+    tag = "v${version}";
+    hash = "sha256-12/FndzUbUlgcYcwMT1OfamSKgy2q+CvtGyx5YY4IFQ=";
   };
 
-  cargoHash = "sha256-7L6hcLnaw6kTPhx4Q23h+Ku4VF9/FAo6mc2p/xMda4c=";
-
-  nativeBuildInputs = [
-    pkg-config
-  ];
-
-  buildInputs = [ ] ++ lib.optionals stdenv.hostPlatform.isDarwin (with darwin.apple_sdk.frameworks; [
-    SystemConfiguration
-    CoreServices
-  ]);
-
-  PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
-  LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
+  cargoHash = "sha256-wLdVIAwrnAk8IRp4RhO3XgfYtNw2S07uAHB1mokZ2lk=";
 
   doCheck = false;
 
   meta = with lib; {
     description = "IDE tools for writing pest grammars, using the Language Server Protocol for Visual Studio Code, Vim and other editors";
-    homepage = "https://github.com/pest-ide-tools/pest-parser";
+    homepage = "https://github.com/pest-parser/pest-ide-tools";
     license = licenses.mit;
     maintainers = with maintainers; [ reo101 ];
   };
