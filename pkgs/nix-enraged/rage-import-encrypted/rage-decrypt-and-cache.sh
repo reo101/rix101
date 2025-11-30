@@ -15,7 +15,7 @@ shift
 process_identities() {
     local -n ref_identities=$1
     local primary_identity="${AGENIX_REKEY_PRIMARY_IDENTITY:-}"
-    local primary_only="${AGENIX_REKEY_PRIMARY_IDENTITY_ONLY:-false}"
+    local primary_only="${AGENIX_REKEY_PRIMARY_IDENTITY_ONLY:-}"
 
     # If primary_only is true, replace the entire identities array with the primary identity
     if [[ -n "${primary_only}" ]]; then
