@@ -3,13 +3,7 @@
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, flake-parts-lib, ... }: {
-      systems = [
-        "aarch64-linux"
-        "i686-linux"
-        "x86_64-linux"
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
+      systems = import inputs.systems.outPath;
 
       # BUG: infinite recursion
       # imports = [
@@ -65,6 +59,10 @@
     });
 
   inputs = {
+    systems = {
+      url = "github:nix-systems/default";
+    };
+
     # Nixpkgs
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
@@ -113,6 +111,10 @@
     mac-app-util = {
       url = "github:hraban/mac-app-util";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.systems.follows = "systems";
+      inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
+      inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     };
 
     yknotify-rs = {
