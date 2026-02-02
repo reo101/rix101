@@ -21,9 +21,9 @@
   };
 
   services.nginx = {
-    virtualHosts."anki.jeeves.lan" = {
-      enableACME = false;
-      forceSSL = false;
+    virtualHosts."anki.jeeves.reo101.xyz" = {
+      forceSSL = true;
+      useACMEHost = "jeeves.reo101.xyz";
       locations."/" = {
         proxyPass = "http://127.0.0.1:${builtins.toString config.services.anki-sync-server.port}";
       };
