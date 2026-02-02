@@ -24,17 +24,18 @@
         inherit inputs;
         inherit (config) lib;
       };
+      thingArgs = lib.pipe thing [ builtins.functionArgs builtins.attrNames ];
       handledThing =
         if and [
           (builtins.isFunction
             thing)
-          # FIXME: check for subset, not `eq`
-          (eq
-            (lib.pipe thing [ builtins.functionArgs builtins.attrNames ])
-            (lib.pipe passthru [ builtins.attrNames ]))
+          # Check that all function's required arguments are present in passthru
+          (lib.all
+            (arg: builtins.hasAttr arg passthru)
+            thingArgs)
         ]
         # { inputs, ... }: { foo, ... }: bar
-        then thing passthru
+        then thing (lib.getAttrs thingArgs passthru)
         # { foo, ... }: bar
         else thing;
       handledResult =
