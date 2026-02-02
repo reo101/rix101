@@ -19,8 +19,10 @@
         if raw
         then result
         else result.${thingType};
+      # NOTE: use `config.lib` to get the extended lib with custom functions
       passthru = {
         inherit inputs;
+        inherit (config) lib;
       };
       handledThing =
         if and [
