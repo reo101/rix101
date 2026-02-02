@@ -238,7 +238,7 @@ in
           drag = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
           sync = ["git" "fetch" "--all-remotes"];
           evolve = ["rebase" "--skip-emptied" "-d" "trunk()"];
-          pullup = ["evolve" "-s" "all:stragglers"];
+          pullup = ["evolve" "-b" "stragglers"];
           touch = ["describe" "--reset-author" "--no-edit"];
           pre-commit = [
             "util" "exec" "--"
