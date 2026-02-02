@@ -94,9 +94,16 @@
             (lib.mapAttrs
               (name: { package, systems }:
                 let
+                  # Handle curried packages: { inputs }: { ... }: ...
+                  packageArgs = builtins.functionArgs package;
+                  isCurriedInputs = packageArgs == { inputs = false; };
+                  actualPackage =
+                    if isCurriedInputs
+                    then package { inherit inputs; }
+                    else package;
                   # TODO: put in `autoThings` `handle`?
                   # TODO: keep source `dream2nix` module for overriding?
-                  isDream2Nix = lib.pipe package
+                  isDream2Nix = lib.pipe actualPackage
                     [
                       builtins.functionArgs
                       builtins.attrNames
@@ -107,7 +114,7 @@
                   inputs.dream2nix.lib.evalModules {
                     packageSets.nixpkgs = pkgsPure;
                     modules = [
-                      package
+                      actualPackage
                       {
                         paths.projectRoot = "${self.outPath}";
                         paths.projectRootFile = "flake.nix";
@@ -119,10 +126,7 @@
                     };
                   }
                 else
-                  # TODO: only inherit `input` if requested
-                  pkgsPure.callPackage package {
-                    # inherit inputs;
-                  }))
+                  pkgsPure.callPackage actualPackage {}))
           ];
     in {
       packages = lib.pipe legacyPackages [
