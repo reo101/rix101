@@ -70,8 +70,6 @@
 
   environment.systemPackages = [
     pkgs.git
-    # Office Suite (`libreoffice-fresh` — `libreoffice` broken by nixpkgs#495635)
-    pkgs.libreoffice-fresh
     # Archive manager
     pkgs.file-roller
     # PDF viewer
