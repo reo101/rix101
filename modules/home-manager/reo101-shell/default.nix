@@ -9,8 +9,8 @@ let
     mkMerge;
 
   shellAliases = {
-    cp = "${pkgs.advcpmv}/bin/advcp -rvi";
-    mv = "${pkgs.advcpmv}/bin/advmv -vi";
+    cp = "${pkgs.custom.advcpmv}/bin/advcp -rvi";
+    mv = "${pkgs.custom.advcpmv}/bin/advmv -vi";
     rebuild =
       let
         rebuild_script = pkgs.writeShellScript "rebuild" ''
