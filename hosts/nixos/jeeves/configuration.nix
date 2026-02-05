@@ -3,12 +3,12 @@
   imports = [
     inputs.hardware.nixosModules.common-cpu-amd
     inputs.hardware.nixosModules.common-gpu-amd
+    inputs.nixarr.nixosModules.default
     ./modules/disko.nix
     ./modules/network.nix
     ./modules/wireguard.nix
     ./modules/nginx.nix
-    ./modules/jellyfin.nix
-    ./modules/transmission.nix
+    ./modules/nixarr.nix
     ./modules/mindustry.nix
     # ./modules/home-assistant
     ./modules/samba.nix
