@@ -63,6 +63,12 @@
       url = "github:nix-systems/default";
     };
 
+    nix = {
+      url = "github:DeterminateSystems/nix-src";
+      # inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     # Nixpkgs
     nixpkgs = {
       url = "github:nixos/nixpkgs/nixos-unstable";
