@@ -60,7 +60,7 @@
       jeeves = removebg {
         image = pkgs.fetchurl {
           url = "https://www.fractal-design.com/app/uploads/2019/06/Define-R2-XL_BK_2-1440x1440.jpg";
-          hash = "sha256-x0kxRVTZT6xBxEtClCyQGxvS/Rs3/iXkbJEl6VHdtdU=";
+          hash = "sha256-as3hkEZl3WIHXHS0wCavaESp7vvudf0YQvUDeDPaH+8=";
         };
         fuzz = 1;
       };
