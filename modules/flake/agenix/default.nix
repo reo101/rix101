@@ -3,6 +3,32 @@
 {
   key = "rix101.modules.flake.agenix";
 
+  flake-file.inputs = {
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        darwin.follows = "nix-darwin";
+        home-manager.follows = "home-manager";
+        systems.follows = "systems";
+      };
+    };
+
+    ragenix = {
+      url = "github:yaxitech/ragenix";
+      inputs.crane.follows = "crane";
+      inputs.agenix.follows = "agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.inputs.systems.follows = "systems";
+    };
+
+    agenix-rekey = {
+      url = "github:oddlama/agenix-rekey";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+  };
+
   imports = [
     ../lib
     inputs.agenix-rekey.flakeModules.default

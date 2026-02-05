@@ -3,6 +3,13 @@
 {
   key = "rix101.modules.flake.packages";
 
+  config.flake-file.inputs = {
+    dream2nix = {
+      url = "github:nix-community/dream2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
   imports = [
     ../lib
     ../things

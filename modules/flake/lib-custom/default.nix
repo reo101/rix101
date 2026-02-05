@@ -13,6 +13,33 @@
     ../lib
   ];
 
+  config.flake-file.inputs = {
+    nix-lib-net = {
+      url = "github:reo101/nix-lib-net";
+    };
+
+    yants = {
+      url = "git+https://code.tvl.fyi/depot.git:/nix/yants.git";
+      flake = false;
+    };
+
+    contracts = {
+      url = "github:yvan-sraka/contracts";
+      # WARN: is technically a flake, exposing the `default.nix` under `nixosModules.default`
+      flake = false;
+    };
+
+    infuse = {
+      url = "git+https://codeberg.org/amjoseph/infuse.nix";
+      flake = false;
+    };
+
+    alloc = {
+      url = "github:Aleksanaa/alloc.nix";
+      flake = false;
+    };
+  };
+
   config.lib-overlays = [
     inputs.nix-lib-net.overlays.raw
     # Yants

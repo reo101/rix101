@@ -58,55 +58,14 @@
         url = "github:vic/flake-file";
       };
 
-      dream2nix = {
-        url = "github:nix-community/dream2nix";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
       crane = {
         url = "github:ipetkov/crane";
-      };
-
-      # Nix on Droid
-      nix-on-droid = {
-        url = "github:t184256/nix-on-droid";
-        # url = "github:t184256/nix-on-droid/master";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.home-manager.follows = "home-manager";
-      };
-      dnshack = {
-        url = "github:ettom/dnshack";
-        flake = false;
-      };
-
-      # Nix Darwin
-      nix-darwin = {
-        url = "github:lnl7/nix-darwin/master";
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      mac-app-util = {
-        url = "github:hraban/mac-app-util";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.systems.follows = "systems";
-        # WARN: needs `nix` `2.30`+
-        inputs.cl-nix-lite.inputs.systems.follows = "systems";
-        inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
-        inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
-        inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-utils.inputs.systems.follows = "systems";
       };
 
       yknotify-rs = {
         url = "github:reo101/yknotify-rs";
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.flake-parts.follows = "flake-parts";
-      };
-
-      # Home Manager
-      home-manager = {
-        url = "github:nix-community/home-manager";
-        inputs.nixpkgs.follows = "nixpkgs";
       };
 
       flake-compat = {
@@ -118,31 +77,6 @@
         url = "github:nix-community/impermanence";
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.home-manager.follows = "home-manager";
-      };
-
-      nix-lib-net = {
-        url = "github:reo101/nix-lib-net";
-      };
-
-      yants = {
-        url = "git+https://code.tvl.fyi/depot.git:/nix/yants.git";
-        flake = false;
-      };
-
-      contracts = {
-        url = "github:yvan-sraka/contracts";
-        # WARN: is technically a flake, exposing the `default.nix` under `nixosModules.default`
-        flake = false;
-      };
-
-      infuse = {
-        url = "git+https://codeberg.org/amjoseph/infuse.nix";
-        flake = false;
-      };
-
-      alloc = {
-        url = "github:Aleksanaa/alloc.nix";
-        flake = false;
       };
 
       nix-monitored = {
@@ -170,36 +104,6 @@
       nixarr = {
         url = "github:nix-media-server/nixarr";
         inputs.nixpkgs.follows = "nixpkgs";
-      };
-
-      deploy-rs = {
-        url = "github:serokell/deploy-rs";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.utils.inputs.systems.follows = "systems";
-      };
-
-      agenix = {
-        url = "github:ryantm/agenix";
-        inputs = {
-          nixpkgs.follows = "nixpkgs";
-          darwin.follows = "nix-darwin";
-          home-manager.follows = "home-manager";
-          systems.follows = "systems";
-        };
-      };
-
-      ragenix = {
-        url = "github:yaxitech/ragenix";
-        inputs.crane.follows = "crane";
-        inputs.agenix.follows = "agenix";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-utils.inputs.systems.follows = "systems";
-      };
-
-      agenix-rekey = {
-        url = "github:oddlama/agenix-rekey";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
       };
 
       # Nix User Repository
@@ -250,37 +154,6 @@
 
       nix-colors = {
         url = "github:misterio77/nix-colors";
-      };
-
-      neovim-nightly-overlay = {
-        url = "github:nix-community/neovim-nightly-overlay";
-        # inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
-      };
-
-      zig-overlay = {
-        url = "github:mitchellh/zig-overlay";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.systems.follows = "systems";
-      };
-
-      zls-overlay = {
-        url = "github:zigtools/zls";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.zig-overlay.follows = "zig-overlay";
-      };
-
-      openwrt-imagebuilder = {
-        url = "github:astro/nix-openwrt-imagebuilder";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
-        inputs.systems.follows = "systems";
-      };
-
-      wired = {
-        url = "github:Toqozz/wired-notify";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
       };
 
       microvm = {

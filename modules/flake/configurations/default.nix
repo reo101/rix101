@@ -3,6 +3,57 @@
 {
   key = "rix101.modules.flake.configurations";
 
+  config.flake-file.inputs = {
+    # Home Manager
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Nix on Droid
+    nix-on-droid = {
+      url = "github:t184256/nix-on-droid";
+      # url = "github:t184256/nix-on-droid/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+    dnshack = {
+      url = "github:ettom/dnshack";
+      flake = false;
+    };
+
+    # Nix Darwin
+    nix-darwin = {
+      url = "github:lnl7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      # WARN: needs `nix` `2.30`+
+      inputs.cl-nix-lite.inputs.systems.follows = "systems";
+      inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
+      inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.inputs.systems.follows = "systems";
+    };
+
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.utils.inputs.systems.follows = "systems";
+    };
+
+    openwrt-imagebuilder = {
+      url = "github:astro/nix-openwrt-imagebuilder";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.systems.follows = "systems";
+    };
+  };
+
   imports = [
     ../lib
     ../lib-custom
