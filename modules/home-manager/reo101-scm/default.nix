@@ -198,9 +198,15 @@ in
             )
           '';
 
-          # id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
+          "has_matching_local_remote" = /* jj_template */ ''
+            remote_bookmarks.any(|r| local_bookmarks.any(|l| l.name() == r.name()))
+          '';
+
           "is_stray" = /* jj_template */ ''
-            !immutable && !self.contained_in("trunk()::")
+            !immutable &&
+            !hidden &&
+            !self.contained_in("trunk()::") &&
+            !(remote_bookmarks.len() > 0 && !has_matching_local_remote)
           '';
 
           "format_short_id(id)" = /* jj_template */ ''
@@ -240,7 +246,10 @@ in
             coalesce(
               if(!self, label("elided", "▪")),
               label(
-                if(is_stray, "stray"),
+                coalesce(
+                  if(hidden, "hidden"),
+                  if(is_stray, "stray"),
+                ),
                 coalesce(
                   if(current_working_copy, "●"),
                   if(immutable, "⊗"),
@@ -262,6 +271,10 @@ in
         };
         colors = {
           stray = { fg = "bright red"; bold = true; };
+          hidden = { dim = true; };
+          "hidden change_id" = "bright black";
+          "hidden commit_id" = "bright black";
+          "node hidden" = { fg = "bright black"; };
         };
         revsets = {
           # log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
