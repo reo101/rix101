@@ -9,7 +9,7 @@
   imports = [
     inputs.hardware.nixosModules.lenovo-thinkpad-t520
     inputs.hardware.nixosModules.common-gpu-nvidia-disable
-    ./modules/disko.nix
+    ./modules/disko
     ./modules/power.nix
     ./modules/users.nix
     ./modules/maintenance.nix
