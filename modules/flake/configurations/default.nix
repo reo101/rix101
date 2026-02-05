@@ -11,7 +11,7 @@
     inherit (lib)
       types
       ;
-    inherit (config.lib)
+    inherit (config.lib.custom)
       extractNixFile
       recurseDir
       kebabToCamel

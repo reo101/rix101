@@ -5,11 +5,11 @@ let
 in
 {
   age.secrets."vaultwarden.password" = {
-    rekeyFile = lib.repoSecret "home/jeeves/vaultwarden/password.age";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/vaultwarden/password.age";
   };
 
   age.secrets."vaultwarden.secret" = {
-    rekeyFile = lib.repoSecret "home/jeeves/vaultwarden/secret.env.age";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/vaultwarden/secret.env.age";
     generator = {
       dependencies = {
         inherit (config.age.secrets) "vaultwarden.password";

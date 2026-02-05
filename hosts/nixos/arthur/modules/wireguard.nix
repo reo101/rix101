@@ -23,7 +23,7 @@ in
   ];
 
   age.secrets."wireguard.privateKey" = {
-    rekeyFile = lib.repoSecret "home/arthur/wireguard/key.age";
+    rekeyFile = lib.custom.repoSecret "home/arthur/wireguard/key.age";
     generator.script =
       {
         lib,

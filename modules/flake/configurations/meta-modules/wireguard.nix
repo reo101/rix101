@@ -7,7 +7,7 @@ let
   readPubkey =
     host:
     let
-      path = lib.repoSecret "home/${host}/wireguard/key.pub";
+      path = lib.custom.repoSecret "home/${host}/wireguard/key.pub";
     in
     if builtins.pathExists path then
       lib.trim (builtins.readFile path)

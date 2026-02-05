@@ -9,12 +9,13 @@
     lib = lib.mkOption {
       internal = true;
       type = types.unspecified;
-      apply = lib': let
+      apply = lib-custom: let
         extensions = lib.composeManyExtensions ([
-          # (final: prev: {
-          #   utils = lib';
-          # })
-          (final: prev: lib')
+          # NOTE: expose custom functions both under:
+          # - `lib.${thing}`
+          # - `lib.custom.${thing}`
+          (final: prev: lib-custom)
+          (final: prev: { custom = lib-custom; })
         ] ++ config.lib-overlays);
       in lib.extend extensions;
     };

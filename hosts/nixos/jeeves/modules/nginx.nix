@@ -12,7 +12,7 @@
   };
 
   age.secrets."epik.api.secrets" = {
-    rekeyFile = lib.repoSecret "epik/api/secrets.env.age";
+    rekeyFile = lib.custom.repoSecret "epik/api/secrets.env.age";
   };
 
   security.acme = {

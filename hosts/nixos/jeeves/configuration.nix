@@ -87,7 +87,7 @@
 
   # NOTE: made with `mkpasswd -m sha-512`
   age.secrets."jeeves.user.password" = {
-    rekeyFile = lib.repoSecret "home/jeeves/user/password.age";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/user/password.age";
     generator = {
       script =
         { pkgs, ... }:

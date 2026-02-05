@@ -2,7 +2,7 @@
 
 {
   age.secrets."anki.reo101" = {
-    rekeyFile = lib.repoSecret "home/jeeves/anki/reo101.age";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/anki/reo101.age";
     mode = "400";
   };
 

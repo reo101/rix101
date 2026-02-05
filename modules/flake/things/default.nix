@@ -6,7 +6,7 @@
   ];
 
   config.lib = let
-    inherit (config.lib)
+    inherit (config.lib.custom)
       and
       eq
       recurseDir

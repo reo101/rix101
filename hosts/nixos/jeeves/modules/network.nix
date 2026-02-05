@@ -6,7 +6,7 @@
   # networking.nftables.enable = true;
 
   age.secrets."home.wifi.env" = {
-    rekeyFile = lib.repoSecret "home/wifi/env.age";
+    rekeyFile = lib.custom.repoSecret "home/wifi/env.age";
   };
   networking.wireless = {
     iwd.enable = false;

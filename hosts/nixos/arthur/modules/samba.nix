@@ -6,7 +6,7 @@
 }:
 {
   age.secrets."samba.credentials" = {
-    rekeyFile = lib.repoSecret "home/arthur/samba/credentials.age";
+    rekeyFile = lib.custom.repoSecret "home/arthur/samba/credentials.age";
   };
 
   environment.systemPackages = [

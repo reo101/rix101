@@ -19,7 +19,7 @@
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # age.secrets."home.wifi.env" = {
-  #   rekeyFile = lib.repoSecret "home/wifi/env.age";
+  #   rekeyFile = lib.custom.repoSecret "home/wifi/env.age";
   # };
   networking.wireless = {
     iwd.enable = true;
@@ -174,4 +174,3 @@
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "25.05"; # Did you read the comment?
 }
-

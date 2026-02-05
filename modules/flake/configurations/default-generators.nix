@@ -3,7 +3,7 @@
 let
   # HACK: doesn't get automatically overriden for some reason
   lib = config._module.args.lib;
-  inherit (config.lib)
+  inherit (config.lib.custom)
     and
     hasNixFiles
     hasDirectories
@@ -30,8 +30,8 @@ let
 
   agenix-module-for = host-type: { meta, config, ... }: {
     imports = [
-      inputs.ragenix."${lib.kebabToCamel host-type}Modules".default
-      inputs.agenix-rekey."${lib.kebabToCamel host-type}Modules".default
+      inputs.ragenix."${lib.custom.kebabToCamel host-type}Modules".default
+      inputs.agenix-rekey."${lib.custom.kebabToCamel host-type}Modules".default
       (lib.optionalAttrs (meta.pubkey != null) {
         age.rekey.hostPubkey = meta.pubkey;
       })
@@ -60,7 +60,7 @@ let
       # Usually `lib.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName.old}`
       sharedModules = extraModules ++ [
         ({ lib, ... }: {
-          _module.args.lib = lib.extend inputs.nix-lib-net.overlays.raw;
+          _module.args.lib = lib;
         })
       ];
       # Pass in `inputs` and `meta`
@@ -216,11 +216,19 @@ let
     configuration,
   }: let
     pkgs = pkgsFor meta.system;
-    profiles = inputs.openwrt-imagebuilder.lib.profiles {
+    cachePath = meta.cachePath or null;
+    profiles = inputs.openwrt-imagebuilder.lib.profiles ({
       inherit pkgs;
       inherit (meta) release;
-    };
-    openwrtConfig = profiles.identifyProfile meta.profile // configuration { inherit pkgs lib; };
+    } // lib.optionalAttrs (cachePath != null) {
+      inherit cachePath;
+    });
+    openwrtConfig =
+      profiles.identifyProfile meta.profile
+      // configuration { inherit pkgs lib; }
+      // lib.optionalAttrs (cachePath != null) {
+        inherit cachePath;
+      };
   in inputs.openwrt-imagebuilder.lib.build openwrtConfig;
 in
 {
@@ -402,6 +410,16 @@ in
           };
           profile = mkOption {
             type = types.str;
+          };
+          cachePath = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description = ''
+              Optional path to a nix-openwrt-imagebuilder cache release directory.
+              You can point this to `${self}/modules/flake/configurations/openwrt-cache/<release>`
+              to reuse a repository-local shared cache override.
+              Useful when upstream package indexes drift before the input cache is refreshed.
+            '';
           };
         };
       };

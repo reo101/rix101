@@ -10,7 +10,7 @@
     inherit (lib)
       types
       ;
-    inherit (config.lib)
+    inherit (config.lib.custom)
       createThings
       kebabToCamel
       ;
