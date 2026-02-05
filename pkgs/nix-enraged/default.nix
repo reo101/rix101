@@ -5,8 +5,9 @@
 , makeWrapper
 , writeShellApplication
 
-, nix' ? pkgs.nixVersions.nix_2_30
-, nix-monitored' ? inputs.nix-monitored.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+, system ? pkgs.stdenv.hostPlatform.system
+, nix' ? inputs.nix.packages.${system}.nix # pkgs.nixVersions.nix_2_32
+, nix-monitored' ? inputs.nix-monitored.packages.${system}.default.override {
     nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
   }
@@ -66,16 +67,17 @@ let
     wrapProgram $out/bin/nix${suffix} \
       --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
   '';
-in drv // {
+in builtins.addErrorContext "while evaluating nix-enraged (nix' = ${nix'.name or "???"}, pname = ${nix'.pname or "???"})" (drv // {
+  # name = "nix-enraged";
   out = drv.out // {
-    inherit (nix') version;
+    inherit (nix') pname version;
     passthru =  drv.out.passthru // {
-      inherit (nix') version;
+      inherit (nix') pname version;
     };
   };
   passthru = {
     inherit nix';
   };
   inherit (nix') dev;
-  inherit (nix') version;
-}
+  inherit (nix') pname version;
+})
