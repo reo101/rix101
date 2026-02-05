@@ -269,6 +269,10 @@ in
           '';
 
           # id.shortest(12).prefix() ++ "[" ++ id.shortest(12).rest() ++ "]"
+          "is_stray" = /* jj_template */ ''
+            !immutable && !self.contained_in("trunk()::")
+          '';
+
           "format_short_id(id)" = /* jj_template */ ''
             id.shortest(12).prefix() ++ id.shortest(12).rest()
           '';
@@ -305,8 +309,14 @@ in
           log_node = /* jj_template */ ''
             coalesce(
               if(!self, label("elided", "▪")),
-              if(current_working_copy, "●"),
-              if(immutable, "⊗", "○"),
+              label(
+                if(is_stray, "stray"),
+                coalesce(
+                  if(current_working_copy, "●"),
+                  if(immutable, "⊗"),
+                  "○",
+                ),
+              ),
             )
           '';
           git_push_bookmark = /* jj_template */ ''
@@ -319,6 +329,9 @@ in
               diff.git(),
             )
           '';
+        };
+        colors = {
+          stray = { fg = "bright red"; bold = true; };
         };
         revsets = {
           # log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
