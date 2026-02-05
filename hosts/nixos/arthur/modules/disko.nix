@@ -92,12 +92,6 @@
     imageBuilder.copyNixStoreThreads = 8;
   };
 
-  # Prevent disko-generated swapDevices fstab entry — the `resume=` kernel
-  # parameter (from `resumeDevice = true`) already causes systemd-fstab-generator
-  # to create and activate the swap unit; having both produces a harmless but
-  # noisy "Duplicate entry in /etc/fstab" warning.
-  swapDevices = lib.mkForce [ ];
-
   # zram swap (compressed in-RAM, complements disk swap)
   zramSwap.enable = true;
 
