@@ -24,7 +24,7 @@
     passwordFile = config.age.secrets."paperless.password".path;
     address = "0.0.0.0";
     port = 28981;
-    domain = "paperless.jeeves.lan";
+    domain = "paperless.jeeves.reo101.xyz";
     dataDir = "/data/paperless";
     consumptionDirIsPublic = true;
     settings = rec {
@@ -63,8 +63,8 @@
 
   services.nginx = {
     virtualHosts.${config.services.paperless.domain} = {
-      enableACME = false;
-      forceSSL = false;
+      forceSSL = true;
+      useACMEHost = "jeeves.reo101.xyz";
       locations."/" = {
         proxyPass = "http://127.0.0.1:${builtins.toString config.services.paperless.port}";
         proxyWebsockets = true;
