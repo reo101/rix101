@@ -19,7 +19,7 @@
     enable = true;
     # HACK: 1 test failing
     package = pkgs.paperless-ngx.overrideAttrs {
-      doCheck = false;
+      pytestCheckPhase = "true";
     };
     passwordFile = config.age.secrets."paperless.password".path;
     address = "0.0.0.0";
