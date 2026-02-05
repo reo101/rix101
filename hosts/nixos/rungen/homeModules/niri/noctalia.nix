@@ -43,13 +43,16 @@
           ];
           right = [
             {
+              id = "Tray";
+            }
+            {
               id = "Battery";
               displayMode = "alwaysShow";
               warningThreshold = 30;
             }
             {
-              formatHorizontal = "HH:mm";
-              formatVertical = "HH mm";
+              formatHorizontal = "HH:mm:ss";
+              formatVertical = "HH mm ss";
               id = "Clock";
               useMonospacedFont = true;
               usePrimaryColor = true;
