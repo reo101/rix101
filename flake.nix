@@ -106,6 +106,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    crane = {
+      url = "github:ipetkov/crane";
+    };
+
     # Nix on Droid
     nix-on-droid = {
       url = "github:t184256/nix-on-droid";
@@ -231,6 +235,7 @@
 
     ragenix = {
       url = "github:yaxitech/ragenix";
+      inputs.crane.follows = "crane";
       inputs.agenix.follows = "agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
