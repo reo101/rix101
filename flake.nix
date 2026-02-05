@@ -131,11 +131,13 @@
     mac-app-util = {
       url = "github:hraban/mac-app-util";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
       # WARN: needs `nix` `2.30`+
-      # inputs.cl-nix-lite.inputs.systems.follows = "systems";
-      # inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
-      # inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
-      # inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.systems.follows = "systems";
+      inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
+      inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.inputs.systems.follows = "systems";
     };
 
     yknotify-rs = {
@@ -222,6 +224,7 @@
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.utils.inputs.systems.follows = "systems";
     };
 
     agenix = {
@@ -230,6 +233,7 @@
         nixpkgs.follows = "nixpkgs";
         darwin.follows = "nix-darwin";
         home-manager.follows = "home-manager";
+        systems.follows = "systems";
       };
     };
 
@@ -238,6 +242,7 @@
       inputs.crane.follows = "crane";
       inputs.agenix.follows = "agenix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.inputs.systems.follows = "systems";
     };
 
     agenix-rekey = {
@@ -267,11 +272,13 @@
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
     };
 
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.noctalia-qs.inputs.systems.follows = "systems";
     };
 
     hardware = {
@@ -287,6 +294,7 @@
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.systems.follows = "systems";
     };
 
     nix-colors = {
@@ -315,6 +323,7 @@
       url = "github:astro/nix-openwrt-imagebuilder";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.systems.follows = "systems";
     };
 
     wired = {
