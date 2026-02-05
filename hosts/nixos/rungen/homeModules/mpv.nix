@@ -1,0 +1,45 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+{
+  programs.mpv = {
+    enable = true;
+    package = pkgs.mpv;
+    scripts = with pkgs.mpvScripts; [
+      crop
+      cutter
+      mpris
+      thumbfast
+      sponsorblock
+      mpv-cheatsheet-ng
+      mpv-discord
+      # NOTE: Anki cards
+      mpvacious
+    ];
+    config = {
+      # profile = "gpu-hq";
+      # force-window = true;
+      ytdl-format = "bestvideo+bestaudio";
+      # cache-default = 4000000;
+      glsl-shader = "${pkgs.mpv-shim-default-shaders}/share/mpv-shim-default-shaders/shaders/FSRCNNX_x2_8-0-4-1.glsl";
+    };
+    bindings = {
+      "WHEEL_UP" = "seek 10";
+      "WHEEL_DOWN" = "seek -10";
+      "Alt+0" = "set window-scale 0.5";
+      "h" = "seek -5";
+      "j" = "seek 60";
+      "k" = "seek -60";
+      "l" = "seek 5";
+      "S" = "cycle sub";
+      "z" = "add sub-delay -0.1";
+      "Z" = "add sub-delay +0.1";
+      "x" = "add secondary-sub-delay -0.1";
+      "X" = "add secondary-sub-delay +0.1";
+    };
+  };
+}

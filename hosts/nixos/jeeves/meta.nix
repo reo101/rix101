@@ -16,7 +16,7 @@
       s42       = { publicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc="; hostIndex = 5; };
       # a41       = { publicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0="; };
       # t410      = { publicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0="; };
-      framework = { publicKey = "RH9pXjC+8wKAyiA3r8Mtsovk2uYOGLiKYYkMBWu5IS4="; hostIndex = 8; };
+      rungen    = { hostIndex = 8; };
       arthur    = { hostIndex = 9; };
     };
   };
