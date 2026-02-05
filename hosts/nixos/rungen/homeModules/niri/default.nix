@@ -214,6 +214,10 @@
                 repeat = false;
                 action = close-window;
               };
+              "Mod+Shift+Q" = {
+                repeat = false;
+                action = spawn "sh" "-c" "kill -9 $(${niri} msg --json focused-window | ${jq} '.pid')";
+              };
               "Mod+C".action = center-column;
               "Mod+S".action = switch-preset-column-width;
               "Mod+F".action = maximize-column;
