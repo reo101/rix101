@@ -48,6 +48,7 @@
 # Structure
 
 - Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic *stuff* extraction
+  - Flake metadata (inputs, `description`, `nixConfig`) is managed by [`flake-file`](https://github.com/vic/flake-file) via a [dedicated flake-parts module](./modules/flake/flake-file.nix) — `flake.nix` is an auto-generated artifact (regenerated with `nix run .#write-flake`), keeping it a dumb dependency manifest while all real logic lives in the module tree
   - Automatic classic (`callPackage`) and `dream2nix` packages extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction

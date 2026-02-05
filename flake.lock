@@ -484,6 +484,21 @@
         "type": "github"
       }
     },
+    "flake-file": {
+      "locked": {
+        "lastModified": 1773637821,
+        "narHash": "sha256-Cp1x/5/97iNjXOI5hLCA51BwR6hc1dWJiZp4VPogkTw=",
+        "owner": "vic",
+        "repo": "flake-file",
+        "rev": "bb9fbe00ba6a1945fbdd6973c2585ab770f404b0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vic",
+        "repo": "flake-file",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -1624,6 +1639,7 @@
         "dnshack": "dnshack",
         "dream2nix": "dream2nix",
         "flake-compat": "flake-compat_4",
+        "flake-file": "flake-file",
         "flake-parts": "flake-parts",
         "hardware": "hardware",
         "home-manager": "home-manager",
