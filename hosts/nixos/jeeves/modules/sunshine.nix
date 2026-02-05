@@ -47,8 +47,6 @@ let
   generatedEdids = pkgs.edid-generator.overrideAttrs (old: {
     nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.libxcvt ];
     clean = true;
-    passAsFile = [ ];
-    modelines = null;
     # Skip validation for non-standard aspect ratios
     doCheck = false;
 
@@ -87,7 +85,7 @@ let
           ''
         ) virtualDisplays}
       } > "$NIX_BUILD_TOP/modelines"
-      export modelinesPath="$NIX_BUILD_TOP/modelines"
+      export modelines="$(cat "$NIX_BUILD_TOP/modelines")"
     '';
   });
 
