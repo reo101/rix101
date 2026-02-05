@@ -96,6 +96,11 @@
                     Function for filtering configurations
                   '';
                   type = types.functionTo types.anything;
+                  apply = f: args: lib.pipe args [
+                    (config.lib.contracts.is config.lib.custom.recurseDirContracts.ConfigurationArgs)
+                    f
+                    (config.lib.contracts.is config.lib.contracts.Bool)
+                  ];
                   example = /* nix */ ''
                     { host, configurationFiles, ... }:
                       # Utils from `./modules/flake/lib/default.nix`
@@ -209,7 +214,7 @@
                             deploy-config = meta.deploy or null;
                             has-deploy-config = deploy-config != null;
                             has-mkDeployNode = mkDeployNode != null;
-                            configuration-args = { inherit meta configurationFiles; };
+                            configuration-args = config.lib.contracts.is config.lib.custom.recurseDirContracts.ConfigurationArgs { inherit meta configurationFiles; };
                             valid = predicate configuration-args;
                             configuration = mkHost configuration-args;
                             deploy-args = { inherit meta configuration; };

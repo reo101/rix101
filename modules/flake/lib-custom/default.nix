@@ -52,7 +52,50 @@
     })
   ];
 
-  config.lib = rec {
+  config.lib = let
+    cs = config.lib.contracts;
+
+    recurseDirContracts = rec {
+      NixFileEntry = cs.declare { name = "NixFileEntry"; } {
+        _type = x: x == "nix";
+        path = cs.Str;
+        content = cs.Any;
+      };
+
+      DirectoryEntry = cs.declare { name = "DirectoryEntry"; } {
+        _type = x: x == "directory";
+        content = cs.setOf RecurseDirEntry;
+      };
+
+      OtherFileEntry = cs.declare { name = "OtherFileEntry"; } {
+        _type = cs.Str;
+        content = cs.Str;
+      };
+
+      RecurseDirEntry = cs.declare { name = "RecurseDirEntry"; } (e:
+        let
+          handler = {
+            "nix" = NixFileEntry;
+            "directory" = DirectoryEntry;
+          }.${e._type} or OtherFileEntry;
+        in
+          handler e
+      );
+
+      RecurseDirResult = cs.setOf RecurseDirEntry;
+
+      ConfigurationArgs = cs.declare { name = "ConfigurationArgs"; } {
+        meta = cs.Set;
+        configurationFiles = cs.Set;
+      };
+
+      ExtractedNixFile = cs.declare { name = "ExtractedNixFile"; } {
+        path = cs.Str;
+        content = cs.Any;
+      };
+
+    };
+  in rec {
     # Secrets Helpers
     repoSecret = lib.path.append ../../../secrets/master;
 
@@ -61,6 +104,8 @@
     eq = x: y: x == y;
 
     # Directory walking helpers
+    inherit recurseDirContracts;
+
     recurseDir = dir: lib.pipe dir [
       builtins.readDir
       (lib.mapAttrs
@@ -73,7 +118,7 @@
           if and [
             (type == "directory")
           ] then
-            {
+            cs.is recurseDirContracts.DirectoryEntry {
               _type = "directory";
               content = recurseDir newPath;
             }
@@ -81,13 +126,13 @@
             (type == "regular")
             (lib.strings.hasSuffix ".nix" file)
           ] then
-            {
+            cs.is recurseDirContracts.NixFileEntry {
               _type = "nix";
               path = newPath;
               content = import newPath;
             }
           else
-            {
+            cs.is recurseDirContracts.OtherFileEntry {
               _type = type;
               content = newPath;
             }))
@@ -130,17 +175,23 @@
           transform file)
         # Same, but now always a nix file if not null
       ];
-    extractNixFile = files: path: extract {
-      inherit files path;
-      pred = file: file._type == "nix";
-      transform = file: { inherit (file) path content; };
-    };
-    extractDirectory = files: path: extract {
-      inherit files path;
-      pred = file: file._type == "directory";
-      default = {};
-      transform = dir: dir.content;
-    };
+
+    extractNixFile = files: path: let
+      result = extract {
+        inherit files path;
+        pred = file: file._type == "nix";
+        transform = file: { inherit (file) path content; };
+      };
+    in cs.contract { name = "extractNixFile result"; } (cs.enum [ recurseDirContracts.ExtractedNixFile cs.Null ]) result;
+
+    extractDirectory = files: path: let
+      result = extract {
+        inherit files path;
+        pred = file: file._type == "directory";
+        default = {};
+        transform = dir: dir.content;
+      };
+    in cs.contract { name = "extractDirectory result"; } cs.Set result;
 
     camelToKebab =
       lib.stringAsChars
