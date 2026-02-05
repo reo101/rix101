@@ -158,36 +158,72 @@ in
           '';
         };
         aliases = {
-          s = ["status"];
           e = ["edit"];
           d = ["diff"];
-          l  = [ "log" ];
-          ls = [ "log" "--summary" ];
           la = [ "log" "--revisions" "::" ];
 
-          drag = ["bookmark" "move" "--from" "closest_bookmark(@-)" "--to" "@-"];
+          drag = ["bookmark" "advance"];
           sync = ["git" "fetch" "--all-remotes"];
-          evolve = ["rebase" "--skip-emptied" "-d" "trunk()"];
+          evolve = ["rebase" "--skip-emptied" "--simplify-parents" "--onto" "trunk()"];
           pullup = ["evolve" "-b" "stragglers"];
           touch = ["describe" "--reset-author" "--no-edit"];
-          pre-commit = [
+          gh-pr = [
             "util" "exec" "--"
-            "sh" "-c" /* sh */ "jj diff -r @ --name-only --no-pager | xargs pre-commit run --files"
+            (pkgs.writeShellScript "jj-gh-pr" ''
+              set -euo pipefail
+
+              trunk_bookmark=$(jj log -r 'trunk()' --no-graph --no-pager \
+                -T 'separate("\n", local_bookmarks)' | head -1)
+              if [[ -z "$trunk_bookmark" ]]; then
+                echo "Error: trunk() has no local bookmark; cannot determine base branch." >&2
+                exit 1
+              fi
+
+              found=false
+              while IFS=$'\t' read -r -u 3 change bookmark_line; do
+                [[ -z "$bookmark_line" ]] && continue
+                found=true
+
+                head=$(echo "$bookmark_line" | head -1)
+
+                base=$(jj log -r "closest_bookmark(parents($change))" --no-graph --no-pager \
+                  -T 'separate("\n", local_bookmarks)' | head -1)
+
+                if [[ -z "$base" ]]; then
+                  base="$trunk_bookmark"
+                fi
+
+                echo ""
+                echo "=== PR: $head -> $base ==="
+                existing=$(gh pr list --head "$head" --json url -q '.[0].url' 2>/dev/null || true)
+                if [[ -n "$existing" ]]; then
+                  echo "  PR already exists: $existing"
+                fi
+                read -r -p "Create PR? [y/N] " confirm
+                if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+                  gh pr create --head "$head" --base "$base"
+                fi
+              done 3< <(jj log -r 'branches()' --no-graph --no-pager --reverse \
+                -T 'change_id ++ "\t" ++ separate("\n", local_bookmarks) ++ "\n"')
+
+              if ! "$found"; then
+                echo "No bookmarks found on branches."
+              fi
+            '')
           ];
           gen-fix-config = [
             "util" "exec" "--" "jj-gen-fix-config"
           ];
 
           pl = ["obslog" "-p"];
-          # xl = ["log" "-r" "all()"];
 
           # cl = ["git" "push" "-c" "@-"];
           # push = ["git" "push" "--all"];
 
           configure = ["config" "edit" "--repo"];
 
-          ".." = ["edit" "-r" "@-"];
-          ",," = ["edit" "-r" "@+"];
+          ".." = ["next" "--edit"];
+          ",," = ["prev" "--edit"];
         };
         template-aliases = {
           "format_timestamp(ts)" = /* jj_template */ ''
@@ -262,11 +298,7 @@ in
             "reo101/" ++ change_id.short()
           '';
           draft_commit_description = /* jj_template */ ''
-            concat(
-              builtin_draft_commit_description,
-              "\nJJ: ignore-rest\n",
-              diff.git(),
-            )
+            builtin_draft_commit_description_with_diff
           '';
         };
         colors = {
@@ -279,6 +311,7 @@ in
         revsets = {
           # log = "@ | bases | branches | curbranch::@ | @::nextbranch | downstream(@, branchesandheads)";
           log = "present(@) | present(trunk()) | ancestors(remote_bookmarks().. | @.., 8)";
+          bookmark-advance-to = "@-";
         };
       };
     };
