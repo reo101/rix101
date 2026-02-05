@@ -10,6 +10,13 @@ in
     enable = true;
     user = "reo101";
     lock.command = [ "noctalia-shell" "ipc" "call" "lockScreen" "lock" ];
+    lock.command = [
+      "noctalia-shell"
+      "ipc"
+      "call"
+      "lockScreen"
+      "lock"
+    ];
     niri.homeManagerModule = ../homeModules/niri;
 
     stylix = {
