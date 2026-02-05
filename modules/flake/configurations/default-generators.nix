@@ -28,19 +28,19 @@ let
             }))
     ];
 
-  agenix-module-for = host-type: { meta, ... }: {
+  agenix-module-for = host-type: { meta, config, ... }: {
     imports = [
-      inputs.ragenix."${config.lib.kebabToCamel host-type}Modules".default
-      # FIXME: <https://github.com/oddlama/agenix-rekey/blob/42362b12f59978aabf3ec3334834ce2f3662013d/flake.nix#L62>
-      #        is marked `_class = "nixos"` automatically by `flake-parts`
-      (lib.pipe inputs.agenix-rekey."${config.lib.kebabToCamel host-type}Modules".default [
-        (module: module // { _class = host-type; })
-      ])
+      inputs.ragenix."${lib.kebabToCamel host-type}Modules".default
+      inputs.agenix-rekey."${lib.kebabToCamel host-type}Modules".default
       (lib.optionalAttrs (meta.pubkey != null) {
         age.rekey.hostPubkey = meta.pubkey;
       })
       ./agenix-rekey
     ];
+    age.rekey.localStorageDir = {
+      nixos = "${inputs.self}/secrets/rekeyed/nixos/${meta.hostname}";
+      homeManager = "${inputs.self}/secrets/rekeyed/home-manager/${config.home.username}@${meta.hostname}";
+    }.${host-type} or (throw "agenix-module-for: unsupported host-type '${host-type}'");
   };
 
   homeManagerModule = {
@@ -171,7 +171,7 @@ let
 
       # (r)agenix && agenix-rekey
       inputs.ragenix.darwinModules.default
-      inputs.agenix-rekey.nixosModules.default
+      inputs.agenix-rekey.darwinModules.default
       (lib.optionalAttrs (meta.pubkey != null) {
         age.rekey.hostPubkey = meta.pubkey;
       })
