@@ -65,14 +65,19 @@
       type = "zpool";
       options = {
         ashift = "12";
+        autotrim = "on";
+        listsnapshots = "on";
       };
       rootFsOptions = {
-        compression = "zstd";
+        acltype = "posixacl";
         atime = "off";
-        xattr = "sa";
+        canmount = "off";
+        checksum = "sha512";
+        compression = "zstd";
         dnodesize = "auto";
-        normalization = "formD";
         mountpoint = "none";
+        normalization = "formD";
+        xattr = "sa";
       };
 
       datasets = {
