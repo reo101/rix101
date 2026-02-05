@@ -9,6 +9,7 @@
   imports = [
     ./modules/disko.nix
     ./modules/base.nix
+    ./modules/vt.nix
     ./modules/battery.nix
     ./modules/binfmt.nix
     ./modules/hibernation.nix
