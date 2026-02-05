@@ -222,8 +222,8 @@ in
 
           configure = ["config" "edit" "--repo"];
 
-          ".." = ["next" "--edit"];
-          ",," = ["prev" "--edit"];
+          ".." = ["prev" "--edit"];
+          ",," = ["next" "--edit"];
         };
         template-aliases = {
           "format_timestamp(ts)" = /* jj_template */ ''
