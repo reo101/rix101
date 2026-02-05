@@ -321,5 +321,12 @@
 
   nixConfig = {
     commit-lockfile-summary = "chore(flake): update `flake.lock`";
+
+    extra-substituters = [
+      "https://rix101.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY="
+    ];
   };
 }
