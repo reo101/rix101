@@ -12,7 +12,7 @@ in
     rekeyFile = lib.repoSecret "home/jeeves/vaultwarden/secret.env.age";
     generator = {
       dependencies = {
-        inherit (config.age.secrets) "vaultwarden-password";
+        inherit (config.age.secrets) "vaultwarden.password";
       };
       # NOTE: as per <https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#using-argon2>
       script = { pkgs, decrypt, deps, ... }: /* bash */ ''
