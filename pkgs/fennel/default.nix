@@ -23,14 +23,14 @@
   };
 
   name = "Fennel";
-  version = "1.5.2-dev";
+  version = "1.7.0-dev";
 
   mkDerivation = {
     src = config.deps.fetchFromGitHub {
       owner = "reo101";
       repo = config.name;
-      rev = "e8fd00ff52c07f8527989f8df6b57008b656f2d1";
-      hash = "sha256-26pvDss6MQKiwNzjXX26yidFquFBBlZP7GvlxdwLMCI=";
+      rev = "355d3885268497dbd387a4f6fd843bb23d5af61b";
+      hash = "sha256-sqTRbFk2zbU/cYn/+31cbtE5oc46eN58uCCgDYXNOvI=";
     };
 
     makeFlags = [
