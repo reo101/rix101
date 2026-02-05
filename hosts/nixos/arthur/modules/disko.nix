@@ -101,6 +101,10 @@
   virtualisation.vmVariantWithDisko.virtualisation = {
     fileSystems."/persist".neededForBoot = true;
     fileSystems."/var/log".neededForBoot = true;
+    qemu.options = [
+      "-serial"
+      "stdio"
+    ];
   };
 
   # Automatic `btrfs` snapshots for safe subvolumes
