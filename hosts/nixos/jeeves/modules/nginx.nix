@@ -41,4 +41,12 @@
         };
       };
   };
+
+  services.nginx.virtualHosts."~^.*\.jeeves\.reo101\.xyz$" = {
+    forceSSL = true;
+    useACMEHost = "jeeves.reo101.xyz";
+    locations."/" = {
+      return = "404";
+    };
+  };
 }
