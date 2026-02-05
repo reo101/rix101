@@ -17,6 +17,7 @@
     ./modules/printers.nix
     ./modules/theming.nix
     ./modules/wireguard.nix
+    ./modules/samba.nix
   ];
 
   networking.hostName = "arthur";
