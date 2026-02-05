@@ -1,9 +1,10 @@
 { lib, pkgs, config, ... }:
 {
-  environment.systemPackages = with pkgs; [
+  imports = [
+    ./maria.nix
   ];
 
-  # TODO: smbpasswd -a <USER>
+  # TODO: smbpasswd -a $USER
 
   services.samba-wsdd = {
     # make shares visible for Windows clients

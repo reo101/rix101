@@ -17,7 +17,7 @@
     ./modules/nixarr.nix
     ./modules/mindustry.nix
     # ./modules/home-assistant
-    ./modules/samba.nix
+    ./modules/samba
     # ./modules/steam.nix
     ./modules/ollama.nix
     ./modules/steam.nix
