@@ -1,6 +1,8 @@
 { lib, config, self, inputs, ... }:
 
 {
+  key = "rix101.modules.flake.agenix";
+
   imports = [
     ../lib
     inputs.agenix-rekey.flakeModules.default

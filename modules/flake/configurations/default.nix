@@ -1,6 +1,8 @@
 { lib, config, self, inputs, withSystem, ... }:
 
 {
+  key = "rix101.modules.flake.configurations";
+
   imports = [
     ../lib
     ../lib-custom

@@ -1,6 +1,8 @@
 { inputs, lib, config, self, ... }:
 
 {
+  key = "rix101.modules.flake.lib";
+
   options = let
     inherit (lib)
       types

@@ -7,6 +7,8 @@
 }:
 
 {
+  key = "rix101.modules.flake.lib-custom";
+
   imports = [
     ../lib
   ];
