@@ -72,9 +72,9 @@ in
                 local entry="$2"
                 local files="$3"
 
-                # Extract base command (first word of entry)
+                # Extract base command (first word of first line of entry)
                 local cmd
-                cmd=$(echo "$entry" | awk '{print $1}')
+                cmd=$(echo "$entry" | head -n1 | awk '{print $1}')
 
                 case "$id" in
                   nixfmt|nixfmt-rfc-style)
@@ -100,8 +100,26 @@ in
                     echo "patterns = [\"glob:'**/*.rs'\"]"
                     echo ""
                     ;;
+                  shfmt)
+                    echo "[fix.tools.shfmt]"
+                    echo "command = [\"$cmd\"]"
+                    echo "patterns = [\"glob:'**/*.sh'\", \"glob:'**/*.bash'\"]"
+                    echo ""
+                    ;;
+                  taplo-fmt|taplo)
+                    echo "[fix.tools.taplo]"
+                    echo "command = [\"taplo\", \"fmt\", \"-\"]"
+                    echo "patterns = [\"glob:'**/*.toml'\"]"
+                    echo ""
+                    ;;
                   *)
-                    echo "# Skipping $id: not a known stdin→stdout formatter" >&2
+                    local lines
+                    lines=$(echo "$entry" | wc -l)
+                    if [[ "$lines" -gt 1 ]]; then
+                      echo "# Skipping $id: multi-line script entry (not a simple command)" >&2
+                    else
+                      echo "# Skipping $id: not a known stdin→stdout formatter (entry: $cmd)" >&2
+                    fi
                     ;;
                 esac
               }
@@ -111,9 +129,14 @@ in
                 echo "# Regenerate with: jj-gen-fix-config"
                 echo ""
 
-                yq -o=json "$CONFIG_FILE" | jq -r '.repos[].hooks[] | "\(.id)\t\(.entry)\t\(.files)"' | \
-                while IFS=$'\t' read -r id entry files; do
-                  generate_fix_config "$id" "$entry" "$files"
+                yq -o=json "$CONFIG_FILE" | jq -c '.repos[].hooks[] | {id: .id, entry: .entry, files: .files}' | \
+                while IFS= read -r json_line; do
+                  id=$(echo "$json_line" | jq -r '.id // empty')
+                  entry=$(echo "$json_line" | jq -r '.entry // empty')
+                  files=$(echo "$json_line" | jq -r '.files // empty')
+                  if [[ -n "$id" ]]; then
+                    generate_fix_config "$id" "$entry" "$files"
+                  fi
                 done
               } > "$OUTPUT_FILE"
 
