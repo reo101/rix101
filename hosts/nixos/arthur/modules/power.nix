@@ -1,5 +1,12 @@
 { ... }:
 {
+  # Battery charge thresholds to keep the battery between 75% and 80% to reduce wear
+  # (since it's plugged in most of the time)
+  services.tlp.settings = {
+    START_CHARGE_THRESH_BAT0 = 75;
+    STOP_CHARGE_THRESH_BAT0 = 80;
+  };
+
   # ZFS hibernation support
   # <https://github.com/NixOS/nixpkgs/blob/a292fd0eb0e40892adea0a08b9bb7ed3835c296b/nixos/modules/tasks/filesystems/zfs.nix#L704-L707>
   boot.zfs.allowHibernation = true;

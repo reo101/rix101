@@ -1,5 +1,114 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
+let
+  mkUint = value: {
+    type = "uint";
+    inherit value;
+  };
+
+  panelId = 1;
+  panelPath = "panels/panel-${toString panelId}";
+
+  panelPlugins = [
+    {
+      id = 1;
+      type = "whiskermenu";
+    }
+    {
+      id = 2;
+      type = "separator";
+      settings = {
+        expand = false;
+        style = mkUint 0;
+      };
+    }
+    {
+      id = 3;
+      type = "tasklist";
+      settings = {
+        show-labels = true;
+        flat-buttons = true;
+      };
+    }
+    {
+      id = 4;
+      type = "separator";
+      settings = {
+        expand = true;
+        style = mkUint 0;
+      };
+    }
+    {
+      id = 9;
+      type = "pager";
+      settings = {
+        # Keep the overview compact while still showing all desktops.
+        rows = mkUint 1;
+        miniature-view = true;
+      };
+    }
+    {
+      id = 5;
+      type = "systray";
+      settings = {
+        square-icons = true;
+      };
+    }
+    {
+      id = 6;
+      type = "pulseaudio";
+      settings = {
+        enable-keyboard-shortcuts = true;
+      };
+    }
+    {
+      id = 10;
+      type = "battery";
+    }
+    {
+      id = 7;
+      type = "clock";
+      settings = {
+        digital-format = "%Y-%m-%d  %H:%M";
+      };
+    }
+    {
+      id = 8;
+      type = "actions";
+    }
+  ];
+
+  mkPluginAttrs =
+    plugin:
+    let
+      pluginPath = "plugins/plugin-${builtins.toString plugin.id}";
+      pluginSettings = lib.mapAttrs' (name: value: lib.nameValuePair "${pluginPath}/${name}" value) (
+        plugin.settings or { }
+      );
+    in
+    { "${pluginPath}" = plugin.type; } // pluginSettings;
+
+  xfce4PanelSettings = lib.mkMerge (
+    [
+      {
+        configver = 2;
+        panels = [ panelId ];
+        "${panelPath}/position" = "p=8;x=0;y=0";
+        "${panelPath}/length" = 100.0;
+        "${panelPath}/position-locked" = true;
+        "${panelPath}/size" = mkUint 40;
+        "${panelPath}/plugin-ids" = lib.map (plugin: plugin.id) panelPlugins;
+      }
+    ]
+    ++ lib.map mkPluginAttrs panelPlugins
+  );
+in
 {
   home = {
     username = "maria";
@@ -10,6 +119,10 @@
 
   programs.home-manager.enable = true;
   programs.bash.enable = true;
+
+  programs.firefox = {
+    enable = true;
+  };
 
   # XFCE theming — Mint-Y-Dark (Linux Mint XFCE style)
   xfconf.settings = {
@@ -29,35 +142,18 @@
     xfwm4 = {
       "general/theme" = "Mint-Y-Dark";
       "general/title_font" = "Noto Sans Bold 9";
+      "general/workspace_count" = mkUint 3;
+      "general/workspace_names" = [
+        "Main"
+        "Web"
+        "Media"
+      ];
+      # Prevent accidental workspace switching when scrolling on the desktop.
+      "general/scroll_workspaces" = false;
     };
 
     # Bottom panel with Whisker Menu (Mint-style layout)
-    xfce4-panel = {
-      "configver" = 2;
-      "panels" = [ 1 ];
-      "panels/panel-1/position" = "p=8;x=0;y=0";
-      "panels/panel-1/length" = 100.0;
-      "panels/panel-1/position-locked" = true;
-      "panels/panel-1/size" = { type = "uint"; value = 40; };
-      "panels/panel-1/plugin-ids" = [ 1 2 3 4 5 6 7 8 ];
-      "plugins/plugin-1" = "whiskermenu";
-      "plugins/plugin-2" = "separator";
-      "plugins/plugin-2/expand" = false;
-      "plugins/plugin-2/style" = { type = "uint"; value = 0; };
-      "plugins/plugin-3" = "tasklist";
-      "plugins/plugin-3/show-labels" = true;
-      "plugins/plugin-3/flat-buttons" = true;
-      "plugins/plugin-4" = "separator";
-      "plugins/plugin-4/expand" = true;
-      "plugins/plugin-4/style" = { type = "uint"; value = 0; };
-      "plugins/plugin-5" = "systray";
-      "plugins/plugin-5/square-icons" = true;
-      "plugins/plugin-6" = "pulseaudio";
-      "plugins/plugin-6/enable-keyboard-shortcuts" = true;
-      "plugins/plugin-7" = "clock";
-      "plugins/plugin-7/digital-format" = "%Y-%m-%d  %H:%M";
-      "plugins/plugin-8" = "actions";
-    };
+    xfce4-panel = xfce4PanelSettings;
 
     # Desktop icons
     xfce4-desktop = {

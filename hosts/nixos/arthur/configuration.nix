@@ -79,6 +79,7 @@
     pkgs.gnome-disk-utility
     # Photo management
     pkgs.digikam
+    pkgs.gimp
   ];
 
   system.stateVersion = "25.11";
