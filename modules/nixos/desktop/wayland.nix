@@ -1,4 +1,10 @@
-{ inputs, config, lib, pkgs, ... }:
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.reo101.wayland;
@@ -11,186 +17,303 @@ in
   ];
 
   options =
-  let
-    inherit (lib) types;
-  in {
-    reo101.wayland = {
-      # TODO: better naming
-      enable = lib.mkEnableOption "reo101 Wayland config";
+    let
+      inherit (lib) types;
+    in
+    {
+      reo101.wayland = {
+        # TODO: better naming
+        enable = lib.mkEnableOption "reo101 Wayland config";
 
-      user = lib.mkOption {
-        type = types.str;
-        default =
-          let
-            hmUsers = builtins.attrNames (lib.attrByPath [ "home-manager" "users" ] { } config);
-            hmUserCount = builtins.length hmUsers;
-          in
-          if hmUserCount == 1 then
-            builtins.head hmUsers
-          else
-            throw "`reo101.wayland.user` must be set explicitly when home-manager user count is not exactly one (found ${builtins.toString hmUserCount})";
-        description = "Primary desktop user used by `greetd` and Home Manager lookups";
-      };
-
-      niri = {
-        package = lib.mkOption {
-          type = types.package;
-          description = "Fallback package used for the `niri` session binary";
-          default = pkgs.niri;
-          defaultText = lib.literalExpression "pkgs.niri";
-        };
-        sessionBinary = lib.mkOption {
+        user = lib.mkOption {
           type = types.str;
-          description = "Binary used by greetd to start the `niri` session";
-          default = "niri-session";
+          default =
+            let
+              hmUsers = builtins.attrNames (lib.attrByPath [ "home-manager" "users" ] { } config);
+              hmUserCount = builtins.length hmUsers;
+            in
+            if hmUserCount == 1 then
+              builtins.head hmUsers
+            else
+              throw "`reo101.wayland.user` must be set explicitly when home-manager user count is not exactly one (found ${builtins.toString hmUserCount})";
+          description = "Primary desktop user used by `greetd` and Home Manager lookups";
         };
-        preferHomeManagerPackage = lib.mkOption {
-          type = types.bool;
-          description = ''
-            Prefer `config.home-manager.users.<user>.programs.niri.package` when available,
-            falling back to `reo101.wayland.niri.package`
-          '';
-          default = true;
-        };
-        homeManagerModule = lib.mkOption {
-          type = types.nullOr types.deferredModule;
-          description = ''
-            Optional Home Manager module imported into `home-manager.users.<user>.imports`.
-            Keep this unset to manage Niri Home Manager configuration directly in host/user modules.
-          '';
-          default = null;
-        };
-      };
 
-      river = {
-        enable = lib.mkEnableOption "`river-classic` compositor support";
-        package = lib.mkOption {
-          type = types.package;
-          description = "Package used for `programs.river-classic` when enabled";
-          default = pkgs.river-classic;
-          defaultText = lib.literalExpression "pkgs.river-classic";
+        niri = {
+          package = lib.mkOption {
+            type = types.package;
+            description = "Fallback package used for the `niri` session binary";
+            default = pkgs.niri;
+            defaultText = lib.literalExpression "pkgs.niri";
+          };
+          sessionBinary = lib.mkOption {
+            type = types.str;
+            description = "Binary used by greetd to start the `niri` session";
+            default = "niri-session";
+          };
+          preferHomeManagerPackage = lib.mkOption {
+            type = types.bool;
+            description = ''
+              Prefer `config.home-manager.users.<user>.programs.niri.package` when available,
+              falling back to `reo101.wayland.niri.package`
+            '';
+            default = true;
+          };
+          homeManagerModule = lib.mkOption {
+            type = types.nullOr types.deferredModule;
+            description = ''
+              Optional Home Manager module imported into `home-manager.users.<user>.imports`.
+              Keep this unset to manage Niri Home Manager configuration directly in host/user modules.
+            '';
+            default = null;
+          };
         };
-      };
 
-      lock = {
-        command = lib.mkOption {
-          type = types.listOf types.str;
-          description = ''
-            Command vector used by compositor/user keybinds to lock the current session.
-            This keeps lock behavior host-specific without hard-coding lock tools in Home Manager modules.
-          '';
-          default = [
-            (lib.getExe' pkgs.systemd "loginctl")
-            "lock-session"
-          ];
-          defaultText = lib.literalExpression ''
-            [
+        river = {
+          enable = lib.mkEnableOption "`river-classic` compositor support";
+          package = lib.mkOption {
+            type = types.package;
+            description = "Package used for `programs.river-classic` when enabled";
+            default = pkgs.river-classic;
+            defaultText = lib.literalExpression "pkgs.river-classic";
+          };
+        };
+
+        lock = {
+          command = lib.mkOption {
+            type = types.listOf types.str;
+            description = ''
+              Command vector used by compositor/user keybinds to lock the current session.
+              This keeps lock behavior host-specific without hard-coding lock tools in Home Manager modules.
+            '';
+            default = [
               (lib.getExe' pkgs.systemd "loginctl")
               "lock-session"
-            ]
-          '';
-          example = lib.literalExpression ''
-            [ "noctalia-shell" "ipc" "call" "lockScreen" "lock" ]
-          '';
+            ];
+            defaultText = lib.literalExpression ''
+              [
+                (lib.getExe' pkgs.systemd "loginctl")
+                "lock-session"
+              ]
+            '';
+            example = lib.literalExpression ''
+              [ "noctalia-shell" "ipc" "call" "lockScreen" "lock" ]
+            '';
+          };
         };
-      };
 
-      stylix = {
-        image = lib.mkOption {
-          type = types.nullOr types.path;
-          description = "Wallpaper image passed to `stylix`";
-          default = null;
+        portal = {
+          desktopNames = lib.mkOption {
+            type = types.listOf types.str;
+            description = ''
+              Desktop names used for desktop-specific portal preference files.
+              `xdg-desktop-portal` resolves preferences from `''${desktop}-portals.conf`
+              based on `XDG_CURRENT_DESKTOP`, so list your session desktops here
+              (for example `[ "niri" ]`).
+            '';
+            default = [ ];
+            example = [ "niri" ];
+          };
+
+          fileChooserBackend = lib.mkOption {
+            type = types.enum [
+              "gnome"
+              "gtk"
+              "portty"
+            ];
+            description = ''
+              XDG desktop portal backend used for the FileChooser interface.
+              Use `gtk` to avoid depending on Nautilus/GNOME Files startup for file picking,
+              or `portty` for a terminal-driven picker workflow.
+            '';
+            default = "gnome";
+            example = "portty";
+          };
+
+          portty = {
+            package = lib.mkOption {
+              type = types.package;
+              description = "Package providing `portty` and `porttyd` binaries";
+              default = pkgs.custom.portty;
+              defaultText = lib.literalExpression "pkgs.custom.portty";
+            };
+
+            useInDesktops = lib.mkOption {
+              type = types.listOf types.str;
+              description = ''
+                Extra desktop names appended to Portty's `UseIn=` portal metadata.
+                Keep package-level metadata generic and define host/session policy here
+                (for example `[ "niri" ]`).
+              '';
+              default = [ ];
+              example = [ "niri" ];
+            };
+
+            configText = lib.mkOption {
+              type = types.lines;
+              description = ''
+                Contents of `~/.config/portty/config.toml`.
+                This defines terminal command and helper shims used by `portty` sessions.
+              '';
+              default = ''
+                exec = "@PORTTY_TERMINAL@"
+
+                [file-chooser]
+                exec = "@PORTTY_TERMINAL@"
+
+                [file-chooser.bin]
+                pick = "${lib.getExe pkgs.fd} --type f --type d --hidden --exclude .git . | ${lib.getExe pkgs.fzf} --multi --height=100% --reverse --prompt='pick> ' | @PORTTY_SEL@ --stdin"
+              '';
+            };
+          };
         };
-        colorscheme = lib.mkOption {
-          type = types.nullOr types.anything;
-          description = "`base16` colorscheme passed to `stylix.base16Scheme`";
-          default = null;
-        };
-        cursor = lib.mkOption {
-          type = types.nullOr (types.submodule {
-            options = {
-              name = lib.mkOption {
-                type = types.str;
-                description = "Cursor theme name";
-              };
+
+        stylix = {
+          image = lib.mkOption {
+            type = types.nullOr types.path;
+            description = "Wallpaper image passed to `stylix`";
+            default = null;
+          };
+          colorscheme = lib.mkOption {
+            type = types.nullOr types.anything;
+            description = "`base16` colorscheme passed to `stylix.base16Scheme`";
+            default = null;
+          };
+          cursor = lib.mkOption {
+            type = types.nullOr (
+              types.submodule {
+                options = {
+                  name = lib.mkOption {
+                    type = types.str;
+                    description = "Cursor theme name";
+                  };
+                  package = lib.mkOption {
+                    type = types.package;
+                    description = "Cursor theme package";
+                  };
+                  size = lib.mkOption {
+                    type = types.ints.positive;
+                    description = "Cursor size";
+                    default = 24;
+                  };
+                };
+              }
+            );
+            description = "Optional Stylix cursor configuration";
+            default = null;
+          };
+          fonts = {
+            monospace = {
               package = lib.mkOption {
                 type = types.package;
-                description = "Cursor theme package";
+                description = "Monospace font package used by Stylix";
+                default = pkgs.jetbrains-mono;
+                defaultText = lib.literalExpression "pkgs.jetbrains-mono";
               };
-              size = lib.mkOption {
-                type = types.ints.positive;
-                description = "Cursor size";
-                default = 24;
+              name = lib.mkOption {
+                type = types.str;
+                description = "Monospace font family name used by Stylix";
+                default = "JetBrains Mono";
               };
             };
-          });
-          description = "Optional Stylix cursor configuration";
-          default = null;
-        };
-        fonts = {
-          monospace = {
-            package = lib.mkOption {
-              type = types.package;
-              description = "Monospace font package used by Stylix";
-              default = pkgs.jetbrains-mono;
-              defaultText = lib.literalExpression "pkgs.jetbrains-mono";
+            serif = {
+              package = lib.mkOption {
+                type = types.package;
+                description = "Serif font package used by Stylix";
+                default = pkgs.noto-fonts;
+                defaultText = lib.literalExpression "pkgs.noto-fonts";
+              };
+              name = lib.mkOption {
+                type = types.str;
+                description = "Serif font family name used by Stylix";
+                default = "Noto Serif";
+              };
             };
-            name = lib.mkOption {
-              type = types.str;
-              description = "Monospace font family name used by Stylix";
-              default = "JetBrains Mono";
+            sansSerif = {
+              package = lib.mkOption {
+                type = types.package;
+                description = "Sans-serif font package used by Stylix";
+                default = pkgs.noto-fonts;
+                defaultText = lib.literalExpression "pkgs.noto-fonts";
+              };
+              name = lib.mkOption {
+                type = types.str;
+                description = "Sans-serif font family name used by Stylix";
+                default = "Noto Sans";
+              };
             };
-          };
-          serif = {
-            package = lib.mkOption {
-              type = types.package;
-              description = "Serif font package used by Stylix";
-              default = pkgs.noto-fonts;
-              defaultText = lib.literalExpression "pkgs.noto-fonts";
-            };
-            name = lib.mkOption {
-              type = types.str;
-              description = "Serif font family name used by Stylix";
-              default = "Noto Serif";
-            };
-          };
-          sansSerif = {
-            package = lib.mkOption {
-              type = types.package;
-              description = "Sans-serif font package used by Stylix";
-              default = pkgs.noto-fonts;
-              defaultText = lib.literalExpression "pkgs.noto-fonts";
-            };
-            name = lib.mkOption {
-              type = types.str;
-              description = "Sans-serif font family name used by Stylix";
-              default = "Noto Sans";
-            };
-          };
-          emoji = {
-            package = lib.mkOption {
-              type = types.package;
-              description = "Emoji font package used by Stylix";
-              default = pkgs.noto-fonts-color-emoji;
-              defaultText = lib.literalExpression "pkgs.noto-fonts-color-emoji";
-            };
-            name = lib.mkOption {
-              type = types.str;
-              description = "Emoji font family name used by Stylix";
-              default = "Noto Color Emoji";
+            emoji = {
+              package = lib.mkOption {
+                type = types.package;
+                description = "Emoji font package used by Stylix";
+                default = pkgs.noto-fonts-color-emoji;
+                defaultText = lib.literalExpression "pkgs.noto-fonts-color-emoji";
+              };
+              name = lib.mkOption {
+                type = types.str;
+                description = "Emoji font family name used by Stylix";
+                default = "Noto Color Emoji";
+              };
             };
           };
         };
-      };
 
+      };
     };
-  };
 
   config = lib.mkIf cfg.enable (
     let
       hasImage = cfg.stylix.image != null;
       hasColorscheme = cfg.stylix.colorscheme != null;
       hasHomeManager = config ? home-manager;
+      usePorttyBackend = cfg.portal.fileChooserBackend == "portty";
+      portalBackendNameByBackend = {
+        gnome = "gnome";
+        gtk = "gtk";
+        portty = "tty";
+      };
+      portalDesktopNames = [ "common" ] ++ cfg.portal.desktopNames;
+      fileChooserPortalBackendName = portalBackendNameByBackend.${cfg.portal.fileChooserBackend};
+      portalPackageByBackend = {
+        gnome = pkgs.xdg-desktop-portal-gnome;
+        gtk = pkgs.xdg-desktop-portal-gtk;
+        portty = porttyPortalPackage;
+      };
+      fileChooserPortalPackage = portalPackageByBackend.${cfg.portal.fileChooserBackend};
+      portalPreferredConfig = {
+        default = lib.mkDefault [ "wlr" ];
+        "org.freedesktop.impl.portal.FileChooser" = lib.mkDefault [ fileChooserPortalBackendName ];
+        "org.freedesktop.impl.portal.ScreenCast" = lib.mkDefault [ "gnome" ];
+        "org.freedesktop.impl.portal.RemoteDesktop" = lib.mkDefault [ "gnome" ];
+      };
+      porttyPortalUseInDesktops = lib.concatStringsSep ";" (cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames);
+      porttyPortalPackage = pkgs.symlinkJoin {
+        name = "portty-with-portal-metadata-${cfg.portal.portty.package.version or "unknown"}";
+        paths = [ cfg.portal.portty.package ];
+        postBuild = ''
+          portal_file="$out/share/xdg-desktop-portal/portals/tty.portal"
+          rm -f "$portal_file"
+          cp ${cfg.portal.portty.package}/share/xdg-desktop-portal/portals/tty.portal "$portal_file"
+
+          if grep -q '^UseIn=' "$portal_file"; then
+            use_in_value="$(sed -n 's/^UseIn=//p' "$portal_file")"
+            if [ -n '${porttyPortalUseInDesktops}' ]; then
+              use_in_value="$use_in_value;${porttyPortalUseInDesktops}"
+            fi
+
+            use_in_value="$(
+              printf '%s' "$use_in_value" \
+                | tr ';' '\n' \
+                | sed '/^$/d' \
+                | awk '!seen[$0]++' \
+                | paste -sd';' -
+            )"
+            sed -i "s|^UseIn=.*$|UseIn=$use_in_value|" "$portal_file"
+          elif [ -n '${porttyPortalUseInDesktops}' ]; then
+            printf 'UseIn=%s\n' '${porttyPortalUseInDesktops}' >> "$portal_file"
+          fi
+        '';
+      };
       hmNiriPackage = lib.attrByPath [
         "home-manager"
         "users"
@@ -204,6 +327,20 @@ in
           hmNiriPackage
         else
           cfg.niri.package;
+      hmGhosttyPackage = lib.attrByPath [
+        "home-manager"
+        "users"
+        cfg.user
+        "programs"
+        "ghostty"
+        "package"
+      ] null config;
+      porttyTerminalExe =
+        if hmGhosttyPackage != null then lib.getExe hmGhosttyPackage else lib.getExe pkgs.ghostty;
+      porttyHelperPackage = pkgs.callPackage ./wayland-portty-helper {
+        portty = cfg.portal.portty.package;
+        inherit (pkgs) zenity;
+      };
     in
     {
       assertions = [
@@ -215,35 +352,42 @@ in
           assertion = cfg.niri.homeManagerModule != null -> hasHomeManager;
           message = "`reo101.wayland.niri.homeManagerModule` requires importing the Home Manager NixOS module";
         }
+        {
+          assertion = usePorttyBackend -> hasHomeManager;
+          message = "`reo101.wayland.portal.fileChooserBackend = \"portty\"` requires importing the Home Manager NixOS module";
+        }
+        {
+          assertion = usePorttyBackend -> (hmGhosttyPackage != null || pkgs ? ghostty);
+          message = "`reo101.wayland.portal.fileChooserBackend = \"portty\"` requires `programs.ghostty.package` in Home Manager or `pkgs.ghostty`";
+        }
       ];
 
-      stylix =
-        {
-          enable = true;
-          fonts = {
-            monospace = {
-              inherit (cfg.stylix.fonts.monospace) package name;
-            };
-            serif = {
-              inherit (cfg.stylix.fonts.serif) package name;
-            };
-            sansSerif = {
-              inherit (cfg.stylix.fonts.sansSerif) package name;
-            };
-            emoji = {
-              inherit (cfg.stylix.fonts.emoji) package name;
-            };
+      stylix = {
+        enable = true;
+        fonts = {
+          monospace = {
+            inherit (cfg.stylix.fonts.monospace) package name;
           };
-        }
-        // lib.optionalAttrs hasImage {
-          image = cfg.stylix.image;
-        }
-        // lib.optionalAttrs hasColorscheme {
-          base16Scheme = cfg.stylix.colorscheme;
-        }
-        // lib.optionalAttrs (cfg.stylix.cursor != null) {
-          cursor = cfg.stylix.cursor;
+          serif = {
+            inherit (cfg.stylix.fonts.serif) package name;
+          };
+          sansSerif = {
+            inherit (cfg.stylix.fonts.sansSerif) package name;
+          };
+          emoji = {
+            inherit (cfg.stylix.fonts.emoji) package name;
+          };
         };
+      }
+      // lib.optionalAttrs hasImage {
+        image = cfg.stylix.image;
+      }
+      // lib.optionalAttrs hasColorscheme {
+        base16Scheme = cfg.stylix.colorscheme;
+      }
+      // lib.optionalAttrs (cfg.stylix.cursor != null) {
+        cursor = cfg.stylix.cursor;
+      };
 
       fonts.packages = lib.unique [
         pkgs.noto-fonts
@@ -274,9 +418,62 @@ in
         };
       };
 
-      home-manager.users = lib.mkIf (cfg.niri.homeManagerModule != null && hasHomeManager) {
+      home-manager.users = lib.mkIf hasHomeManager {
         "${cfg.user}" = {
-          imports = [ cfg.niri.homeManagerModule ];
+          imports = lib.optional (cfg.niri.homeManagerModule != null) cfg.niri.homeManagerModule;
+
+          # Some sessions export `NIX_XDG_DESKTOP_PORTAL_DIR` to the per-user profile.
+          # Ensure that profile contains the selected FileChooser backend metadata.
+          home.packages = lib.optionals usePorttyBackend [
+            fileChooserPortalPackage
+            pkgs.xdg-desktop-portal-gnome
+            porttyHelperPackage
+          ];
+
+          home.sessionPath = lib.optionals usePorttyBackend [
+            "${porttyHelperPackage}/bin"
+          ];
+
+          xdg.configFile = lib.mkIf usePorttyBackend {
+            "portty/config.toml".text =
+              lib.replaceStrings
+                [
+                  "@PORTTY_TERMINAL@"
+                  "@PORTTY_SESSION_HOLDER@"
+                  "@PORTTY_SEL@"
+                  "@PORTTY_SUBMIT@"
+                ]
+                [
+                  porttyTerminalExe
+                  (lib.getExe' porttyHelperPackage "portty-session-holder")
+                  (lib.getExe' porttyHelperPackage "sel")
+                  (lib.getExe' porttyHelperPackage "submit")
+                ]
+                cfg.portal.portty.configText;
+          };
+
+          systemd.user.services.portty = lib.mkIf usePorttyBackend {
+            Unit = {
+              Description = "Portty - XDG Desktop Portal for TTY";
+              After = [ "graphical-session.target" ];
+            };
+            Service = {
+              Type = "simple";
+              Environment = [
+                "DISPLAY="
+                "GDK_BACKEND=wayland"
+              ];
+              ExecStart = "${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}";
+              Restart = "on-failure";
+              RestartSec = 5;
+            };
+            Install = {
+              WantedBy = [
+                "default.target"
+                "graphical-session.target"
+              ];
+            };
+          };
         };
       };
 
@@ -289,13 +486,11 @@ in
       xdg.portal = {
         enable = lib.mkDefault true;
         wlr.enable = lib.mkDefault true;
-        extraPortals = lib.mkDefault [ pkgs.xdg-desktop-portal-gnome ];
-        config.common = {
-          default = lib.mkDefault [ "wlr" ];
-          "org.freedesktop.impl.portal.FileChooser" = lib.mkDefault [ "gnome" ];
-          "org.freedesktop.impl.portal.ScreenCast" = lib.mkDefault [ "gnome" ];
-          "org.freedesktop.impl.portal.RemoteDesktop" = lib.mkDefault [ "gnome" ];
-        };
+        extraPortals = lib.mkAfter [
+          fileChooserPortalPackage
+          pkgs.xdg-desktop-portal-gnome
+        ];
+        config = lib.genAttrs portalDesktopNames (_: portalPreferredConfig);
       };
 
       environment.systemPackages = [
@@ -304,6 +499,10 @@ in
         pkgs.wlr-randr
         pkgs.grim
         pkgs.slurp
+      ]
+      ++ lib.optionals usePorttyBackend [
+        cfg.portal.portty.package
+        porttyHelperPackage
       ];
 
       # Sound
