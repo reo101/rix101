@@ -38,6 +38,7 @@
     # ./modules/opencloud.nix
     ./modules/microvm.nix
     ./modules/home-assistant
+    ./modules/slskd.nix
   ];
 
   # services.kanidm = { };

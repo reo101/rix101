@@ -64,6 +64,8 @@
 
     lidarr = {
       enable = true;
+      # NOTE: plugins are currently only available on Lidarr's nightly/prerelease channel
+      package = pkgs.custom.lidarr-nightly;
     };
 
     jellyseerr = {
