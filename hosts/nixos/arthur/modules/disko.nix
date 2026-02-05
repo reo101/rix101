@@ -10,7 +10,8 @@
     inputs.disko.nixosModules.disko
   ];
 
-  boot.loader.grub.enable = true;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   disko = {
     enableConfig = true;
@@ -23,14 +24,8 @@
           content = {
             type = "gpt";
             partitions = {
-              boot = {
-                label = "boot_mbr";
-                size = "1M";
-                type = "EF02"; # BIOS boot partition for GRUB
-                priority = 1;
-              };
               ESP = {
-                label = "boot";
+                label = "ESP";
                 size = "512M";
                 type = "EF00";
                 content = {
@@ -38,7 +33,7 @@
                   format = "vfat";
                   mountpoint = "/boot";
                 };
-                priority = 2;
+                priority = 1;
               };
               swap = {
                 label = "swap";
@@ -47,7 +42,7 @@
                   type = "swap";
                   resumeDevice = true;
                 };
-                priority = 3;
+                priority = 2;
               };
               nixos = {
                 label = "nixos";
@@ -84,7 +79,7 @@
                     };
                   };
                 };
-                priority = 4;
+                priority = 3;
               };
             };
           };
