@@ -102,12 +102,17 @@
         };
         "persist/home" = {
           type = "zfs_fs";
-          options.mountpoint = "legacy";
+          options = {
+            mountpoint = "legacy";
+            "com.sun:auto-snapshot" = "true";
+          };
           mountpoint = "/persist/home";
         };
       };
     };
   };
+
+  services.zfs.autoSnapshot.enable = true;
 
   disko.zfs = {
     enable = true;
