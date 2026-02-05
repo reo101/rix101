@@ -156,6 +156,32 @@
         (mutFirstChar lib.toUpper))
       (mutFirstChar lib.toLower)
     ];
+
+    uci = lib.makeExtensible (self: {
+      escape = value:
+        lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] (toString value);
+
+      quote = value: "\"${self.escape value}\"";
+
+      set = key: value:
+        "set ${key}=${self.quote value}";
+
+      setRaw = key: value:
+        "set ${key}=${toString value}";
+
+      delete = key:
+        "delete ${key}";
+
+      addList = key: value:
+        "add_list ${key}=${self.quote value}";
+
+      commit = package:
+        "commit ${package}";
+
+      renderBatch = lines:
+        lib.concatStringsSep "\n" lines;
+    });
+
     # s:
     # mutFirstChar
     #   lib.toLower

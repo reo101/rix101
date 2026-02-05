@@ -1418,11 +1418,11 @@
         "systems": "systems_4"
       },
       "locked": {
-        "lastModified": 1770886384,
-        "narHash": "sha256-LnAVScatU0yPowAihzzuPyQAkMYXihD+YqJgoOOenn4=",
+        "lastModified": 1772854700,
+        "narHash": "sha256-HjePyCWOPg6/EWXh3HMMz+LHN/B6Ws5pl6iFxSoplRI=",
         "owner": "astro",
         "repo": "nix-openwrt-imagebuilder",
-        "rev": "7b613907f90d6d67c3f6646795538aee590dfedf",
+        "rev": "5a4ea3971af08862402f56ae95ea222793ecdee7",
         "type": "github"
       },
       "original": {
