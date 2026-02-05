@@ -16,6 +16,7 @@
     ./modules/impermanence.nix
     ./modules/printers.nix
     ./modules/theming.nix
+    ./modules/wireguard.nix
   ];
 
   networking.hostName = "arthur";

@@ -241,6 +241,7 @@ in
           metaModules.pubkey
           metaModules.deploy
           metaModules.gui
+          metaModules.wireguard
         ];
       };
       mkHost = ({ meta, configurationFiles, ... }:

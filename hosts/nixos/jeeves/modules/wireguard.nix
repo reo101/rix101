@@ -1,8 +1,9 @@
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, config, meta, ... }:
 
 let
+  wgServer = meta.wireguardServer;
   wireguard-interface = "wg0";
-  wireguard-network-cidr = "10.100.0.0/24";
+  wireguard-network-cidr = wgServer.cidr;
   wireguard-network-host-cidr = lib.net.cidr.hostCidr 1 wireguard-network-cidr;
   wireguard-network-gateway = lib.net.cidr.host 1 wireguard-network-cidr;
 in
@@ -89,41 +90,14 @@ in
           ListenPort = 51820;
         };
         wireguardPeers =
-          lib.imap1
-            (i: peer: {
-              inherit (peer) PublicKey;
+          lib.mapAttrsToList
+            (_host: peer: {
+              PublicKey = peer.publicKey;
               AllowedIPs = [
-                (lib.net.cidr.host
-                  (i + 1)
-                  wireguard-network-cidr)
+                (lib.net.cidr.host peer.hostIndex wireguard-network-cidr)
               ];
             })
-            [
-              {
-                Host = "cheetah";
-                PublicKey = "BcDdwQyF5ilK/pNOjwEGTohoWoomNptZ5fmdF1ZuRVo=";
-              }
-              {
-                Host = "limonka";
-                PublicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4=";
-              }
-              {
-                Host = "peshoDjam";
-                PublicKey = "37QEe3Lsq5BTIzxqAh9z7clHYeaOaMH31oqi5YvAPBY=";
-              }
-              {
-                Host = "s42";
-                PublicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
-              }
-              {
-                Host = "a41";
-                PublicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0=";
-              }
-              {
-                Host = "t410";
-                PublicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0=";
-              }
-            ];
+            wgServer.peers;
       };
     };
 

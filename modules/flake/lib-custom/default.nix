@@ -79,6 +79,7 @@
           ] then
             {
               _type = "nix";
+              path = newPath;
               content = import newPath;
             }
           else
@@ -128,7 +129,7 @@
     extractNixFile = files: path: extract {
       inherit files path;
       pred = file: file._type == "nix";
-      # transform = file: { inherit (file) content; };
+      transform = file: { inherit (file) path content; };
     };
     extractDirectory = files: path: extract {
       inherit files path;

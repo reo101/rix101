@@ -194,6 +194,8 @@
                               specialArgs = {
                                 # Give access to common meta modules
                                 metaModules = (import ./meta-modules);
+                                # Give access to overlayed `lib`
+                                inherit (config) lib;
                                 # Pass through host (default for `hostname`, etc.)
                                 inherit host;
                               };
@@ -201,7 +203,7 @@
                                 # {} if no `metaModule` is provided
                                 metaModule
                                 # {} if no `meta.nix` is provided
-                                (lib.optionalAttrs has-meta meta-content)
+                                (if has-meta then { _file = meta-file.path; imports = [ meta-content ]; } else {})
                               ];
                             }).config;
                             deploy-config = meta.deploy or null;

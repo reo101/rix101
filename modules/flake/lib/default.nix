@@ -27,4 +27,5 @@
   # NOTE: expose flake's `lib` augmentations to everybody
   #       (including configurations, check <../configurations/default-generators.nix>)
   config._module.args.lib = config.lib;
+  config.flake.lib = config.lib;
 }

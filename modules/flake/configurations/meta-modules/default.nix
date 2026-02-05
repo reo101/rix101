@@ -5,4 +5,5 @@
   hostname = ./hostname.nix;
   pubkey = ./pubkey.nix;
   system = ./system.nix;
+  wireguard = ./wireguard.nix;
 }
