@@ -86,10 +86,6 @@
         };
       };
     };
-
-    # NOTE: for `config.system.build.vmWithDisko`
-    memSize = 2048;
-    imageBuilder.copyNixStoreThreads = 8;
   };
 
   # zram swap (compressed in-RAM, complements disk swap)
@@ -98,53 +94,6 @@
   # Ensure `/persist` and `/var/log` are mounted early for `impermanence` bind mounts
   fileSystems."/persist".neededForBoot = true;
   fileSystems."/var/log".neededForBoot = true;
-
-  # Persistent-disk variant of vmWithDisko — survives VM restarts so you can
-  # test hibernation (resume from swap) and impermanence rollback across reboots.
-  #   nix run .#nixosConfigurations.arthur.config.system.build.vmWithDiskoPersistent
-  #   nix run .#nixosConfigurations.arthur.config.system.build.vmWithDiskoPersistent -- --reset
-  system.build.vmWithDiskoPersistent =
-    let
-      vmVariant = config.virtualisation.vmVariantWithDisko;
-      diskoImages = vmVariant.system.build.diskoImages;
-      vmRunner = vmVariant.system.build.vm;
-      diskNames = builtins.attrNames config.disko.devices.disk;
-      inherit (config.networking) hostName;
-    in
-    pkgs.writeShellScriptBin "disko-vm-persistent" ''
-      set -euo pipefail
-
-      state_dir="''${DISKO_VM_STATE_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/disko-vm/${hostName}}"
-      mkdir -p "$state_dir"
-      export tmp="$state_dir"
-
-      if [ "''${1:-}" = "--reset" ]; then
-        echo "Resetting VM disk images in $state_dir..."
-        ${lib.concatMapStringsSep "\n    " (
-          name: ''rm -f "$state_dir"/${lib.escapeShellArg name}.qcow2''
-        ) diskNames}
-        shift
-      fi
-
-      ${lib.concatMapStringsSep "\n    " (name: ''
-        if [ ! -f "$state_dir"/${lib.escapeShellArg name}.qcow2 ]; then
-          echo "Creating persistent disk overlay: $state_dir/${name}.qcow2"
-          ${lib.getExe' pkgs.qemu "qemu-img"} create -f qcow2 \
-            -b ${diskoImages}/${lib.escapeShellArg name}.qcow2 \
-            -F qcow2 "$state_dir"/${lib.escapeShellArg name}.qcow2
-        fi'') diskNames}
-
-      exec ${vmRunner}/bin/run-*-vm "$@"
-    '';
-
-  virtualisation.vmVariantWithDisko.virtualisation = {
-    fileSystems."/persist".neededForBoot = true;
-    fileSystems."/var/log".neededForBoot = true;
-    qemu.options = [
-      "-serial"
-      "stdio"
-    ];
-  };
 
   # Automatic `btrfs` snapshots for safe subvolumes
   services.btrbk.instances.safe = {
