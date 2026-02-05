@@ -127,10 +127,11 @@
     mac-app-util = {
       url = "github:hraban/mac-app-util";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.cl-nix-lite.inputs.systems.follows = "systems";
-      inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
-      inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
-      inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+      # WARN: needs `nix` `2.30`+
+      # inputs.cl-nix-lite.inputs.systems.follows = "systems";
+      # inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
+      # inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
+      # inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     };
 
     yknotify-rs = {
