@@ -80,6 +80,10 @@
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
+    nixpkgs-trunk = {
+      url = "github:nixos/nixpkgs/master";
+    };
+
     nixpkgs-stable = {
       url = "github:nixos/nixpkgs/nixos-24.05";
     };
