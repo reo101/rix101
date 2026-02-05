@@ -180,6 +180,22 @@
         "type": "github"
       }
     },
+    "contracts": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770301900,
+        "narHash": "sha256-RSZ+1QvoaATZYJDaimd56ozIMfT7hvDMM37gD5/HEW0=",
+        "owner": "yvan-sraka",
+        "repo": "contracts",
+        "rev": "5a964508a88c44baf31ec7791db154057895c511",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yvan-sraka",
+        "repo": "contracts",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1760924934,
@@ -1529,6 +1545,7 @@
         "agenix": "agenix",
         "agenix-rekey": "agenix-rekey",
         "alloc": "alloc",
+        "contracts": "contracts",
         "deploy-rs": "deploy-rs",
         "disko": "disko",
         "disko-zfs": "disko-zfs",

@@ -171,6 +171,12 @@
       flake = false;
     };
 
+    contracts = {
+      url = "github:yvan-sraka/contracts";
+      # WARN: is technically a flake, exposing the `default.nix` under `nixosModules.default`
+      flake = false;
+    };
+
     infuse = {
       url = "git+https://codeberg.org/amjoseph/infuse.nix";
       flake = false;

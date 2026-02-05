@@ -11,6 +11,10 @@
     (final: prev: {
       yants = import "${inputs.yants.outPath}/default.nix" { lib = prev; };
     })
+    # Contracts
+    (final: prev: {
+      contracts = import "${inputs.contracts.outPath}/default.nix" { enable = true; };
+    })
     # Infuse
     (final: prev: let
       infuse = (import "${inputs.infuse.outPath}/default.nix" {
