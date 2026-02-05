@@ -16,15 +16,16 @@
     )
   ];
 
+  flake.overlays.additions = final: prev: {
+    custom = self.packages.${final.stdenv.hostPlatform.system};
+  };
+
   perSystem = { pkgs, system, ... }: {
     _module.args.pkgs = let
       overlays = lib.concatLists [
         # NOTE: packages from flake outputs
         [
-          (_: _: {
-            custom = (config.perSystem system).packages;
-            # custom = self'.packages;
-          })
+          config.flake.overlays.additions
         ]
 
         # NOTE: overlays from flake outputs
