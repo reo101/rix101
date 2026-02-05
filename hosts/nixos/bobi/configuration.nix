@@ -112,10 +112,7 @@
     user = "reo101";
     # TODO: extract a shared HM niri module path instead of reusing `gomi`'s.
     niri.homeManagerModule = ../gomi/homeModules/niri.nix;
-    stylix.image = builtins.fetchurl {
-      url = "https://media.baraag.net/media_attachments/files/114/343/416/726/247/325/original/202ab96f97ed846a.jpg";
-      sha256 = "3h7A8NKJ045NZ+RSaPNnWDyfA7+W5RbUzCJTEJWhKlY=";
-    };
+    stylix.colorscheme = inputs.nix-colors.colorSchemes.tokyo-night-dark;
   };
 
   programs.firefox.enable = true;
