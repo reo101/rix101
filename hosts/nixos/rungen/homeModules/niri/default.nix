@@ -7,6 +7,124 @@
   ...
 }:
 
+let
+  inherit (inputs.niri.lib.kdl)
+    leaf
+    serialize
+    ;
+
+  baseNiriConfig =
+    let
+      value = config.programs.niri.config;
+    in
+    if value == null then
+      [ ]
+    else if builtins.isString value then
+      throw "rungen battery-mode Niri config expects programs.niri.config to stay as structured KDL"
+    else
+      value;
+
+  batteryizeNiriNode =
+    node:
+    let
+      removeChildrenByName = name: builtins.filter (child: child.name != name);
+      transformChildren = children: builtins.map batteryizeNiriNode children;
+    in
+    if node.name == "output" && node.arguments == [ "eDP-1" ] then
+      node
+      // {
+        children = builtins.map (
+          child:
+          if child.name == "mode" then
+            leaf "mode" "2560x1600@60.002"
+          else
+            batteryizeNiriNode child
+        ) (removeChildrenByName "variable-refresh-rate" node.children);
+      }
+    else if node.name == "animations" then
+      node
+      // {
+        children = transformChildren (removeChildrenByName "window-resize" node.children);
+      }
+    else if node.name == "background-effect" then
+      node
+      // {
+        children = builtins.map (
+          child:
+          if child.name == "blur" then
+            leaf "blur" false
+          else
+            batteryizeNiriNode child
+        ) node.children;
+      }
+    else
+      node // { children = transformChildren node.children; };
+
+  batteryNiriConfig = builtins.map batteryizeNiriNode baseNiriConfig;
+  batteryNiriConfigFile = inputs.niri.lib.internal.validated-config-for
+    pkgs
+    config.programs.niri.package
+    (serialize.nodes batteryNiriConfig);
+
+  niriPowerSourceSync = pkgs.writeShellApplication {
+    name = "niri-power-source-sync";
+    runtimeInputs = [
+      config.programs.niri.package
+      pkgs.coreutils
+      pkgs.systemd
+    ];
+    text = ''
+      set -eu
+
+      state_dir="$XDG_RUNTIME_DIR/niri"
+      state_file="$state_dir/power-source-config"
+      base_config="${config.xdg.configHome}/niri/config.kdl"
+      battery_config="${config.xdg.configHome}/niri/config-battery.kdl"
+      on_battery="$(busctl --system get-property org.freedesktop.UPower /org/freedesktop/UPower org.freedesktop.UPower OnBattery 2>/dev/null || true)"
+
+      case "$on_battery" in
+        "b true")
+          target_config="$battery_config"
+          ;;
+        "b false")
+          target_config="$base_config"
+          ;;
+        *)
+          exit 0
+          ;;
+      esac
+
+      if [ ! -r "$target_config" ]; then
+        exit 0
+      fi
+
+      mkdir -p "$state_dir"
+
+      if [ -r "$state_file" ] && [ "$(cat "$state_file")" = "$target_config" ]; then
+        exit 0
+      fi
+
+      ${lib.getExe config.programs.niri.package} msg action load-config-file --path "$target_config"
+      printf '%s\n' "$target_config" > "$state_file"
+    '';
+  };
+
+  niriPowerSourceMonitor = pkgs.writeShellApplication {
+    name = "niri-power-source-monitor";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.upower
+      niriPowerSourceSync
+    ];
+    text = ''
+      set -eu
+
+      stdbuf -oL -eL upower --monitor | while IFS= read -r _line; do
+        niri-power-source-sync || true
+      done
+    '';
+  };
+in
 {
   imports = [
     inputs.niri.homeModules.niri
@@ -32,6 +150,39 @@
     wofi
     xwayland-satellite
   ];
+
+  xdg.configFile.niri-battery-config = {
+    enable = config.programs.niri.finalConfig != null;
+    target = "niri/config-battery.kdl";
+    source = batteryNiriConfigFile;
+  };
+
+  systemd.user.services.niri-power-source-sync = {
+    Unit = {
+      Description = "Sync Niri power-saving visuals with current power source";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = lib.getExe niriPowerSourceSync;
+    };
+  };
+
+  systemd.user.services.niri-power-source-monitor = {
+    Unit = {
+      Description = "Watch UPower for Niri power-saving overrides";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStartPre = lib.getExe niriPowerSourceSync;
+      ExecStart = lib.getExe niriPowerSourceMonitor;
+      Restart = "always";
+      RestartSec = 2;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 
   programs.niri = {
     enable = true;
