@@ -1,6 +1,12 @@
 { lib, config, self, inputs, ... }:
 
 {
+  flake-file.inputs.nix-topology = {
+    url = "github:oddlama/nix-topology";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.flake-parts.follows = "flake-parts";
+  };
+
   imports = [
     inputs.nix-topology.flakeModule
   ];

@@ -120,12 +120,6 @@
         inputs.home-manager.follows = "home-manager";
       };
 
-      nix-topology = {
-        url = "github:oddlama/nix-topology";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
-      };
-
       nix-lib-net = {
         url = "github:reo101/nix-lib-net";
       };
