@@ -107,7 +107,13 @@
       jujutsu
     ];
   };
-  reo101.wayland.enable = true;
+  reo101.wayland = {
+    enable = true;
+    stylix.image = builtins.fetchurl {
+      url = "https://media.baraag.net/media_attachments/files/114/343/416/726/247/325/original/202ab96f97ed846a.jpg";
+      sha256 = "3h7A8NKJ045NZ+RSaPNnWDyfA7+W5RbUzCJTEJWhKlY=";
+    };
+  };
 
   programs.firefox.enable = true;
 
