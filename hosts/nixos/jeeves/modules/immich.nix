@@ -9,7 +9,9 @@
   ];
 
   # Immich service
-  services.nginx.virtualHosts."immich.jeeves.lan" = {
+  services.nginx.virtualHosts."immich.jeeves.reo101.xyz" = {
+    forceSSL = true;
+    useACMEHost = "jeeves.reo101.xyz";
     locations."/" = {
       proxyPass = "http://127.0.0.1:${builtins.toString config.services.immich.port}";
       # NOTE: https://immich.app/docs/administration/reverse-proxy/
