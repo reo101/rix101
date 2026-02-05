@@ -2,16 +2,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "flamelens";
-  version = "v0.2.0";
+  version = "v0.4.0";
 
   src = fetchFromGitHub {
     owner = "YS-L";
     repo = pname;
     rev = version;
-    hash = "sha256-v8SBd5KkGok4hmAwSKmnKgxq3Ghipho7W7UYHW/2EMg=";
+    hash = "sha256-b7lRMyeX/aL1ziSaLBUxChrwXeKNhcCShjGY6ANYqhY=";
   };
 
-  cargoHash = "sha256-Rm4pRmTqxLCPMVeFCeb0Gg/AV1olMsG0UKB75i5iyB8=";
+  cargoHash = "sha256-QcEN83Cd92i0Ll+8uWSLREKk5i0STwhAKTCx48BiI6A=";
 
   nativeBuildInputs = [
   ];
