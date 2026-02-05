@@ -146,6 +146,10 @@ in
           "jellyfin"
           # Chromecast
           "cast"
+          # Sonarr (TV series management)
+          "sonarr"
+          # Radarr (movie management)
+          "radarr"
         ];
         config = {
           default_config = { };
@@ -214,7 +218,6 @@ in
           inherit (cfg) user group;
           mode = "0755";
         };
-
       } // lib.pipe hass-theme-packages [
         (lib.concatMap (pkg: lib.map
           (file: lib.nameValuePair "/var/lib/hass/themes/${file}" { L.argument = "${pkg}/themes/${file}"; })
