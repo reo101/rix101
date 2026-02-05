@@ -5,9 +5,11 @@
     username = "maria";
     homeDirectory = "/home/maria";
     stateVersion = "25.11";
+    sessionPath = [ "$HOME/.local/bin" ];
   };
 
   programs.home-manager.enable = true;
+  programs.bash.enable = true;
 
   # XFCE theming — Mint-Y-Dark (Linux Mint XFCE style)
   xfconf.settings = {
