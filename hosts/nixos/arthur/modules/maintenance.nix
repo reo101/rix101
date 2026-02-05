@@ -13,6 +13,10 @@
     };
   };
 
+  age.identityPaths = [
+    "/persist/etc/ssh/ssh_host_ed25519_key"
+  ];
+
   services.openssh = {
     enable = true;
     settings = {

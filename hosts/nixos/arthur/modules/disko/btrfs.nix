@@ -70,6 +70,9 @@
     };
   };
 
+  # `/var/log` is its own subvolume — mount early for `journald`
+  fileSystems."/var/log".neededForBoot = true;
+
   # Btrfs root rollback — delete and recreate root subvolume on every boot
   boot.initrd.supportedFilesystems = [ "btrfs" ];
   boot.initrd.systemd.storePaths = [

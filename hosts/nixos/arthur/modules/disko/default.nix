@@ -4,7 +4,8 @@
 }:
 
 let
-  filesystem = "btrfs"; # "btrfs" or "zfs"
+  # NOTE: "btrfs" or "zfs"
+  filesystem = "zfs";
 in
 {
   imports = [
@@ -21,10 +22,9 @@ in
     };
   };
 
-  # zram swap (compressed in-RAM, complements disk swap)
+  # `zram` swap (compresses swap in RAM)
   zramSwap.enable = true;
 
-  # Ensure `/persist` and `/var/log` are mounted early for `impermanence` bind mounts
+  # Ensure `/persist` is mounted early for `impermanence` bind mounts
   fileSystems."/persist".neededForBoot = true;
-  fileSystems."/var/log".neededForBoot = true;
 }

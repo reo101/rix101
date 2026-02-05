@@ -26,7 +26,7 @@
         boot = {
           label = "boot_mbr";
           size = "1M";
-          type = "EF02"; # BIOS boot partition for GRUB
+          type = "EF02";
           priority = 1;
         };
         ESP = {
@@ -76,19 +76,13 @@
       };
 
       datasets = {
-        # Machine-specific
-        "local" = {
-          type = "zfs_fs";
-          options.mountpoint = "none";
-          mountpoint = null;
-        };
-        "local/root" = {
+        "root" = {
           type = "zfs_fs";
           options.mountpoint = "legacy";
           mountpoint = "/";
-          postCreateHook = "zfs snapshot zroot/local/root@blank";
+          postCreateHook = "zfs snapshot zroot/root@blank";
         };
-        "local/nix" = {
+        "nix" = {
           type = "zfs_fs";
           options = {
             mountpoint = "legacy";
@@ -96,27 +90,15 @@
           };
           mountpoint = "/nix";
         };
-        "local/var-log" = {
-          type = "zfs_fs";
-          options.mountpoint = "legacy";
-          mountpoint = "/var/log";
-        };
-
-        # User
-        "safe" = {
-          type = "zfs_fs";
-          options.mountpoint = "none";
-          mountpoint = null;
-        };
-        "safe/home" = {
-          type = "zfs_fs";
-          options.mountpoint = "legacy";
-          mountpoint = "/home";
-        };
-        "safe/persist" = {
+        "persist" = {
           type = "zfs_fs";
           options.mountpoint = "legacy";
           mountpoint = "/persist";
+        };
+        "persist/home" = {
+          type = "zfs_fs";
+          options.mountpoint = "legacy";
+          mountpoint = "/persist/home";
         };
       };
     };
@@ -133,7 +115,7 @@
     "/home"
     "/var/log"
   ];
- 
+
   boot.initrd.systemd.services.rollback = {
     description = "Rollback ZFS root dataset to a pristine state";
     wantedBy = [ "initrd.target" ];
@@ -142,7 +124,7 @@
     unitConfig.DefaultDependencies = "no";
     serviceConfig.Type = "oneshot";
     script = ''
-      ${lib.getExe' config.boot.zfs.package "zfs"} rollback -r zroot/local/root@blank
+      ${lib.getExe' config.boot.zfs.package "zfs"} rollback -r zroot/root@blank
     '';
   };
 }
