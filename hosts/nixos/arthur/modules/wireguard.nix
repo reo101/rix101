@@ -47,7 +47,6 @@ in
   # WireGuard VPN to jeeves
   # Not auto-started: routing homeCidr through the tunnel conflicts
   # with being directly on that subnet at home.
-  # Toggle with: systemctl start/stop wireguard-wg0
   networking.wireguard.interfaces.${wireguard-interface} = {
     ips = [ "${myIp}/32" ];
     listenPort = listenPort;
@@ -67,5 +66,7 @@ in
   };
 
   # Don't auto-start — only useful when away from home
+  # Toggle with: systemctl start/stop wireguard-wg0
   systemd.services."wireguard-${wireguard-interface}".wantedBy = lib.mkForce [ ];
+  systemd.targets."wireguard-${wireguard-interface}".wantedBy = lib.mkForce [ ];
 }
