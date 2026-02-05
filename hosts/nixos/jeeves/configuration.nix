@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 {
   imports = [
     inputs.hardware.nixosModules.common-cpu-amd
@@ -83,9 +89,11 @@
   age.secrets."jeeves.user.password" = {
     rekeyFile = lib.repoSecret "home/jeeves/user/password.age";
     generator = {
-      script = { pkgs, ... }: /* bash */ ''
-        ${lib.getExe pkgs.mkpasswd} -m sha-512
-      '';
+      script =
+        { pkgs, ... }:
+        /* bash */ ''
+          ${lib.getExe pkgs.mkpasswd} -m sha-512
+        '';
     };
   };
 
