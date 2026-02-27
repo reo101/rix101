@@ -11,6 +11,15 @@ in
     "/var/lib/nixos"
   ];
 
+  # HACK: Ensure home directory exists (`createHome` is unreliable with `impermanence`)
+  systemd.tmpfiles.settings."${mainUser}" = {
+    "/home/${mainUser}".d = {
+      user = mainUser;
+      group = "users";
+      mode = "0700";
+    };
+  };
+
   users = {
     mutableUsers = true;
     users.${mainUser} = {

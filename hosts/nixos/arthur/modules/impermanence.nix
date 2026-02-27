@@ -1,42 +1,50 @@
-{ inputs, lib, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 {
   imports = [
     inputs.impermanence.nixosModules.impermanence
   ];
 
   boot.initrd.supportedFilesystems = [ "btrfs" ];
+  boot.initrd.systemd.enable = true;
+  boot.initrd.systemd.storePaths = [
+    "${lib.getExe pkgs.btrfs-progs}"
+    "${lib.getExe pkgs.nushell}"
+    "${lib.getExe' pkgs.util-linux "mount"}"
+    "${lib.getExe' pkgs.util-linux "umount"}"
+    "${./rollback.nu}"
+  ];
 
   # Roll back root subvolume to blank state on every boot
-  boot.initrd.postDeviceCommands =
-    lib.mkAfter
-      # bash
-      ''
-        mkdir -p /mnt
-        mount -t btrfs -o subvol=/ /dev/disk/by-partlabel/nixos /mnt
-
-        # Recursively delete old root subvolume (NixOS may create nested subvols)
-        delete_subvolume_recursively() {
-          IFS=$'\n'
-          for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
-            delete_subvolume_recursively "/mnt/$i"
-          done
-          btrfs subvolume delete "$1"
-        }
-
-        if [ -e /mnt/root ]; then
-          delete_subvolume_recursively /mnt/root
-        fi
-
-        btrfs subvolume create /mnt/root
-        umount /mnt
-      '';
+  boot.initrd.systemd.services.rollback = {
+    description = "Rollback BTRFS root subvolume to a pristine state";
+    wantedBy = [ "initrd.target" ];
+    after = [ "initrd-root-device.target" ];
+    before = [ "sysroot.mount" ];
+    unitConfig.DefaultDependencies = "no";
+    serviceConfig.Type = "oneshot";
+    path = [
+      pkgs.btrfs-progs
+      pkgs.nushell
+      pkgs.util-linux
+    ];
+    script = ''
+      ${lib.getExe pkgs.nushell} ${./rollback.nu}
+    '';
+  };
 
   environment.persistence."/persist" = {
     hideMounts = true;
     directories = [
+      # Crash dumps for `coredumpctl`
       "/var/lib/systemd/coredump"
     ];
     files = [
+      # Stable machine identifier used by `systemd`, `journald`, `D-Bus`, etc.
       "/etc/machine-id"
     ];
   };
