@@ -122,8 +122,8 @@ in
   config =
     mkIf cfg.enable {
       home.packages = with pkgs;
-        builtins.concatLists [
-          (builtins.map
+        lib.concatLists [
+          (lib.map
             (lib.flip builtins.getAttr pkgs)
             cfg.shells)
           (optionals cfg.starship [
@@ -335,7 +335,7 @@ in
         };
 
         initContent =
-          builtins.concatStringsSep "\n"
+          lib.concatStringsSep "\n"
             [
               ''
                 function take() {

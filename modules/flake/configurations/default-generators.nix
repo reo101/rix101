@@ -57,7 +57,7 @@ let
       # Do not keep packages in ${HOME}
       useUserPackages = true;
       # Default import provided modules
-      # Usually `builtins.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName.old}`
+      # Usually `lib.attrValues config.flake.${config.auto.modules.moduleTypes."home-manager".modulesName.old}`
       sharedModules = extraModules ++ [
         ({ lib, ... }: {
           _module.args.lib = lib.extend inputs.nix-lib-net.overlays.raw;
@@ -249,10 +249,10 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = builtins.attrValues config.flake.nixosModules ++ [
+          extraModules = lib.attrValues config.flake.nixosModules ++ [
             (agenix-module-for "nixos")
           ];
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+          extraHomeModules = lib.attrValues config.flake.homeManagerModules ++ [
             (agenix-module-for "homeManager")
           ];
         });
@@ -300,8 +300,8 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           homeConfiguration = configurationFiles."home.nix".content;
-          extraModules = builtins.attrValues config.flake.nixOnDroidModules;
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules;
+          extraModules = lib.attrValues config.flake.nixOnDroidModules;
+          extraHomeModules = lib.attrValues config.flake.homeManagerModules;
         });
       mkDeployNode = ({ meta, configuration }:
         {
@@ -340,8 +340,8 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = builtins.attrValues config.flake.darwinModules;
-          extraHomeModules = builtins.attrValues config.flake.homeManagerModules ++ [
+          extraModules = lib.attrValues config.flake.darwinModules;
+          extraHomeModules = lib.attrValues config.flake.homeManagerModules ++ [
             # (agenix-module-for "darwin")
           ];
         });
@@ -375,7 +375,7 @@ in
         mkHomeManagerHost {
           inherit meta;
           configuration = configurationFiles."home.nix".content;
-          extraModules = builtins.attrValues config.flake.homeManagerModules;
+          extraModules = lib.attrValues config.flake.homeManagerModules;
         });
     };
     openwrt = {

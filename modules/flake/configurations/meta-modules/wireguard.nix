@@ -73,7 +73,7 @@ in
                   peers:
                   assert lib.assertMsg (!(peers ? self)) (
                     let
-                      selfDefs = builtins.filter (def: def.value ? self) options.peers.definitionsWithLocations;
+                      selfDefs = lib.filter (def: def.value ? self) options.peers.definitionsWithLocations;
                     in
                     "wireguardServer.peers: 'self' is a reserved peer name; it is injected automatically for the server"
                     + lib.concatMapStrings (def: "\n  - defined in `${def.file}`") selfDefs

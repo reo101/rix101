@@ -106,12 +106,12 @@ in
         lib.pipe
           [ "TCP" "UDP" ]
           [
-            (builtins.map
+            (lib.map
               (protocol:
                 lib.nameValuePair
                   "allowed${protocol}Ports"
                   [ cfg.port ]))
-            builtins.listToAttrs
+            lib.listToAttrs
           ];
 
       # networking.firewall.allowedTCPPorts = [cfg.port];

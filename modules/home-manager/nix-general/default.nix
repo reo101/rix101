@@ -10,7 +10,7 @@
     # # Add flake inputs to $NIX_PATH
     # home.sessionVariables = {
     #   NIX_PATH =
-    #     builtins.concatStringsSep
+    #     lib.concatStringsSep
     #       ":"
     #       (lib.mapAttrsToList
     #         (name: input:

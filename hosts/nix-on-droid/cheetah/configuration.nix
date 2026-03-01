@@ -31,7 +31,7 @@
 
   nix.extraOptions = ''
     experimental-features = ${
-      builtins.concatStringsSep " " [
+      lib.concatStringsSep " " [
         "nix-command"
         "flakes"
         "recursive-nix"
@@ -45,7 +45,7 @@
     # Remote builders
     builders = ${
       # TODO: <https://nix.dev/manual/nix/2.18/advanced-topics/distributed-builds>
-      builtins.concatStringsSep " ; " [
+      lib.concatStringsSep " ; " [
         "ssh://jeeves@jeeves.lan           x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
         "ssh://pavelatanasov@limonka.local aarch64-darwin             - 4  3 nixos-test                            -"
       ]

@@ -24,12 +24,12 @@
               builtins.filter infusion target;
           __map =
             path: infusion: target:
-              builtins.map infusion target;
+              lib.map infusion target;
           __swapOutPackage =
             path: infusion: target: let
               # TODO: more validation
               infusion-name = infusion.pname or infusion.name or "";
-            in builtins.map
+            in lib.map
               (pkg: let
                 pkg-name = pkg.pname or pkg.name or "";
                 nonempty = pkg-name != "";

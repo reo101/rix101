@@ -134,7 +134,7 @@
                         configuration
                         # Home Manager
                         inputs.home-manager.nixosModules.home-manager
-                      ] ++ (builtins.attrValues config.flake.nixosModules);
+                      ] ++ (lib.attrValues config.flake.nixosModules);
 
                       specialArgs = {
                         inherit inputs;

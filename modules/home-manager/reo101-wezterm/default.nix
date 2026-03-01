@@ -25,7 +25,7 @@ in
   config =
     mkIf cfg.enable {
       home.packages = with pkgs;
-        builtins.concatLists [
+        lib.concatLists [
           [
             wezterm
             nerd-fonts.fira-code
@@ -34,7 +34,7 @@ in
 
       programs.wezterm = {
         enable = true;
-        extraConfig = builtins.concatStringsSep "\n" [
+        extraConfig = lib.concatStringsSep "\n" [
           (builtins.readFile ./wezterm.lua)
           cfg.extraConfig
         ];

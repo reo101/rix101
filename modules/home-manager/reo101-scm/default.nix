@@ -41,7 +41,7 @@ in
     key = "7DA978E6383E5885";
   in {
     home.packages = with pkgs;
-      builtins.concatLists [
+      lib.concatLists [
         (optionals cfg.git.enable [
           # git
           gh

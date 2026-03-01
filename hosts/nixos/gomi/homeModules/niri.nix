@@ -126,13 +126,13 @@
               10;
         in lib.mergeAttrsList [
           # Mod+N focus workspace N
-          (builtins.listToAttrs (map (w: {
+          (lib.listToAttrs (lib.map (w: {
             name = "Mod+" + w.key;
             value = { action.focus-workspace = w.index; };
           }) workspaces))
 
           # Mod+Shift+N move window to workspace N
-          (builtins.listToAttrs (map (w: {
+          (lib.listToAttrs (lib.map (w: {
             name = "Mod+Shift+" + w.key;
             value = { action.move-window-to-workspace = w.index; };
           }) workspaces))
@@ -249,7 +249,7 @@
         in
           baseRule // floatingRule;
 
-        openFloatingApps = builtins.map
+        openFloatingApps = lib.map
           (appId: mkMatchRule {
             appId = appId;
             openFloating = true;

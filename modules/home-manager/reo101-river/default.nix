@@ -24,7 +24,7 @@ in
   config =
     mkIf cfg.enable {
       home.packages = with pkgs;
-        builtins.concatLists [
+        lib.concatLists [
           [
             river-classic
             # FIXME: does not build
