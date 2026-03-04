@@ -174,13 +174,22 @@ in
             ];
           };
           lovelace = {
-            mode = "yaml";
+            resource_mode = "yaml";
             resources = [
               {
                 url = "/local/nixos-lovelace-modules/navbar-card.js";
                 type = "module";
               }
             ];
+            dashboards = {
+              lovelace = {
+                mode = "yaml";
+                filename = "ui-lovelace.yaml";
+                title = "Overview";
+                icon = "mdi:view-dashboard";
+                show_in_sidebar = true;
+              };
+            };
           };
 
           mobile_app = { };
