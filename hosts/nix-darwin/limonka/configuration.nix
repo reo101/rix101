@@ -10,9 +10,6 @@
 
   # environment.darwinConfig = builtins.toString ./configuration.nix;
 
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
-
   nix = {
     # Ensure we can work with flakes
     # TODO: add to `README.md`
@@ -65,6 +62,9 @@
     nerd-fonts.fira-code
   ];
 
+  # Required for nix-darwin options that apply to a specific user
+  system.primaryUser = "pavelatanasov";
+
   reo101 = {
     system = {
       enable = true;
@@ -80,9 +80,6 @@
   # Keyboard
   system.keyboard.enableKeyMapping = true;
   system.keyboard.remapCapsLockToEscape = true;
-
-  # Add ability to used TouchID for sudo authentication
-  security.pam.services.sudo_local.touchIdAuth = true;
 
   # Used for backwards compatibility, please read the changelog before changing.
   # > darwin-rebuild changelog

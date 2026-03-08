@@ -41,7 +41,7 @@
     # }))
     (pkgs.writeShellScriptBin "lua" "exec -a $0 ${luajitPackages.nlua}/bin/nlua $@")
     # luajitPackages.nlua
-    fennel
+    luaPackages.fennel
     # fennel-language-server
     fennel-ls
     git
@@ -73,7 +73,7 @@
     himalaya
 
     # Java
-    graalvm-ce
+    graalvmPackages.graalvm-ce
 
     # SSH and GPG
     openssh
@@ -87,7 +87,7 @@
     google-cloud-sdk
 
     # FMI
-    vim-fmi-cli
+    pkgs.custom.vim-fmi-cli
 
     # Zig
     zigpkgs.master

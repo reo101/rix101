@@ -219,6 +219,7 @@
   ### Transmission
   services.transmission = {
     enable = true;
+    package = pkgs.transmission_4;
   };
 
   # Open ports in the firewall.

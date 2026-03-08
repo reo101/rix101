@@ -17,7 +17,6 @@ in
 
   config = mkIf cfg.enable {
 
-    services.nix-daemon.enable = true;
     # programs.nix-index.enable = true;
 
     environment.systemPackages = [
@@ -29,7 +28,7 @@ in
       pkgs.nushell
     ];
 
-    security.pam.enableSudoTouchIdAuth = true;
+    security.pam.services.sudo_local.touchIdAuth = true;
 
     system = {
       startup = {
@@ -199,8 +198,8 @@ in
         ${inputs.mac-app-util.packages.${pkgs.stdenv.system}.default}/bin/mac-app-util sync-trampolines "/Applications/Nix Apps" "/Applications/Nix Trampolines"
       '';
 
-      # User-level settings
-      activationScripts.postUserActivation.text = ''
+      # User-level settings (merged into postActivation since all activation now runs as root)
+      activationScripts.extraActivation.text = ''
         echo "Show the ~/Library folder"
         chflags nohidden ~/Library
 

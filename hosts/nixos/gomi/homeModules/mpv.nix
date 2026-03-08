@@ -17,7 +17,7 @@
       mpris
       thumbfast
       sponsorblock
-      mpv-cheatsheet
+      mpv-cheatsheet-ng
       mpv-discord
       # NOTE: Anki cards
       mpvacious

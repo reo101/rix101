@@ -32,7 +32,7 @@
 
     ## Core
     neovim
-    fennel-language-server
+    pkgs.custom.fennel-language-server
     git
     gnupg
     firefox
@@ -69,7 +69,7 @@
     pkg-config
 
     ## Vim FMI
-    vim-fmi-cli
+    pkgs.custom.vim-fmi-cli
 
     ## Zig
     # zigpkgs."0.10.1"
