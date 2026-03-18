@@ -1,4 +1,4 @@
-{ inputs, config, lib, pkgs, ... }:
+{ inputs, config, lib, osConfig ? null, pkgs, ... }:
 
 {
   imports = [
@@ -66,6 +66,16 @@
         grim = lib.getExe pkgs.grim;
         slurp = lib.getExe pkgs.slurp;
         tesseract = lib.getExe pkgs.tesseract;
+        niri = lib.getExe config.programs.niri.package;
+        jq = lib.getExe pkgs.jq;
+        defaultLockCommand = [
+          (lib.getExe' pkgs.systemd "loginctl")
+          "lock-session"
+        ];
+        lockCommand =
+          if osConfig != null
+          then lib.attrByPath [ "reo101" "wayland" "lock" "command" ] defaultLockCommand osConfig
+          else defaultLockCommand;
       in lib.mergeAttrsList (with config.lib.niri.actions; [
         # Multimedia
         {
@@ -97,11 +107,13 @@
 
           "Mod+V" = { repeat = false; action = spawn "${cliphist}" "list" "|" "${wofi}" "-dmenu" "|" "${cliphist}" "decode" "|" "${wl-copy}"; };
 
+          "Mod+Shift+C" = { repeat = false; action = spawn "sh" "-c" "${niri} msg action set-dynamic-cast-window --id $(${niri} msg --json pick-window | ${jq} .id)"; };
+
           # "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grim} -g $(${slurp}) - | ${wl-copy}; ${killall} wayfreeze";};
           "Mod+Shift+S" = { repeat = false; action = spawn "${wayfreeze}" "--after-freeze-cmd" "${grimshot} --notify --cursor copy area; ${killall} wayfreeze";};
           "Mod+Shift+D" = { repeat = false; action = spawn "sh" "-c" "${grim} -g '$(${slurp})' - | ${tesseract} - - -l jpn | ${wl-copy}"; };
 
-          "Mod+Ctrl+Q" = { repeat = false; action = spawn "sh" "-c" "pgrep swaylock || swaylock --image ${config.stylix.image}"; };
+          "Mod+Ctrl+Q" = { repeat = false; action.spawn = lockCommand; };
 
           "Mod+Q" = { repeat = false; action = close-window; };
           "Mod+S".action = switch-preset-column-width;
