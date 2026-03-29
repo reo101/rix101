@@ -92,25 +92,37 @@ in
                     capacity = lib.net.cidr.capacity config.cidr;
                     firstPeerIndex = 2; # `.0` -> network, `.1` -> server
                     allocated = lib.alloc firstPeerIndex (capacity - firstPeerIndex) blocks;
+                    autoAllocated = lib.filterAttrs (host: _: !(blocks.${host} ? start)) allocated;
+                    autoAllocatedWarning =
+                      "wireguardServer.peers: auto-allocated WireGuard `hostIndex` values for `${metaConfig.hostname}`: "
+                      + lib.pipe autoAllocated [
+                        (lib.mapAttrsToList (
+                          host: block: "${host}=${toString block.start} (${lib.net.cidr.host block.start config.cidr})"
+                        ))
+                        (lib.concatStringsSep ", ")
+                      ]
+                      + ". Add explicit `hostIndex` values for these peers to the static `meta.nix` to keep assignments stable.";
+                    resolvedPeers =
+                      lib.mapAttrs (
+                        host: peer:
+                        let
+                          index = allocated.${host}.start;
+                        in
+                        peer
+                        // {
+                          hostIndex = index;
+                          ip = lib.net.cidr.host index config.cidr;
+                        }
+                      ) peers
+                      // {
+                        self = {
+                          publicKey = config.publicKey;
+                          hostIndex = 1;
+                          ip = lib.net.cidr.host 1 config.cidr;
+                        };
+                      };
                   in
-                  lib.mapAttrs (
-                    host: peer:
-                    let
-                      index = allocated.${host}.start;
-                    in
-                    peer
-                    // {
-                      hostIndex = index;
-                      ip = lib.net.cidr.host index config.cidr;
-                    }
-                  ) peers
-                  // {
-                    self = {
-                      publicKey = config.publicKey;
-                      hostIndex = 1;
-                      ip = lib.net.cidr.host 1 config.cidr;
-                    };
-                  };
+                  lib.warnIf (autoAllocated != { }) autoAllocatedWarning resolvedPeers;
               };
             };
           }
