@@ -1,13 +1,14 @@
 diff --git a/src/lib_base.c b/src/lib_base.c
-index d644b4f2..b999184f 100644
+index d644b4f2..3e6c0870 100644
 --- a/src/lib_base.c
 +++ b/src/lib_base.c
-@@ -610,6 +610,27 @@ LJLIB_ASM(coroutine_yield)
+@@ -610,6 +610,35 @@ LJLIB_ASM(coroutine_yield)
    return FFH_UNREACHABLE;
  }
  
 +LJLIB_CF(coroutine_clone)
 +{
++  ErrMsg em;
 +  lua_State *L1;
 +  lua_State *L2;
 +
@@ -17,6 +18,13 @@ index d644b4f2..b999184f 100644
 +
 +  // Fetch the original coroutine
 +  L1 = threadV(L->base);
++
++  // Only clone coroutines that coroutine.resume would accept.
++  if (L1->cframe != NULL || L1->status > LUA_YIELD ||
++      (L1->status == LUA_OK && L1->top == L1->base)) {
++    em = L1->cframe ? LJ_ERR_CORUN : LJ_ERR_CODEAD;
++    lj_err_caller(L, em);
++  }
 +
 +  // Clone the coroutine using lj_clonethread
 +  L2 = lj_clonethread(L, L1);
@@ -31,49 +39,45 @@ index d644b4f2..b999184f 100644
  {
    if (co->cframe != NULL || co->status > LUA_YIELD ||
 diff --git a/src/lj_state.c b/src/lj_state.c
-index 6fd7d9ce..45f5801e 100644
+index 6fd7d9ce..7ccba167 100644
 --- a/src/lj_state.c
 +++ b/src/lj_state.c
-@@ -164,6 +164,47 @@ int LJ_FASTCALL lj_state_cpgrowstack(lua_State *L, MSize need)
+@@ -164,6 +164,43 @@ int LJ_FASTCALL lj_state_cpgrowstack(lua_State *L, MSize need)
    return lj_vm_cpcall(L, NULL, &need, cpgrowstack);
  }
  
 +LUA_API lua_State *lj_clonethread(lua_State *L, lua_State *from) {
 +  lua_State *to;
-+
-+  // Ensure the coroutine is cloneable
-+  lj_assertL(from->status == LUA_YIELD ||
-+             (from->status == LUA_OK && from->ci == from->base_ci),
-+             "attempt to clone uncloneable coroutine");
++  TValue *f, *t, *tend;
 +
 +  // Create a new thread
 +  to = lj_state_new(L);
 +
-+  // Adjust stack sizes
-+  lj_state_growstack(to, from->stacksize - LJ_STACK_EXTRA - 1);
++  // Grow the destination stack to match the source stack capacity.
++  if (to->stacksize < from->stacksize)
++    lj_state_growstack(to, from->stacksize - LJ_STACK_EXTRA - 1);
 +
 +  // Copy stack slots
-+  {
-+    TValue *f, *t;
-+    for (f = tvref(from->stack), t = tvref(to->stack); f < from->top; f++, t++) {
-+      copyTV(to, t, f);
-+    }
-+    to->top = t;
-+    for (; f < from->top + from->stacksize; f++, t++) {
-+      setnilV(t);
-+    }
-+    to->base = tvref(to->stack) + (from->base - tvref(from->stack));
++  for (f = tvref(from->stack), t = tvref(to->stack); f < from->top; f++, t++) {
++    copyTV(to, t, f);
 +  }
++  to->top = t;
++  tend = tvref(to->stack) + to->stacksize;
++  for (; t < tend; t++) {
++    setnilV(t);
++  }
++
++  // stack[0] stores the current thread for curr_funcisL() on empty stacks.
++  setthreadV(to, tvref(to->stack), to);
++  to->base = tvref(to->stack) + (from->base - tvref(from->stack));
 +
 +  // Copy other relevant fields
 +  to->status = from->status;
-+  to->cframe = from->cframe;
-+  to->glref = from->glref;
++  to->cframe = NULL;
++  setmrefr(to->glref, from->glref);
 +
-+  // Use setgcref for GCRef fields
-+  setgcref(to->env, obj2gco(&from->env));
-+
-+  to->base = (from->base - tvref(from->stack)) + tvref(to->stack);
++  // Copy GC-managed references without reinterpreting them as raw pointers.
++  setgcrefr(to->env, from->env);
 +
 +  // Return the new thread
 +  return to;
