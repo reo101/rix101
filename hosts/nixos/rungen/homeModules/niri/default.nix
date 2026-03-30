@@ -191,14 +191,15 @@ in
       src = pkgs.fetchFromGitHub {
         owner = "niri-wm";
         repo = "niri";
-        rev = "4a7e443b6c816e4f673f6e25cc0a5aa37697d667";
-        hash = "sha256-YfWsg2FyXyv0awYazmlufoKSUUzGUZQUHA/VP9fmMLI=";
+        rev = "3818406eb44535bc10e659fbcb21fbc86c61153c";
+        hash = "sha256-2NMJF0nHHkvRP0Td4y0qoIEbGs8dX4e1/O3zKIt8x6E=";
       };
     in {
       inherit src;
+      version = "unstable-blur";
       cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
         inherit src;
-        hash = "sha256-Fv3uClwuuAAGTQ7ujuAQW7xCoYFCw4q9QC08Z7Q7Hdk=";
+        hash = "sha256-soJYT6TavlyqtVqMD70QYDZ+8swn6TVXsFHadJxaxWo=";
       };
     });
     # Append raw KDL for options not yet in niri-flake's settings schema
