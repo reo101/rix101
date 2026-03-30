@@ -49,14 +49,6 @@
   perSystem = { pkgs, system, ... }: {
     _module.args.pkgs = let
       overlays = lib.concatLists [
-        # NOTE: packages from flake outputs
-        [
-          config.flake.overlays.additions
-        ]
-
-        # NOTE: overlays from flake outputs
-        (lib.attrValues self.overlays)
-
         # NOTE: overlays from flake inputs
         [
           inputs.neovim-nightly-overlay.overlays.default
@@ -67,6 +59,9 @@
           inputs.nix-on-droid.overlays.default
           # inputs.nix-lib-net.overlays.default
         ]
+
+        # NOTE: overlays from flake outputs
+        (lib.attrValues self.overlays)
       ];
     in import inputs.nixpkgs {
       inherit system;
