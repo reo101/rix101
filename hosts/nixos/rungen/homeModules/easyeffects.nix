@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ ... }:
 
 {
   services.easyeffects = {
@@ -12,8 +12,12 @@
           "plugins_order" = [
             "stereo_tools#0"
             "rnnoise#0"
+            "echo_canceller#0"
             "equalizer#0"
           ];
+          "echo_canceller#0" = {
+            bypass = false;
+          };
           "rnnoise#0" = {
             bypass = false;
             enable-vad = true;
@@ -102,7 +106,7 @@
               right = eq-cfg;
               mode = "IIR";
               num-bands = 4;
-              output-gain = 9.0;
+              output-gain = 0.0;
               pitch-left = 0.0;
               pitch-right = 0.0;
               split-channels = false;
