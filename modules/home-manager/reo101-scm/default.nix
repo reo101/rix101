@@ -58,6 +58,7 @@ in
       enable = true;
       package = pkgs.gitFull;
       signing = {
+        format = "openpgp";
         signByDefault = true;
         inherit key;
       };
