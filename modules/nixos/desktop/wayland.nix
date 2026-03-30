@@ -442,6 +442,9 @@ in
           {
             imports = lib.optional (cfg.niri.homeManagerModule != null) cfg.niri.homeManagerModule;
 
+            # NOTE: Previously was the default
+            gtk.gtk4.theme = lib.mkDefault config.gtk.theme;
+
             # Some sessions export `NIX_XDG_DESKTOP_PORTAL_DIR` to the per-user profile.
             # Ensure that profile contains the selected FileChooser backend metadata.
             home.packages = lib.optionals usePorttyBackend [
