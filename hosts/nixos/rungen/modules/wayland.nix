@@ -9,7 +9,6 @@ in
   reo101.wayland = {
     enable = true;
     user = "reo101";
-    lock.command = [ "noctalia-shell" "ipc" "call" "lockScreen" "lock" ];
     lock.command = [
       "noctalia-shell"
       "ipc"
