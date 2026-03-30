@@ -512,6 +512,44 @@ in
         alsa.support32Bit = true;
         pulse.enable = true;
         jack.enable = true;
+        wireplumber.enable = true;
+        wireplumber.extraConfig = {
+          "51-audio-priority" = {
+            "monitor.alsa.rules" = [
+              {
+                matches = [
+                  { "node.name" = "easyeffects_sink"; }
+                ];
+                actions.update-props = {
+                  "priority.driver" = 10;
+                  "priority.session" = 10;
+                };
+              }
+              {
+                matches = [
+                  { "node.name" = "~alsa_output.*"; }
+                ];
+                actions = {
+                  update-props = {
+                    "device.profile.switch-on-connect" = false;
+                  };
+                };
+              }
+            ];
+          };
+          "52-bluetooth-properties" = {
+            "monitor.bluez.properties" = {
+              "bluez5.enable-sbc-xq" = true;
+              "bluez5.enable-msbc" = true;
+              "bluez5.enable-hw-volume" = true;
+              "bluez5.roles" = [
+                "a2dp_sink"
+                "a2dp_source"
+              ];
+            };
+          };
+        };
+
       };
 
       # IME
