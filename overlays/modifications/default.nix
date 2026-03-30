@@ -15,31 +15,37 @@ lib.infuse prev {
     ];
   };
 
-  nix-monitored.__assign = inputs.nix-monitored.packages.${prev.stdenv.hostPlatform.system}.default.override {
-    nix = prev.nix;
-    nix-output-monitor = prev.nix-output-monitor;
-  };
+  nix-monitored.__assign =
+    inputs.nix-monitored.packages.${prev.stdenv.hostPlatform.system}.default.override
+      {
+        nix = prev.nix;
+        nix-output-monitor = prev.nix-output-monitor;
+      };
 
-  lix-monitored.__assign = inputs.nix-monitored.packages.${prev.stdenv.hostPlatform.system}.default.override {
-    nix = prev.lix;
-    nix-output-monitor = prev.nix-output-monitor;
-  };
+  lix-monitored.__assign =
+    inputs.nix-monitored.packages.${prev.stdenv.hostPlatform.system}.default.override
+      {
+        nix = prev.lix;
+        nix-output-monitor = prev.nix-output-monitor;
+      };
 
-  nixVersions.monitored.__assign =
-    lib.flip lib.concatMapAttrs prev.nixVersions (version: package:
-      let
-        # Check if package evaluates and is a derivation
-        evalResult = builtins.tryEval (lib.isDerivation package);
-        isValidDerivation = evalResult.success && evalResult.value;
-      in
-      lib.optionalAttrs isValidDerivation {
-        # NOTE: `lib.getBin` is needed, otherwise the `-dev` output is chosen
-        "${version}" = lib.getBin (inputs.nix-monitored.packages.${final.stdenv.hostPlatform.system}.default.override {
+  nixVersions.monitored.__assign = lib.flip lib.concatMapAttrs prev.nixVersions (
+    version: package:
+    let
+      # Check if package evaluates and is a derivation
+      evalResult = builtins.tryEval (lib.isDerivation package);
+      isValidDerivation = evalResult.success && evalResult.value;
+    in
+    lib.optionalAttrs isValidDerivation {
+      # NOTE: `lib.getBin` is needed, otherwise the `-dev` output is chosen
+      "${version}" = lib.getBin (
+        inputs.nix-monitored.packages.${final.stdenv.hostPlatform.system}.default.override {
           nix = package;
           nix-output-monitor = prev.nix-output-monitor;
-        });
-      }
-    );
+        }
+      );
+    }
+  );
 
   # FIXME: <https://github.com/NixOS/nixpkgs/issues/442652>
   ceph.__assign = inputs.nixpkgs-stable.legacyPackages.${prev.stdenv.hostPlatform.system}.ceph;
