@@ -8,6 +8,18 @@
 
 let
   cfg = config.reo101.wayland;
+  easyeffectsEchoProbePackage =
+    pkgs.runCommandLocal "wireplumber-easyeffects-echo-probe"
+      {
+        nativeBuildInputs = [ pkgs.custom.fennel ];
+      }
+      ''
+        mkdir -p "$out/share/wireplumber/scripts/reo101"
+        ${lib.getExe' pkgs.custom.fennel "fennel"} \
+          --correlate \
+          --compile ${./easyeffects-echo-probe.fnl} \
+          > "$out/share/wireplumber/scripts/reo101/easyeffects-echo-probe.lua"
+      '';
 in
 {
   imports = [
@@ -286,7 +298,9 @@ in
         "org.freedesktop.impl.portal.ScreenCast" = lib.mkDefault [ "gnome" ];
         "org.freedesktop.impl.portal.RemoteDesktop" = lib.mkDefault [ "gnome" ];
       };
-      porttyPortalUseInDesktops = lib.concatStringsSep ";" (cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames);
+      porttyPortalUseInDesktops = lib.concatStringsSep ";" (
+        cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames
+      );
       porttyPortalPackage = pkgs.symlinkJoin {
         name = "portty-with-portal-metadata-${cfg.portal.portty.package.version or "unknown"}";
         paths = [ cfg.portal.portty.package ];
@@ -419,62 +433,68 @@ in
       };
 
       home-manager.users = lib.mkIf hasHomeManager {
-        "${cfg.user}" = {
-          imports = lib.optional (cfg.niri.homeManagerModule != null) cfg.niri.homeManagerModule;
+        "${cfg.user}" =
+          {
+            config,
+            lib,
+            ...
+          }:
+          {
+            imports = lib.optional (cfg.niri.homeManagerModule != null) cfg.niri.homeManagerModule;
 
-          # Some sessions export `NIX_XDG_DESKTOP_PORTAL_DIR` to the per-user profile.
-          # Ensure that profile contains the selected FileChooser backend metadata.
-          home.packages = lib.optionals usePorttyBackend [
-            fileChooserPortalPackage
-            pkgs.xdg-desktop-portal-gnome
-            porttyHelperPackage
-          ];
+            # Some sessions export `NIX_XDG_DESKTOP_PORTAL_DIR` to the per-user profile.
+            # Ensure that profile contains the selected FileChooser backend metadata.
+            home.packages = lib.optionals usePorttyBackend [
+              fileChooserPortalPackage
+              pkgs.xdg-desktop-portal-gnome
+              porttyHelperPackage
+            ];
 
-          home.sessionPath = lib.optionals usePorttyBackend [
-            "${porttyHelperPackage}/bin"
-          ];
+            home.sessionPath = lib.optionals usePorttyBackend [
+              "${porttyHelperPackage}/bin"
+            ];
 
-          xdg.configFile = lib.mkIf usePorttyBackend {
-            "portty/config.toml".text =
-              lib.replaceStrings
-                [
-                  "@PORTTY_TERMINAL@"
-                  "@PORTTY_SESSION_HOLDER@"
-                  "@PORTTY_SEL@"
-                  "@PORTTY_SUBMIT@"
-                ]
-                [
-                  porttyTerminalExe
-                  (lib.getExe' porttyHelperPackage "portty-session-holder")
-                  (lib.getExe' porttyHelperPackage "sel")
-                  (lib.getExe' porttyHelperPackage "submit")
-                ]
-                cfg.portal.portty.configText;
+            xdg.configFile = lib.mkIf usePorttyBackend {
+              "portty/config.toml".text =
+                lib.replaceStrings
+                  [
+                    "@PORTTY_TERMINAL@"
+                    "@PORTTY_SESSION_HOLDER@"
+                    "@PORTTY_SEL@"
+                    "@PORTTY_SUBMIT@"
+                  ]
+                  [
+                    porttyTerminalExe
+                    (lib.getExe' porttyHelperPackage "portty-session-holder")
+                    (lib.getExe' porttyHelperPackage "sel")
+                    (lib.getExe' porttyHelperPackage "submit")
+                  ]
+                  cfg.portal.portty.configText;
+            };
+
+            systemd.user.services.portty = lib.mkIf usePorttyBackend {
+              Unit = {
+                Description = "Portty - XDG Desktop Portal for TTY";
+                After = [ "graphical-session.target" ];
+              };
+              Service = {
+                Type = "simple";
+                Environment = [
+                  "DISPLAY="
+                  "GDK_BACKEND=wayland"
+                ];
+                ExecStart = "${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}";
+                Restart = "on-failure";
+                RestartSec = 5;
+              };
+              Install = {
+                WantedBy = [
+                  "default.target"
+                  "graphical-session.target"
+                ];
+              };
+            };
           };
-
-          systemd.user.services.portty = lib.mkIf usePorttyBackend {
-            Unit = {
-              Description = "Portty - XDG Desktop Portal for TTY";
-              After = [ "graphical-session.target" ];
-            };
-            Service = {
-              Type = "simple";
-              Environment = [
-                "DISPLAY="
-                "GDK_BACKEND=wayland"
-              ];
-              ExecStart = "${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}";
-              Restart = "on-failure";
-              RestartSec = 5;
-            };
-            Install = {
-              WantedBy = [
-                "default.target"
-                "graphical-session.target"
-              ];
-            };
-          };
-        };
       };
 
       programs.river-classic = lib.mkIf cfg.river.enable {
@@ -513,6 +533,9 @@ in
         pulse.enable = true;
         jack.enable = true;
         wireplumber.enable = true;
+        wireplumber.configPackages = [
+          easyeffectsEchoProbePackage
+        ];
         wireplumber.extraConfig = {
           "51-audio-priority" = {
             "monitor.alsa.rules" = [
@@ -546,6 +569,20 @@ in
                 "a2dp_sink"
                 "a2dp_source"
               ];
+            };
+          };
+          "53-easyeffects-echo-probe" = {
+            "wireplumber.components" = [
+              {
+                name = "reo101/easyeffects-echo-probe.lua";
+                type = "script/lua";
+                provides = "reo101.easyeffects-echo-probe";
+              }
+            ];
+            "wireplumber.profiles" = {
+              main = {
+                "reo101.easyeffects-echo-probe" = "required";
+              };
             };
           };
         };
