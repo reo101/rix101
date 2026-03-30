@@ -322,7 +322,7 @@ in
 
         enableCompletion = true;
 
-        dotDir = ".config/zsh";
+        dotDir = "${config.xdg.configHome}/zsh";
 
         shellAliases = shellAliases // {
           ls = "${pkgs.lsd}/bin/lsd";
