@@ -70,6 +70,7 @@
 
     jellyseerr = {
       enable = true;
+      package = pkgs.seerr;
     };
   };
 
