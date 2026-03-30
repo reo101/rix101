@@ -18,6 +18,7 @@
       # t410      = { publicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0="; };
       rungen    = { hostIndex = 8; };
       arthur    = { hostIndex = 9; };
+      iso       = { hostIndex = 10; };
     };
   };
 
