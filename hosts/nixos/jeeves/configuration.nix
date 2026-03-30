@@ -22,6 +22,7 @@
     ./modules/ollama.nix
     ./modules/steam.nix
     ./modules/sunshine.nix
+    ./modules/rustdesk
     # ./modules/photoprism.nix
     ./modules/immich.nix
     # ./modules/nextcloud.nix

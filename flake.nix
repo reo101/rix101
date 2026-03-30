@@ -7,6 +7,7 @@
 
   nixConfig = {
     commit-lockfile-summary = "chore(flake): update `flake.lock`";
+    extra-experimental-features = [ "pipe-operators" ];
     extra-substituters = [ "https://rix101.cachix.org" ];
     extra-trusted-public-keys = [ "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY=" ];
   };
@@ -77,6 +78,13 @@
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    htnl = {
+      url = "github:molybdenumsoftware/htnl";
+      inputs = {
+        flake-parts.follows = "flake-parts";
+        nixpkgs-lib.follows = "nixpkgs";
+      };
     };
     impermanence = {
       url = "github:nix-community/impermanence";

@@ -672,6 +672,29 @@
         "type": "github"
       }
     },
+    "htnl": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs-lib": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1764508361,
+        "narHash": "sha256-sC1aVfUi5WiVju2f6epusZePPyz3v5nGzT6wQUsRH0Y=",
+        "owner": "molybdenumsoftware",
+        "repo": "htnl",
+        "rev": "82d13a31d0d1786832e32273a9c62967e8d83cd8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "molybdenumsoftware",
+        "repo": "htnl",
+        "type": "github"
+      }
+    },
     "impermanence": {
       "inputs": {
         "home-manager": [
@@ -1625,6 +1648,7 @@
         "flake-parts": "flake-parts",
         "hardware": "hardware",
         "home-manager": "home-manager",
+        "htnl": "htnl",
         "impermanence": "impermanence",
         "infuse": "infuse",
         "jovian-nixos": "jovian-nixos",

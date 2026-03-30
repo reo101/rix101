@@ -9,6 +9,9 @@
 
     nixConfig = {
       commit-lockfile-summary = "chore(flake): update `flake.lock`";
+      extra-experimental-features = [
+        "pipe-operators"
+      ];
       extra-substituters = [
         "https://rix101.cachix.org"
       ];
@@ -56,6 +59,12 @@
 
       flake-file = {
         url = "github:vic/flake-file";
+      };
+
+      htnl = {
+        url = "github:molybdenumsoftware/htnl";
+        inputs.nixpkgs-lib.follows = "nixpkgs";
+        inputs.flake-parts.follows = "flake-parts";
       };
 
       crane = {
