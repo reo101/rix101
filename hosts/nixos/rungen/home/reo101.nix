@@ -16,6 +16,7 @@ in
     ../homeModules/taskwarrior.nix
     ../homeModules/games.nix
     ../homeModules/ghostty
+    ../homeModules/easyeffects.nix
   ];
 
   home = {
