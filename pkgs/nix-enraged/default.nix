@@ -6,7 +6,7 @@
 , writeShellApplication
 
 , system ? pkgs.stdenv.hostPlatform.system
-, nix' ? pkgs.nixVersions.nix_2_32
+, nix' ? pkgs.nixVersions.nix_2_34
 # , nix' ? inputs.nix.packages.${system}.nix
 , nix-monitored' ? inputs.nix-monitored.packages.${system}.default.override {
     nix = nix';
@@ -18,6 +18,10 @@
     buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
       (lib.filter (drv: drv.pname != "nix"))
       (buildInputs: [ nix' ] ++ buildInputs)
+    ];
+    patches = (oldAttrs.patches or [ ]) ++ [
+      # NOTE: based on patch from <https://github.com/shlevy/nix-plugins/pull/25>
+      ./nix-plugins-nix-2.34.patch
     ];
   })
 , coreutils
