@@ -66,4 +66,19 @@ lib.infuse prev {
   prismlauncher.__output.patches.__append = [
     ./offline-mode-prism-launcher.diff
   ];
+
+  # NOTE: this broad LuaJIT override works, but it rebuilds far more of the
+  #       package set than desired. Keep the patched runtime scoped to Neovim
+  #       and related packages instead.
+  # luajit.__assign = prev.custom.luajitcoroutineclone;
+
+  # NOTE: this overlay is applied after neovim-nightly-overlay in rix101, so we
+  #       can re-override the nightly packages directly to use the patched LuaJIT.
+  neovim.__input.luajit.__assign = final.custom.luajitcoroutineclone;
+  neovim-unwrapped.__assign = final.neovim;
+  neovim-debug.__input.neovim.__assign = final.neovim;
+  neovim-developer.__input = {
+    neovim-debug.__assign = final.neovim-debug;
+    neovim-unwrapped.__assign = final.neovim-unwrapped;
+  };
 }
