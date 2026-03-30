@@ -2,7 +2,7 @@
   lib,
   buildHomeAssistantComponent,
   fetchFromGitHub,
-  python3Packages,
+  home-assistant,
 }:
 
 buildHomeAssistantComponent rec {
@@ -18,7 +18,7 @@ buildHomeAssistantComponent rec {
   };
 
   dependencies = [
-    python3Packages.paho-mqtt
+    home-assistant.python.pkgs.paho-mqtt
   ];
 
   meta = with lib; {
