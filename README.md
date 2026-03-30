@@ -54,6 +54,7 @@
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction
   - Automatic overlays extraction
   - Automatic devShells extraction
+  - Automatic flake templates extraction from `./templates/*/flake.nix`
 - Hosts can be found under `./hosts/${config-type}/${system}/${hostname}/...`
   - Check [`./modules/flake/configurations`](./modules/flake/configurations) for more info on what is extracted from those directories
 - Modules can be found under `./modules/${config-type}/...`
@@ -65,6 +66,10 @@
 - Shells can be found under `./shells/...`
   - Check [`./modules/flake/shells`](./modules/flake/shells) for more info on what is extracted from that directory
   - Default one puts a recent `nix` together with some other useful tools for working with the repo (`deploy-rs`, `rage`, `agenix-rekey`, etc.), see [`./shells/default/default.nix`](./shells/default/default.nix) for more info
+- Templates can be found under `./templates/...`
+  - Directories containing `flake.nix` are exposed as `flake.templates`
+  - Optional `description.nix` and `welcomeText.nix` files can add template metadata
+  - Check [`./modules/flake/templates`](./modules/flake/templates) for more info on what is extracted from that directory
 
 # Topology
 

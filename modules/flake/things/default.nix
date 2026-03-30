@@ -51,6 +51,11 @@
       { baseDir
       , thingType ? "thing"
       , filter ? (name: type: true)
+      , isThing ? ({ name, type, thingDir }:
+          if type == "directory"
+          then hasNixFiles [ "default.nix" ] (recurseDir thingDir)
+          else type == "regular" && lib.hasSuffix ".nix" name)
+      , mkThing ? ({ thingDir, ... }: import thingDir)
       , handle ? (defaultThingHandle { inherit raw thingType; })
       , raw ? true
       , extras ? {}
@@ -82,7 +87,7 @@
                     then import extraPath
                     else default))
               ];
-              thing = import thingDir;
+              thing = mkThing { inherit name type thingDir; };
               result =
                 if raw
                 then thing
@@ -92,8 +97,7 @@
             in
             if and [
               (type == "directory")
-              # PERF: `recurseDir` here may not be optimal
-              (hasNixFiles [ "default.nix" ] (recurseDir thingDir))
+              (isThing { inherit name type thingDir; })
             ] then
               # Classic thing in a directory
               lib.nameValuePair
@@ -101,7 +105,7 @@
                 result
             else if and [
               (type == "regular")
-              (lib.hasSuffix ".nix" name)
+              (isThing { inherit name type thingDir; })
             ] then
               # Classic thing in a file
               lib.nameValuePair

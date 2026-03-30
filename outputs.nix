@@ -21,6 +21,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       ./modules/flake/packages
       ./modules/flake/overlays
       ./modules/flake/shells
+      ./modules/flake/templates
     ];
 
     auto = {
@@ -38,6 +39,9 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
 
       # Automatic devShells, see `./modules/flake/shells/default.nix`
       devShells.enable = true;
+
+      # Automatic templates, see `./modules/flake/templates/default.nix`
+      templates.enable = true;
     };
 
     perSystem =
@@ -52,11 +56,6 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
 
     flake = {
       inherit (inputs) self;
-
-      # Templates
-      templates = import ./templates {
-        inherit inputs;
-      };
     };
   }
 )
