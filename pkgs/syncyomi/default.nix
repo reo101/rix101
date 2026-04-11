@@ -9,6 +9,9 @@
   nodejs_20,
   pnpm,
   pkg-config,
+  formats,
+  writeShellScript,
+  util-linux,
 }:
 
 buildGoModule (finalAttrs: {
@@ -63,6 +66,15 @@ buildGoModule (finalAttrs: {
 
   # NOTE: the `go.mod` is at the repo root
   subPackages = [ "." ];
+
+  passthru.services.default = {
+    imports = [
+      (lib.modules.importApply ./service.nix {
+        inherit formats writeShellScript util-linux;
+      })
+    ];
+    syncyomi.package = finalAttrs.finalPackage;
+  };
 
   meta = {
     description = "Self-hosted, FOSS synchronization server for Tachiyomi manga reading progress and library across multiple devices.";
