@@ -11,7 +11,7 @@
     options = "grp:lalt_lshift_toggle";
   };
 
-  services.getty.autologinUser = config.reo101.wayland.user;
+  services.getty.autologinUser = config.rix101.wayland.user;
 
   services.kmscon = {
     enable = true;
@@ -19,6 +19,6 @@
 
     useXkbConfig = true;
     hwRender = true;
-    fonts = [ config.reo101.wayland.stylix.fonts.monospace ];
+    fonts = [ config.rix101.wayland.stylix.fonts.monospace ];
   };
 }

@@ -1,6 +1,11 @@
-{ lib, pkgs, config, ... }:
 {
-  reo101.mindustry = {
+  lib,
+  pkgs,
+  config,
+  ...
+}:
+{
+  rix101.mindustry = {
     enable = false;
   };
 }

@@ -1,16 +1,17 @@
-{ inputs, lib, pkgs, config, ... }:
 {
-  services.taskchampion-sync-server = {
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
+{
+  rix101.taskchampionSyncServer = {
     enable = true;
-    port = 10222;
-  };
+    domain = "taskwarrior.jeeves.reo101.xyz";
 
-  services.nginx.virtualHosts."taskwarrior.jeeves.reo101.xyz" = {
-    forceSSL = true;
-    useACMEHost = "jeeves.reo101.xyz";
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:${builtins.toString config.services.taskchampion-sync-server.port}";
-      proxyWebsockets = true;
+    nginx = {
+      useACMEHost = "jeeves.reo101.xyz";
     };
   };
 }

@@ -123,7 +123,7 @@
     };
   };
 
-  # reo101.jellyfin = {
+  # rix101.jellyfin = {
   #   enable = true;
   #   image = "docker.io/jellyfin/jellyfin:latest";
   #   volumes = [

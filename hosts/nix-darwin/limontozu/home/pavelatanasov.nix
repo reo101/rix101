@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   home = {
@@ -47,9 +53,11 @@
     openssh
     gnupg
     pinentry_mac
-    (pass.withExtensions (extensions: with extensions; [
-      pass-otp
-    ]))
+    (pass.withExtensions (
+      extensions: with extensions; [
+        pass-otp
+      ]
+    ))
 
     # FMI
     vim-fmi-cli
@@ -62,7 +70,7 @@
     android-tools
   ];
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
       atuin = true;

@@ -7,7 +7,7 @@
 }:
 
 let
-  cfg = config.reo101.wayland;
+  cfg = config.rix101.wayland;
   easyeffectsEchoProbePackage =
     pkgs.runCommandLocal "wireplumber-easyeffects-echo-probe"
       {
@@ -33,9 +33,9 @@ in
       inherit (lib) types;
     in
     {
-      reo101.wayland = {
+      rix101.wayland = {
         # TODO: better naming
-        enable = lib.mkEnableOption "reo101 Wayland config";
+        enable = lib.mkEnableOption "rix101 Wayland config";
 
         user = lib.mkOption {
           type = types.str;
@@ -47,7 +47,7 @@ in
             if hmUserCount == 1 then
               builtins.head hmUsers
             else
-              throw "`reo101.wayland.user` must be set explicitly when home-manager user count is not exactly one (found ${builtins.toString hmUserCount})";
+              throw "`rix101.wayland.user` must be set explicitly when home-manager user count is not exactly one (found ${builtins.toString hmUserCount})";
           description = "Primary desktop user used by `greetd` and Home Manager lookups";
         };
 
@@ -67,7 +67,7 @@ in
             type = types.bool;
             description = ''
               Prefer `config.home-manager.users.<user>.programs.niri.package` when available,
-              falling back to `reo101.wayland.niri.package`
+              falling back to `rix101.wayland.niri.package`
             '';
             default = true;
           };
@@ -360,19 +360,19 @@ in
       assertions = [
         {
           assertion = hasImage != hasColorscheme;
-          message = "Exactly one of `reo101.wayland.stylix.image` or `reo101.wayland.stylix.colorscheme` must be set when `reo101.wayland.enable = true`";
+          message = "Exactly one of `rix101.wayland.stylix.image` or `rix101.wayland.stylix.colorscheme` must be set when `rix101.wayland.enable = true`";
         }
         {
           assertion = cfg.niri.homeManagerModule != null -> hasHomeManager;
-          message = "`reo101.wayland.niri.homeManagerModule` requires importing the Home Manager NixOS module";
+          message = "`rix101.wayland.niri.homeManagerModule` requires importing the Home Manager NixOS module";
         }
         {
           assertion = usePorttyBackend -> hasHomeManager;
-          message = "`reo101.wayland.portal.fileChooserBackend = \"portty\"` requires importing the Home Manager NixOS module";
+          message = "`rix101.wayland.portal.fileChooserBackend = \"portty\"` requires importing the Home Manager NixOS module";
         }
         {
           assertion = usePorttyBackend -> (hmGhosttyPackage != null || pkgs ? ghostty);
-          message = "`reo101.wayland.portal.fileChooserBackend = \"portty\"` requires `programs.ghostty.package` in Home Manager or `pkgs.ghostty`";
+          message = "`rix101.wayland.portal.fileChooserBackend = \"portty\"` requires `programs.ghostty.package` in Home Manager or `pkgs.ghostty`";
         }
       ];
 
@@ -579,12 +579,12 @@ in
               {
                 name = "reo101/easyeffects-echo-probe.lua";
                 type = "script/lua";
-                provides = "reo101.easyeffects-echo-probe";
+                provides = "rix101.easyeffects-echo-probe";
               }
             ];
             "wireplumber.profiles" = {
               main = {
-                "reo101.easyeffects-echo-probe" = "required";
+                "rix101.easyeffects-echo-probe" = "required";
               };
             };
           };

@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -52,7 +58,7 @@
 
     # Bling
     onefetch
-    neofetch
+    fastfetch
 
     # Utils
     ripgrep
@@ -66,9 +72,11 @@
     profanity
 
     # Passwords
-    (pass.withExtensions (extensions: with extensions; [
-      pass-otp
-    ]))
+    (pass.withExtensions (
+      extensions: with extensions; [
+        pass-otp
+      ]
+    ))
 
     # Dhall
     dhall
@@ -111,14 +119,17 @@
     ];
   };
 
-  reo101.shell = {
+  rix101.shell = {
     enable = true;
     username = "reo101";
     hostname = "cheetah";
     atuin = true;
     direnv = true;
     zoxide = true;
-    shells = [ "zsh" "nushell" ];
+    shells = [
+      "zsh"
+      "nushell"
+    ];
   };
 
   home.file = {
@@ -127,7 +138,7 @@
     };
   };
 
-  reo101.scm = {
+  rix101.scm = {
     git.enable = true;
     jj.enable = true;
   };
@@ -136,7 +147,7 @@
     enable = true;
     defaultCacheTtl = 86400;
     maxCacheTtl = 86400;
-    pinentryPackage = pkgs.pinentry-tty;
+    pinentry.package = pkgs.pinentry-tty;
     enableSshSupport = true;
     sshKeys = [ "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7" ];
   };

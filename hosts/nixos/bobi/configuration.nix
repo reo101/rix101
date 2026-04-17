@@ -2,7 +2,13 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ inputs, config, lib, pkgs, ... }:
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -51,13 +57,13 @@
       ];
 
       experimental-features = [
-        "ca-derivations"        # Content-Addressable Derivations
-        "dynamic-derivations"   # Dynamic Derivations
-        "recursive-nix"         # Recursive Nix
-        "flakes"                # Flakes and related commands
-        "nix-command"           # Experimental Nix commands
-        "auto-allocate-uids"    # Automatic allocation of UIDs
-        "cgroups"               # Cgroup support
+        "ca-derivations" # Content-Addressable Derivations
+        "dynamic-derivations" # Dynamic Derivations
+        "recursive-nix" # Recursive Nix
+        "flakes" # Flakes and related commands
+        "nix-command" # Experimental Nix commands
+        "auto-allocate-uids" # Automatic allocation of UIDs
+        "cgroups" # Cgroup support
       ];
 
       # Deduplicate and optimize nix store
@@ -107,7 +113,7 @@
       jujutsu
     ];
   };
-  reo101.wayland = {
+  rix101.wayland = {
     enable = true;
     user = "reo101";
     # TODO: extract a shared HM niri module path instead of reusing `gomi`'s.

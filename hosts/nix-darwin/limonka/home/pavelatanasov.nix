@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -79,9 +85,11 @@
     openssh
     gnupg
     pinentry_mac
-    (pass.withExtensions (extensions: with extensions; [
-      pass-otp
-    ]))
+    (pass.withExtensions (
+      extensions: with extensions; [
+        pass-otp
+      ]
+    ))
 
     # GCP
     google-cloud-sdk
@@ -97,10 +105,13 @@
     android-tools
   ];
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
-      shells = [ "zsh" "nushell" ];
+      shells = [
+        "zsh"
+        "nushell"
+      ];
       starship = true;
       atuin = true;
       carapace = true;

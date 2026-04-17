@@ -2,7 +2,13 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -186,7 +192,10 @@
   users.users.reo101 = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" "docker" ];
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
   };
 
   programs.zsh = {
@@ -210,7 +219,7 @@
   ];
 
   ### Jellyfin
-  reo101.jellyfin = {
+  rix101.jellyfin = {
     enable = true;
   };
 

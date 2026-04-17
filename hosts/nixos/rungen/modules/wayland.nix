@@ -6,7 +6,7 @@ let
   };
 in
 {
-  reo101.wayland = {
+  rix101.wayland = {
     enable = true;
     user = "reo101";
     lock.command = [

@@ -1,6 +1,12 @@
 {
   system = "aarch64-linux";
 
+  roles = [
+    "common/rix101"
+    "desktop/wayland"
+    "system/battery-notify"
+  ];
+
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZFRF6sDONR9q7Hx+11ARCOaJ8b/7WvOclm4GxK79Nk";
 
   deploy = {
@@ -8,7 +14,10 @@
     sshUser = "reo101";
     user = "root";
     sudo = "sudo -u";
-    sshOpts = [ "-p" "22" ];
+    sshOpts = [
+      "-p"
+      "22"
+    ];
     fastConnection = false;
     autoRollback = true;
     magicRollback = true;

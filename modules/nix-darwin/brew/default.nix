@@ -1,16 +1,21 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 with lib;
 let
-  cfg = config.reo101.brew;
+  cfg = config.rix101.brew;
 in
 {
   imports = [
   ];
 
   options = {
-    reo101.brew = {
-      enable = mkEnableOption "reo101 brew config";
+    rix101.brew = {
+      enable = mkEnableOption "rix101 brew config";
     };
   };
 

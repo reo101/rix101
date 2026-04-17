@@ -1,16 +1,21 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 with lib;
 let
-  cfg = config.reo101.jellyfin;
+  cfg = config.rix101.jellyfin;
 in
 {
   imports = [
   ];
 
   options = {
-    reo101.jellyfin = {
-      enable = mkEnableOption "reo101 Jellyfin config";
+    rix101.jellyfin = {
+      enable = mkEnableOption "rix101 Jellyfin config";
       image = mkOption {
         type = types.strMatching ".+/.+:.+";
         default = "docker.io/jellyfin/jellyfin:latest";

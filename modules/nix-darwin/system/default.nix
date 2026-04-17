@@ -1,17 +1,22 @@
 { inputs, ... }:
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 with lib;
 let
-  cfg = config.reo101.system;
+  cfg = config.rix101.system;
 in
 {
   imports = [
   ];
 
   options = {
-    reo101.system = {
-      enable = mkEnableOption "reo101 MacOS system config";
+    rix101.system = {
+      enable = mkEnableOption "rix101 MacOS system config";
     };
   };
 
@@ -195,7 +200,9 @@ in
         # echo "Set hostname"
         # sudo scutil --set HostName $hostname
 
-        ${inputs.mac-app-util.packages.${pkgs.stdenv.system}.default}/bin/mac-app-util sync-trampolines "/Applications/Nix Apps" "/Applications/Nix Trampolines"
+        ${
+          inputs.mac-app-util.packages.${pkgs.stdenv.system}.default
+        }/bin/mac-app-util sync-trampolines "/Applications/Nix Apps" "/Applications/Nix Trampolines"
       '';
 
       # User-level settings (merged into postActivation since all activation now runs as root)
@@ -287,12 +294,12 @@ in
                 ''
                 [
                   (lib.splitString "\n")
-                  (map
-                    (lib.flip lib.pipe
-                      [
-                        (builtins.match "[[:space:]]*(.*)")
-                        head
-                      ]))
+                  (map (
+                    lib.flip lib.pipe [
+                      (builtins.match "[[:space:]]*(.*)")
+                      head
+                    ]
+                  ))
                   lib.concatStrings
                 ]
             }"

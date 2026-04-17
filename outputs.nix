@@ -15,6 +15,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       ./modules/flake/lib-custom
       ./modules/flake/pkgs
       ./modules/flake/modules
+      ./modules/flake/roles
       ./modules/flake/configurations
       ./modules/flake/agenix
       ./modules/flake/topology
@@ -27,6 +28,9 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
     auto = {
       # Automatic modules, see `./modules/flake/modules/default.nix`
       modules.enableAll = true;
+
+      # Automatic roles, see `./modules/flake/roles/default.nix`
+      roles.enable = true;
 
       # Automatic configurations, see `./modules/flake/configurations/default.nix`
       configurations.enableAll = true;

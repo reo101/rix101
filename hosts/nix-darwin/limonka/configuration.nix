@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -23,18 +29,18 @@
         # "flakes"
 
         # "no-url-literals"       # Disabling URL literals
-        "ca-derivations"        # Content-Addressable Derivations
-        "dynamic-derivations"   # Dynamic Derivations
-        "recursive-nix"         # Recursive Nix
-        "flakes"                # Flakes and related commands
-        "nix-command"           # Experimental Nix commands
-        "auto-allocate-uids"    # Automatic allocation of UIDs
-        "cgroups"               # Cgroup support
+        "ca-derivations" # Content-Addressable Derivations
+        "dynamic-derivations" # Dynamic Derivations
+        "recursive-nix" # Recursive Nix
+        "flakes" # Flakes and related commands
+        "nix-command" # Experimental Nix commands
+        "auto-allocate-uids" # Automatic allocation of UIDs
+        "cgroups" # Cgroup support
         # "daemon-trust-override" # Overriding daemon trust settings
         # "dynamic-derivations"   # Dynamic derivation support
         # "discard-references"    # Discarding build output references
-        "fetch-closure"         # builtins.fetchClosure
-        "impure-derivations"    # Impure derivations
+        "fetch-closure" # builtins.fetchClosure
+        "impure-derivations" # Impure derivations
       ];
 
       # Allow building multiple derivations in parallel
@@ -65,7 +71,7 @@
   # Required for nix-darwin options that apply to a specific user
   system.primaryUser = "pavelatanasov";
 
-  reo101 = {
+  rix101 = {
     system = {
       enable = true;
     };

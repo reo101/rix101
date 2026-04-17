@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -84,7 +90,7 @@
     enableSshSupport = true;
   };
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
       direnv = true;

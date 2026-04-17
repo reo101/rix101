@@ -1,4 +1,10 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 {
   imports = [
@@ -54,10 +60,13 @@
     pkg-config
   ];
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
-      shells = [ "zsh" "nushell" ];
+      shells = [
+        "zsh"
+        "nushell"
+      ];
       starship = true;
       atuin = true;
       carapace = true;

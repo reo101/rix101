@@ -78,7 +78,7 @@ in
     package = pkgs.arrpc;
   };
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
       shells = [

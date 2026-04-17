@@ -28,7 +28,7 @@ in
     pkgs.fastfetch
   ];
 
-  reo101 = {
+  rix101 = {
     shell = {
       enable = true;
       hostname = "iso";

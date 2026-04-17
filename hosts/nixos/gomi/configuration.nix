@@ -1,4 +1,10 @@
-{ inputs, config, lib, pkgs, ... }:
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -81,13 +87,13 @@
       ];
 
       experimental-features = [
-        "ca-derivations"        # Content-Addressable Derivations
-        "dynamic-derivations"   # Dynamic Derivations
-        "recursive-nix"         # Recursive Nix
-        "flakes"                # Flakes and related commands
-        "nix-command"           # Experimental Nix commands
-        "auto-allocate-uids"    # Automatic allocation of UIDs
-        "cgroups"               # Cgroup support
+        "ca-derivations" # Content-Addressable Derivations
+        "dynamic-derivations" # Dynamic Derivations
+        "recursive-nix" # Recursive Nix
+        "flakes" # Flakes and related commands
+        "nix-command" # Experimental Nix commands
+        "auto-allocate-uids" # Automatic allocation of UIDs
+        "cgroups" # Cgroup support
       ];
 
       # Deduplicate and optimize nix store
@@ -114,7 +120,7 @@
       neovim
     ];
   };
-  reo101.wayland = {
+  rix101.wayland = {
     enable = true;
     user = "reo101";
     niri.homeManagerModule = ./homeModules/niri.nix;

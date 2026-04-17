@@ -52,58 +52,21 @@ in
       '';
   };
 
-  services.slskd = {
+  rix101.slskd = {
     enable = true;
     environmentFile = config.age.secrets."slskd.env".path;
+    restartTriggerFiles = [ config.age.secrets."slskd.env".file ];
+    inherit dataDir;
     group = "media";
-    openFirewall = true;
     inherit domain;
+    shares = [
+      "/data/media/music"
+    ];
+    description = ACMEHost;
+    listenPort = 50300;
 
     nginx = {
-      forceSSL = true;
       useACMEHost = ACMEHost;
-    };
-
-    settings = {
-      directories = {
-        downloads = "${dataDir}/downloads";
-        incomplete = "${dataDir}/incomplete";
-      };
-
-      shares.directories = [
-        "/data/media/music"
-      ];
-
-      soulseek = {
-        description = ACMEHost;
-        listen_port = 50300;
-      };
-    };
-  };
-
-  # Keep completed downloads group-writable so `nixarr` services in the
-  # shared `media` group can import and clean them up without ACL workarounds
-  systemd.services.slskd.restartTriggers = [ config.age.secrets."slskd.env".file ];
-  systemd.services.slskd.serviceConfig.UMask = lib.mkForce "0002";
-  systemd.services.slskd.unitConfig.RequiresMountsFor = [ dataDir ];
-
-  # The upstream module hardcodes the application directory under `/var/lib`,
-  # so only the large transfer payloads move to `/data`
-  systemd.tmpfiles.settings."slskd" = {
-    "${dataDir}".d = {
-      user = config.services.slskd.user;
-      group = config.services.slskd.group;
-      mode = "0775";
-    };
-    "${dataDir}/downloads".d = {
-      user = config.services.slskd.user;
-      group = config.services.slskd.group;
-      mode = "0775";
-    };
-    "${dataDir}/incomplete".d = {
-      user = config.services.slskd.user;
-      group = config.services.slskd.group;
-      mode = "0775";
     };
   };
 }

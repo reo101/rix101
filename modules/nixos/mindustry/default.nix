@@ -1,16 +1,21 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 with lib;
 let
-  cfg = config.reo101.mindustry;
+  cfg = config.rix101.mindustry;
 in
 {
   imports = [
   ];
 
   options = {
-    reo101.mindustry = {
-      enable = mkEnableOption "reo101 Mindustry config";
+    rix101.mindustry = {
+      enable = mkEnableOption "rix101 Mindustry config";
       version = mkOption {
         type = types.str;
         default = "146";
@@ -73,17 +78,20 @@ in
       # };
       # mindustryCmd = "${cfg.java}/bin/java -jar ${mindustryJar}";
       mindustryConfig = lib.concatStringsSep "," [
-        ("startCommands " + lib.concatStringsSep "," [
-          "config port ${builtins.toString cfg.port}"
-          "config logging false"
-        ])
+        (
+          "startCommands "
+          + lib.concatStringsSep "," [
+            "config port ${builtins.toString cfg.port}"
+            "config logging false"
+          ]
+        )
       ];
       mindustryCmd = "${cfg.mindustry-server}/bin/mindustry-server ${mindustryConfig}";
     in
     {
       # FIXME: set log path
 
-      # systemd.services.mindustry = 
+      # systemd.services.mindustry =
       #   wantedBy = [ "multi-user.target" ];
       #   after = [ "network.target" ];
       #   description = "Start a Mindustry server instance";
@@ -106,11 +114,7 @@ in
         lib.pipe
           [ "TCP" "UDP" ]
           [
-            (lib.map
-              (protocol:
-                lib.nameValuePair
-                  "allowed${protocol}Ports"
-                  [ cfg.port ]))
+            (lib.map (protocol: lib.nameValuePair "allowed${protocol}Ports" [ cfg.port ]))
             lib.listToAttrs
           ];
 

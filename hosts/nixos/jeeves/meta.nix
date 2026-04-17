@@ -2,6 +2,11 @@
   # The `system` of the host
   system = "x86_64-linux";
 
+  roles = [
+    "common/rix101"
+    "server/selfhosted"
+  ];
+
   # The host SSH key, used for encrypting agenix secrets
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
 
@@ -10,15 +15,30 @@
     cidr = "10.100.0.0/24";
     endpoint = "jeeves.reo101.xyz:51820";
     peers = {
-      cheetah   = { publicKey = "BcDdwQyF5ilK/pNOjwEGTohoWoomNptZ5fmdF1ZuRVo="; hostIndex = 2; };
+      cheetah = {
+        publicKey = "BcDdwQyF5ilK/pNOjwEGTohoWoomNptZ5fmdF1ZuRVo=";
+        hostIndex = 2;
+      };
       # limonka   = { publicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4="; };
       # peshoDjam = { publicKey = "37QEe3Lsq5BTIzxqAh9z7clHYeaOaMH31oqi5YvAPBY="; };
-      s42       = { publicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc="; hostIndex = 5; };
+      s42 = {
+        publicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
+        hostIndex = 5;
+      };
       # a41       = { publicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0="; };
-      # t410      = { publicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0="; };
-      rungen    = { hostIndex = 8; };
-      arthur    = { hostIndex = 9; };
-      iso       = { hostIndex = 10; };
+      t420 = {
+        publicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0=";
+        hostIndex = 7;
+      };
+      rungen = {
+        hostIndex = 8;
+      };
+      arthur = {
+        hostIndex = 9;
+      };
+      iso = {
+        hostIndex = 10;
+      };
     };
   };
 

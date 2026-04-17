@@ -1,3 +1,5 @@
 /.direnv/
 /hosts/nixos/gomi/firmware
 /result
+/.secret
+/tests
