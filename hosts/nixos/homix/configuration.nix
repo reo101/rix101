@@ -117,17 +117,15 @@
   };
 
   ### Wayland specific
-  services.xserver = {
-    enable = true;
-    displayManager = {
-      defaultSession = "river";
-      sessionPackages = with pkgs; [
-        river-classic
-      ];
-      gdm = {
-        enable = true;
-        wayland = true;
-      };
+  services.xserver.enable = true;
+  services.displayManager = {
+    defaultSession = "river";
+    sessionPackages = with pkgs; [
+      river-classic
+    ];
+    gdm = {
+      enable = true;
+      wayland = true;
     };
   };
 
@@ -146,10 +144,10 @@
   };
 
   ## X11 specific
-  services.xserver = {
+  services.xserver.xkb = {
     layout = "us,bg";
-    xkbVariant = ",phonetic";
-    xkbOptions = "grp:lalt_lshift_toggle";
+    variant = ",phonetic";
+    options = "grp:lalt_lshift_toggle";
   };
 
   ### Enable the OpenSSH daemon.

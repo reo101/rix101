@@ -25,7 +25,7 @@
     openssh
     diffutils
     findutils
-    utillinux
+    util-linux
     curl
     wget
     tzdata
@@ -76,7 +76,7 @@
 
     # Zig
     zigpkgs.master
-    inputs.zls-overlay.packages.${pkgs.system}.default
+    inputs.zls-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # Emacs
     # emacs

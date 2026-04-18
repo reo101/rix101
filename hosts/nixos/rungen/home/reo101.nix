@@ -26,7 +26,10 @@ in
   };
 
   # NOTE: enable stuff like `Music` dir
-  xdg.userDirs.enable = true;
+  xdg.userDirs = {
+    enable = true;
+    setSessionVariables = true;
+  };
 
   home.packages = [
     ## Core
