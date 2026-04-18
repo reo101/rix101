@@ -73,8 +73,8 @@ let
           fragment = (getRole roleName).${hostType} or { };
         in
         (lib.map resolveModule (fragment.modules or [ ]))
-        ++ (fragment.imports or [ ])
-        ++ lib.optional (fragment ? config && fragment.config != { }) fragment.config;
+        ++ (fragment.extraImports or [ ])
+        ++ lib.optional (fragment ? extraConfig && fragment.extraConfig != { }) fragment.extraConfig;
     in
     lib.concatMap resolveFragment (resolveRoles roleNames);
 
