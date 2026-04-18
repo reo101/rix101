@@ -1,6 +1,8 @@
 { inputs, self, lib, config, ... }:
 
 {
+  key = "rix101.modules.flake.pkgs";
+
   flake-file.inputs = {
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
