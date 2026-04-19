@@ -52,6 +52,10 @@
         url = "github:nixos/nixpkgs/staging-next";
       };
 
+      nixpkgs-for-nod = {
+        url = "github:NixOS/nixpkgs?rev=88d3861acdd3d2f0e361767018218e51810df8a1";
+      };
+
       flake-parts = {
         url = "github:hercules-ci/flake-parts";
         inputs.nixpkgs-lib.follows = "nixpkgs";

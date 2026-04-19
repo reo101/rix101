@@ -27,7 +27,8 @@
   # Read the changelog before changing this value
   system.stateVersion = "22.11";
 
-  nix.package = pkgs.nixVersions.latest;
+  # HACK: breaks system activation on `stable` and >`2.31`
+  nix.package = pkgs.nixpkgs.for-nod.nixVersions.nix_2_31;
 
   nix.extraOptions = ''
     experimental-features = ${

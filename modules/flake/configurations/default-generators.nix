@@ -199,15 +199,6 @@ let
       modules = [
         # Main configuration
         configuration
-        {
-          disabledModules = [
-            "${inputs.nix-on-droid.outPath}/modules/environment/login"
-            "${inputs.nix-on-droid.outPath}/modules/environment/login/default.nix"
-          ];
-          imports = [
-            config.flake.nixOnDroidModules.proot-static
-          ];
-        }
         # Home Manager
         (homeManagerModule {
           inherit meta;

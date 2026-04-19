@@ -77,20 +77,6 @@
         pass-otp
       ]
     ))
-
-    # Dhall
-    dhall
-    dhall-lsp-server
-
-    # Zig
-    zigpkgs.master
-    inputs.zls-overlay.packages.${pkgs.stdenv.hostPlatform.system}.default
-
-    # Emacs
-    # emacs
-
-    #
-    # j
   ];
 
   programs.neovim = {

@@ -8,8 +8,14 @@
   nixConfig = {
     commit-lockfile-summary = "chore(flake): update `flake.lock`";
     extra-experimental-features = [ "pipe-operators" ];
-    extra-substituters = [ "https://rix101.cachix.org" ];
-    extra-trusted-public-keys = [ "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY=" ];
+    extra-substituters = [
+      "https://nix-on-droid.cachix.org"
+      "https://rix101.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nix-on-droid.cachix.org-1:56snoMJTXmDRC1Ei24CmKoUqvHJ9XCp+nidK7qkMQrU="
+      "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY="
+    ];
   };
 
   inputs = {
@@ -167,6 +173,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-for-nod.url = "github:NixOS/nixpkgs?rev=88d3861acdd3d2f0e361767018218e51810df8a1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
     nixpkgs-staging.url = "github:nixos/nixpkgs/staging";
     nixpkgs-staging-next.url = "github:nixos/nixpkgs/staging-next";
