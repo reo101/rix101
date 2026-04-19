@@ -97,9 +97,35 @@
           .browserContainer:has(#statuspanel[type="status"]) {
             background:
               url("file://${
-                pkgs.fetchurl {
-                  url = "https://static.wikia.nocookie.net/doki-doki-literature-club/images/d/d8/S_kill_early.png";
-                  hash = "sha256-aSOZOX6dK1avohEVHzr3hGa1PazDD3lADqZbL9JFrfQ=";
+                let
+                  og = pkgs.fetchurl {
+                    url = "https://static.wikia.nocookie.net/doki-doki-literature-club/images/d/d8/S_kill_early.png";
+                    hash = "sha256-aSOZOX6dK1avohEVHzr3hGa1PazDD3lADqZbL9JFrfQ=";
+                  };
+                  removeColour =
+                    {
+                      image,
+                      fuzz ? 10,
+                      colour ? "white",
+                      ...
+                    }:
+                    pkgs.runCommand "${image.name}.png"
+                      {
+                        buildInputs = [
+                          pkgs.imagemagick
+                        ];
+                      }
+                      ''
+                        magick ${image} \
+                          -fuzz ${builtins.toString fuzz}% \
+                          -transparent ${lib.escapeShellArg colour} \
+                          $out
+                      '';
+                in
+                removeColour {
+                  image = og;
+                  fuzz = 20;
+                  colour = "white";
                 }
               }")
               no-repeat top left 20%,
