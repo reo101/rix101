@@ -6,6 +6,11 @@
   unzip,
   python3,
 
+  enableNerdFont ? true,
+  enableCN ? true,
+  enableHinting ? false,
+  enableLigature ? true,
+  # Frozen OpenType features (e.g. cvXX, ssXX)
   features ? [
     "cv03"
     "cv08"
@@ -17,10 +22,31 @@
     "ss10"
     "zero"
   ],
-  enableNerdFont ? true,
-  enableCN ? true,
-  enableHinting ? false,
-  enableLigature ? true,
+  # Glyph names for characters that trigger thinned backslash (e.g. "one" for \1)
+  extraEscapeChars ? [
+    "zero"
+    "one"
+    "two"
+    "three"
+    "four"
+    "five"
+    "six"
+    "seven"
+    "eight"
+    "nine"
+  ],
+  # Keywords to turn into pills (e.g. `["TASK" "DONE"]`)
+  # Automatically mapped to tag styles based on length (4, 5, or 7).
+  pillKeywords ? [
+    "TODO"
+    "TASK"
+    "FIXME"
+    "BUG"
+  ],
+  # Remove alt pill syntax (`todo))`)
+  disableAltPill ? true,
+  # Build specific subfamily for smaller derivation (e.g. "Regular")
+  buildStyle ? null,
 }:
 
 let
@@ -113,6 +139,7 @@ let
     ps.brotli
     ps.skia-pathops
     ps.setuptools
+    ps.hy
     foundrytools-cli
     python-minifier
   ]);
@@ -154,9 +181,18 @@ stdenvNoCC.mkDerivation (
       unzip
     ];
 
-    postUnpack = lib.optionalString enableCN ''
-      mkdir -p $sourceRoot/source/cn/static
-      ${lib.getExe unzip} ${cnBaseStatic} -d $sourceRoot/source/cn/static
+    postUnpack = ''
+      ${lib.optionalString enableCN ''
+        mkdir -p $sourceRoot/source/cn/static
+        ${lib.getExe unzip} ${cnBaseStatic} -d $sourceRoot/source/cn/static
+      ''}
+      cp ${./patch_maple.hy} $sourceRoot/patch_maple.hy
+      pushd $sourceRoot
+      ${pythonEnv}/bin/hy patch_maple.hy \
+        ${lib.escapeShellArg (lib.concatStringsSep "," extraEscapeChars)} \
+        ${lib.escapeShellArg (lib.concatStringsSep "," pillKeywords)} \
+        ${if disableAltPill then "1" else "0"}
+      popd
     '';
 
     buildPhase =
@@ -169,11 +205,12 @@ stdenvNoCC.mkDerivation (
                 (lib.concatStringsSep ",")
               ]
             }";
+        styleFlag = lib.optionalString (buildStyle != null) "--style ${lib.escapeShellArg buildStyle}";
       in
       # bash
       ''
         runHook preBuild
-        python build.py ${featFlag} --${no enableHinting}hinted --${no enableLigature}liga --${no enableNerdFont}nf --${no enableCN}cn
+        python build.py ${featFlag} ${styleFlag} --apply-fea-file --${no enableHinting}hinted --${no enableLigature}liga --${no enableNerdFont}nf --${no enableCN}cn
         runHook postBuild
       '';
 
