@@ -89,7 +89,8 @@
       url = "github:molybdenumsoftware/htnl";
       inputs = {
         flake-parts.follows = "flake-parts";
-        nixpkgs-lib.follows = "nixpkgs";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
       };
     };
     impermanence = {

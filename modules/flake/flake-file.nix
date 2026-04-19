@@ -67,7 +67,8 @@
 
       htnl = {
         url = "github:molybdenumsoftware/htnl";
-        inputs.nixpkgs-lib.follows = "nixpkgs";
+        inputs.nixpkgs.follows = "nixpkgs";
+        inputs.systems.follows = "systems";
         inputs.flake-parts.follows = "flake-parts";
       };
 
