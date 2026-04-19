@@ -120,6 +120,7 @@
         flake-utils.inputs.systems.follows = "systems";
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
+        treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
       };
     };
     microvm = {
@@ -235,6 +236,7 @@
       inputs = {
         flake-parts.follows = "flake-parts";
         nixpkgs.follows = "nixpkgs";
+        rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
       };
     };
     yants = {
@@ -248,7 +250,10 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
-    zig-flake.url = "github:silversquirl/zig-flake";
+    zig-flake = {
+      url = "github:silversquirl/zig-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     zls-overlay = {
       url = "github:zigtools/zls";
       inputs = {

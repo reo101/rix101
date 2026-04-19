@@ -47,6 +47,7 @@
       inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
       inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.inputs.systems.follows = "systems";
+      inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     };
 
     deploy-rs = {
