@@ -74,7 +74,7 @@ lib.infuse prev {
 
   # NOTE: this overlay is applied after neovim-nightly-overlay in rix101, so we
   #       can re-override the nightly packages directly to use the patched LuaJIT.
-  neovim.__input.luajit.__assign = final.custom.luajitcoroutineclone;
+  neovim.__input.${if builtins.hasAttr "luajit" prev.neovim.override.__functionArgs then "luajit" else "lua"}.__assign = final.custom.luajitcoroutineclone;
   neovim-unwrapped.__assign = final.neovim;
   neovim-debug.__input.neovim.__assign = final.neovim;
   neovim-developer.__input = {
