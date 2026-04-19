@@ -4,6 +4,7 @@
 , runCommand
 , makeWrapper
 , writeShellApplication
+, capnproto
 
 , system ? pkgs.stdenv.hostPlatform.system
 , nix' ? pkgs.nixVersions.nix_2_34
@@ -13,23 +14,42 @@
     nix-output-monitor = pkgs.nix-output-monitor;
   }
 , monitored ? false
-, nix-plugins' ? pkgs.nix-plugins.overrideAttrs (oldAttrs: {
-    # Only override `nix`
-    buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
-      (lib.filter (drv: drv.pname != "nix"))
-      (buildInputs: [ nix' ] ++ buildInputs)
-    ];
-    patches = (oldAttrs.patches or [ ]) ++ [
-      # NOTE: based on patch from <https://github.com/shlevy/nix-plugins/pull/25>
-      ./nix-plugins-nix-2.34.patch
-    ];
-  })
+, nix-plugins' ? pkgs.nix-plugins.overrideAttrs (oldAttrs:
+    let
+      isLix = (nix'.pname or null) == "lix";
+      nixComponentPnames = [
+        "nix"
+        "nix-cmd"
+        "nix-expr"
+        "nix-fetchers"
+        "nix-flake"
+        "nix-main"
+        "nix-store"
+        "nix-util"
+      ];
+    in {
+      buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
+        (lib.filter (drv: !(lib.elem (drv.pname or null) nixComponentPnames)))
+        (buildInputs: [ nix' ] ++ lib.optionals isLix [ capnproto ] ++ buildInputs)
+      ];
+      patches = (oldAttrs.patches or [ ]) ++ [
+        (
+          if isLix then
+            ./nix-plugins-lix.patch
+          else
+            # NOTE: based on patch from <https://github.com/shlevy/nix-plugins/pull/25>
+            ./nix-plugins-nix-2.34.patch
+        )
+      ];
+    })
 , coreutils
 , rage
 , ...
 }:
 
 let
+  isLix = (nix'.pname or null) == "lix";
+
   # Create a wrapped version of the decrypt script with all required runtime dependencies
   # TODO: rewrite the script in another language
   rage-decrypt-and-cache = writeShellApplication {
@@ -52,11 +72,12 @@ let
 
   # Default Nix configuration
   defaultNixConfig = makeNixConfig {
-    "extra-experimental-features" = lib.concatStringsSep " " [
+    "extra-experimental-features" = lib.concatStringsSep " " ([
       "nix-command"
       "flakes"
+    ] ++ lib.optionals (!isLix) [
       "pipe-operators"
-    ];
+    ]);
     "plugin-files" = "${nix-plugins'}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
