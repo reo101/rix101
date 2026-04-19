@@ -64,9 +64,8 @@
       package = pkgs.custom.lidarr-nightly;
     };
 
-    jellyseerr = {
+    seerr = {
       enable = true;
-      package = pkgs.seerr;
     };
   };
 
@@ -112,7 +111,7 @@
         "prowlarr"
         "bazarr"
         "lidarr"
-        "jellyseerr"
+        "seerr"
       ];
       mkVhost = name: port: {
         "${name}.jeeves.reo101.xyz" = {
