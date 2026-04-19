@@ -58,10 +58,6 @@
       enable = true;
     };
 
-    readarr = {
-      enable = true;
-    };
-
     lidarr = {
       enable = true;
       # NOTE: plugins are currently only available on Lidarr's nightly/prerelease channel
@@ -102,7 +98,6 @@
         "radarr"
         "prowlarr"
         "bazarr"
-        "readarr"
         "lidarr"
       ]
       (_: {
@@ -116,7 +111,6 @@
         "radarr"
         "prowlarr"
         "bazarr"
-        "readarr"
         "lidarr"
         "jellyseerr"
       ];
