@@ -14,7 +14,7 @@
     magicRollback = true;
     sshOpts = [
       "-p"
-      " 8022"
+      "8022"
     ];
     remoteBuild = true;
   };
