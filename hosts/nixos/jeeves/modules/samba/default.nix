@@ -53,6 +53,8 @@
         "directory mask" = "0755";
         "force user" = "jeeves";
         "force group" = "users";
+        "follow symlinks" = "yes";
+        "wide links" = "yes";
       };
       private = {
         "path" = "/data/samba/private";
