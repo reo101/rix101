@@ -49,7 +49,15 @@ in
 
   # Allow DHCP and DNS on the bridge
   networking.firewall.interfaces.${microvm-interface} = {
-    allowedTCPPorts = [ 22 ];
-    allowedUDPPorts = [ 53 67 ];
+    allowedTCPPorts = [
+      # SSH
+      22
+    ];
+    allowedUDPPorts = [
+      # DNS queries to the host-side resolver
+      53
+      # host-side DHCP server
+      67
+    ];
   };
 }

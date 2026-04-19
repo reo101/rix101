@@ -40,6 +40,7 @@ let
   hass-theme-packages = [
     pkgs.custom.hass-frosted-glass-theme
   ];
+
 in
 {
   # Declarative Home Assistant MicroVM
@@ -110,7 +111,7 @@ in
         customComponents = [
           # Tuya-enabled appliances (LED lamps, power tool batteries)
           pkgs.home-assistant-custom-components.tuya_local
-          # Philips AirPurifier devices
+          # Philips Air+ cloud integration (AC0651/10 air purifier)
           pkgs.custom.hass-philips-airplus
           # Frosted Glass theme manager (customize colors/backgrounds via UI)
           pkgs.custom.hass-frosted-glass-manager
@@ -181,19 +182,9 @@ in
                 type = "module";
               }
             ];
-            dashboards = {
-              lovelace = {
-                mode = "yaml";
-                filename = "ui-lovelace.yaml";
-                title = "Overview";
-                icon = "mdi:view-dashboard";
-                show_in_sidebar = true;
-              };
-            };
           };
 
           mobile_app = { };
-          map = { };
 
           "automation ui" = "!include automations.yaml";
           "scene ui" = "!include scenes.yaml";
@@ -216,10 +207,6 @@ in
           mode = "0644";
         };
         "/var/lib/hass/scenes.yaml".f = {
-          inherit (cfg) user group;
-          mode = "0644";
-        };
-        "/var/lib/hass/ui-lovelace.yaml".f = {
           inherit (cfg) user group;
           mode = "0644";
         };

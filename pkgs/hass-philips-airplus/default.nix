@@ -6,15 +6,15 @@
 }:
 
 buildHomeAssistantComponent rec {
-  owner = "nicolas-stein";
+  owner = "ShorMeneses";
   domain = "philips_airplus";
-  version = "0.1.1";
+  version = "0.3.0";
 
   src = fetchFromGitHub {
     inherit owner;
     repo = "philips-airplus-homeassistant";
-    rev = "d8c3cce5a2946c33747dcaa7c22bcbaaddc47dae";
-    hash = "sha256-Lt5MGKNA9mkCe4QyNunDXWz+we2pAgkljKCsq94evfQ=";
+    rev = "99c6b01e4f305142c221b8764c59d3ba31b3ce8a";
+    hash = "sha256-Nr7+F9EtTJT8PCJVvcFrh9R8B+k2UbrasVWelJ8DAJc=";
   };
 
   dependencies = [
@@ -23,7 +23,8 @@ buildHomeAssistantComponent rec {
 
   meta = with lib; {
     description = "Home Assistant custom component for Philips Air+ air purifiers via cloud API";
-    homepage = "https://github.com/nicolas-stein/philips-airplus-homeassistant";
+    homepage = "https://github.com/ShorMeneses/philips-airplus-homeassistant";
+    changelog = "https://github.com/ShorMeneses/philips-airplus-homeassistant/commits/master";
     license = licenses.mit;
     maintainers = with maintainers; [ ];
   };
