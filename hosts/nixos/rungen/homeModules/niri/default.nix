@@ -710,13 +710,13 @@ in
           xkb = {
             layout = "us,bg";
             variant = ",phonetic";
-            # NOTE: no longer using right shift for Wezterm zooming,
-            #       thus no need for `l` only modifiers
-            options =
-              let
-                side = "";
-              in
-              "grp:${side}alt_${side}shift_toggle";
+            options = lib.pipe {
+              grp = "alt_shift_toggle";
+              # compose = "rctrl";
+            } [
+              (lib.mapAttrsToList (k: v: "${k}:${v}"))
+              (lib.concatStringsSep ",")
+            ];
           };
         };
         mouse = {
