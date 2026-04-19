@@ -19,7 +19,12 @@ let
 
   # Global `pkgs` with flake's overlays and packages
   # See <../pkgs/default.nix>
-  pkgsFor = system: (config.perSystem system).pkgs;
+  pkgsFor =
+    system: nixpkgs:
+    let
+      inherit (config.perSystem system) pkgs;
+    in
+    if builtins.isNull nixpkgs then pkgs else pkgs.nixpkgs.${nixpkgs};
 
   genUsers =
     configurationFiles:
@@ -153,7 +158,7 @@ let
     }:
     inputs.nixpkgs.lib.nixosSystem {
       inherit (meta) system;
-      pkgs = pkgsFor meta.system;
+      pkgs = pkgsFor meta.system meta.nixpkgs;
 
       modules = [
         # Main configuration
@@ -194,7 +199,7 @@ let
     inputs.nix-on-droid.lib.nixOnDroidConfiguration {
       # NOTE: inferred by `pkgs.system`
       # inherit system;
-      pkgs = pkgsFor meta.system;
+      pkgs = pkgsFor meta.system meta.nixpkgs;
 
       modules = [
         # Main configuration
@@ -236,7 +241,7 @@ let
     }:
     inputs.nix-darwin.lib.darwinSystem {
       inherit (meta) system;
-      pkgs = pkgsFor meta.system;
+      pkgs = pkgsFor meta.system meta.nixpkgs;
 
       modules = [
         # Main configuration
@@ -274,7 +279,7 @@ let
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit (meta) system;
-      pkgs = pkgsFor meta.system;
+      pkgs = pkgsFor meta.system meta.nixpkgs;
 
       modules = [
         configuration
@@ -294,7 +299,7 @@ let
       configuration,
     }:
     let
-      pkgs = pkgsFor meta.system;
+      pkgs = pkgsFor meta.system meta.nixpkgs;
       cachePath = meta.cachePath or null;
       profiles = inputs.openwrt-imagebuilder.lib.profiles (
         {
@@ -331,6 +336,7 @@ in
             metaModules.enable
             metaModules.system
             metaModules.hostname
+            metaModules.nixpkgs
             metaModules.pubkey
             metaModules.roles
             metaModules.deploy
@@ -377,6 +383,7 @@ in
             metaModules.enable
             metaModules.system
             metaModules.hostname
+            metaModules.nixpkgs
             metaModules.pubkey
             metaModules.roles
             metaModules.deploy
@@ -441,6 +448,7 @@ in
             metaModules.enable
             metaModules.system
             metaModules.hostname
+            metaModules.nixpkgs
             metaModules.pubkey
             metaModules.roles
             metaModules.deploy
@@ -489,6 +497,7 @@ in
             metaModules.system
             metaModules.hostname
             metaModules.roles
+            metaModules.nixpkgs
             # metaModules.pubkey
           ];
         };
@@ -516,6 +525,7 @@ in
             metaModules.enable
             metaModules.system
             metaModules.roles
+            metaModules.nixpkgs
           ];
 
           options =

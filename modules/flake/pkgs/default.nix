@@ -52,76 +52,57 @@
     )
   ];
 
-  flake.overlays.additions =
-    final: prev:
-    let
-      system = final.stdenv.hostPlatform.system;
-      nixOnDroidArch =
-        {
-          aarch64-linux = "aarch64";
-          x86_64-linux = "x86_64";
-        }
-        .${system} or null;
-      nixOnDroidPackages = inputs.nix-on-droid.packages.${system} or { };
-    in
-    {
-      custom = self.packages.${system};
-      nixOnDroid = lib.optionalAttrs (nixOnDroidArch != null) {
-        bootstrap = nixOnDroidPackages."bootstrap-${nixOnDroidArch}";
-        bootstrapZip = nixOnDroidPackages."bootstrapZip-${nixOnDroidArch}";
-        prootTermux = nixOnDroidPackages."prootTermux-${nixOnDroidArch}";
-        tallocStatic = nixOnDroidPackages."tallocStatic-${nixOnDroidArch}";
-      };
-    };
+  flake.overlays.additions = final: prev: {
+    custom = self.packages.${final.stdenv.hostPlatform.system};
+  };
 
   perSystem =
     { pkgs, system, ... }:
-    {
-      _module.args.pkgs =
-        let
-          overlays = lib.concatLists [
-            # NOTE: overlays from flake inputs
-            [
-              inputs.neovim-nightly-overlay.overlays.default
-              inputs.zig-overlay.overlays.default
-              inputs.nix-topology.overlays.default
-              inputs.wired.overlays.default
-              # NOTE: nix-on-droid overlay (needed for `proot`)
-              inputs.nix-on-droid.overlays.default
-              # inputs.nix-lib-net.overlays.default
-            ]
-
-            # NOTE: overlays from flake outputs
-            (lib.attrValues self.overlays)
-          ];
-        in
-        import inputs.nixpkgs {
+    let
+      nixpkgsConfig = {
+        # TODO: per machine?
+        allowUnfree = true;
+      };
+      mkNixpkgsInstance =
+        input:
+        import input {
           inherit system;
-          overlays = overlays ++ [
-            (_: _: {
-              # NOTE: `nixpkgs-stable` -> `pkgs.nixpkgs.stable.*`
-              nixpkgs = lib.pipe inputs [
-                (lib.concatMapAttrs (
-                  name: input:
-                  if lib.hasPrefix "nixpkgs-" name then
-                    {
-                      ${lib.removePrefix "nixpkgs-" name} = import input {
-                        inherit system;
-                        inherit overlays;
-                      };
-                    }
-                  else
-                    {
-                    }
-                ))
-              ];
-            })
-          ];
-          config = {
-            # TODO: per machine?
-            allowUnfree = true;
-          };
+          inherit overlays;
+          config = nixpkgsConfig;
         };
+      # NOTE: `nixpkgs-stable` -> `pkgs.nixpkgs.stable.*`
+      nixpkgsInstances = lib.pipe inputs [
+        (lib.concatMapAttrs (
+          name: input:
+          lib.optionalAttrs (lib.hasPrefix "nixpkgs-" name) {
+            ${lib.removePrefix "nixpkgs-" name} = mkNixpkgsInstance input;
+          }
+        ))
+      ];
+      overlays = lib.concatLists [
+        # NOTE: overlays from flake inputs
+        [
+          inputs.neovim-nightly-overlay.overlays.default
+          inputs.zig-overlay.overlays.default
+          inputs.nix-topology.overlays.default
+          inputs.wired.overlays.default
+          # NOTE: nix-on-droid overlay (needed for `proot`)
+          inputs.nix-on-droid.overlays.default
+          # inputs.nix-lib-net.overlays.default
+        ]
+
+        # NOTE: overlays from flake outputs
+        (lib.attrValues self.overlays)
+
+        [
+          (_: _: {
+            nixpkgs = nixpkgsInstances;
+          })
+        ]
+      ];
+    in
+    {
+      _module.args.pkgs = mkNixpkgsInstance inputs.nixpkgs;
 
       # NOTE: Export this custom `pkgs` instance
       inherit pkgs;

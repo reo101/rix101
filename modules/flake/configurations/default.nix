@@ -263,14 +263,16 @@
                                 metaModules = (import ./meta-modules);
                                 # Give access to overlayed `lib`
                                 inherit (config) lib;
-                                # Pass through host (default for `hostname`, etc.)
+                                # Pass through `host` (default for `hostname`, etc.)
                                 inherit host;
+                                # Pass through `inputs` (used for seeing the available `nixpkgs` inputs)
+                                inherit inputs;
                               };
                               modules = [
                                 # {} if no `metaModule` is provided
                                 metaModule
                                 # {} if no `meta.nix` is provided
-                                (if has-meta then { _file = meta-file.path; imports = [ meta-content ]; } else {})
+                                (lib.optionalAttrs has-meta { _file = meta-file.path; imports = [ meta-content ]; })
                               ];
                             }).config;
                             deploy-config = meta.deploy or null;

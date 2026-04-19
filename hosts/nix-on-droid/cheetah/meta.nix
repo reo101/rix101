@@ -1,5 +1,7 @@
 {
   system = "aarch64-linux";
+  # HACK: newer versions fail to allocate `PTY`s in `NoD`
+  nixpkgs = "for-nod";
   roles = [
     "common/rix101"
   ];
