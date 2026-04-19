@@ -8,6 +8,22 @@
 
 let
   cfg = config.rix101.wayland;
+  easyeffectsEchoProbeFennelGlobals = [
+    "Constraint"
+    "Core"
+    "Features"
+    "Interest"
+    "Link"
+    "Log"
+    "ObjectManager"
+    "Plugin"
+    "ipairs"
+    "pcall"
+    "string"
+    "table"
+    "tonumber"
+    "tostring"
+  ];
   easyeffectsEchoProbePackage =
     pkgs.runCommandLocal "wireplumber-easyeffects-echo-probe"
       {
@@ -17,6 +33,7 @@ let
         mkdir -p "$out/share/wireplumber/scripts/reo101"
         ${lib.getExe' pkgs.custom.fennel "fennel"} \
           --correlate \
+          --globals-only ${lib.escapeShellArg (lib.concatStringsSep "," easyeffectsEchoProbeFennelGlobals)} \
           --compile ${./easyeffects-echo-probe.fnl} \
           > "$out/share/wireplumber/scripts/reo101/easyeffects-echo-probe.lua"
       '';
