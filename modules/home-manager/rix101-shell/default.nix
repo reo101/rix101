@@ -20,8 +20,8 @@ let
     ;
 
   shellAliases = {
-    cp = "${pkgs.custom.advcpmv}/bin/advcp -rvi";
-    mv = "${pkgs.custom.advcpmv}/bin/advmv -vi";
+    # cp = "${pkgs.custom.advcpmv}/bin/advcp -rvi";
+    # mv = "${pkgs.custom.advcpmv}/bin/advmv -vi";
     rebuild =
       let
         rebuild_script = pkgs.writeShellScript "rebuild" ''
@@ -137,7 +137,6 @@ in
     home.packages =
       with pkgs;
       lib.concatLists [
-        (lib.map (lib.flip builtins.getAttr pkgs) cfg.shells)
         (optionals cfg.starship [
           starship
         ])
@@ -262,7 +261,7 @@ in
       {
         SHELL =
           let
-            shellPackage = builtins.getAttr (builtins.head cfg.shells) pkgs;
+            shellPackage = config.programs.${builtins.head cfg.shells}.package;
           in
           "${shellPackage}/${shellPackage.shellPath}";
         MANPAGER = "nvim +Man!";
@@ -291,7 +290,7 @@ in
         environmentVariables = { };
       })
       (mkIf cfg.atuin {
-        extraEnv = /* nu */ ''
+        extraEnv = /* nu' */ ''
           let atuin_cache = "${config.xdg.cacheHome}/atuin"
           if not ($atuin_cache | path exists) {
               mkdir $atuin_cache
@@ -299,7 +298,7 @@ in
           ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
         '';
 
-        extraConfig = /* nu */ ''
+        extraConfig = /* nu' */ ''
           source ${config.xdg.cacheHome}/atuin/init.nu
 
           # Ctrl-R
