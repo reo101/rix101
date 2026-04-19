@@ -95,6 +95,21 @@
     (final: prev: {
       alloc = import "${inputs.alloc.outPath}/default.nix" { lib = prev; };
     })
+    # Htnl
+    (final: prev: {
+      htnl =
+        let
+          base = import "${inputs.htnl.outPath}/default.nix" { inherit lib; };
+        in
+        base
+        // {
+          bundle =
+            pkgs:
+            pkgs.callPackage "${inputs.htnl.outPath}/bare/bundle.nix" {
+              htnl = base;
+            };
+        };
+    })
   ];
 
   config.lib =
@@ -147,19 +162,6 @@
     rec {
       # Secrets Helpers
       repoSecret = lib.path.append ../../../secrets/master;
-
-      htnl =
-        let
-          base = import "${inputs.htnl.outPath}/default.nix" { inherit lib; };
-        in
-        base
-        // {
-          bundle =
-            pkgs:
-            pkgs.callPackage "${inputs.htnl.outPath}/bare/bundle.nix" {
-              htnl = base;
-            };
-        };
 
       # Boolean helpers
       and = lib.all lib.id;
