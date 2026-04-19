@@ -2,6 +2,9 @@
 
 {
   imports = [
+    inputs.self.modules.nix-on-droid.am
+    inputs.self.modules.nix-on-droid.rish
+    inputs.self.modules.nix-on-droid.home-manager-users-stub
   ];
 
   environment.packages = with pkgs; [ ];
@@ -47,8 +50,7 @@
     builders = ${
       # TODO: <https://nix.dev/manual/nix/2.18/advanced-topics/distributed-builds>
       lib.concatStringsSep " ; " [
-        "ssh://jeeves@jeeves.lan           x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
-        "ssh://pavelatanasov@limonka.local aarch64-darwin             - 4  3 nixos-test                            -"
+        "ssh://jeeves@jeeves.reo101.xyz x86_64-linux,aarch64-linux - 16 6 benchmark,big-parallel,kvm,nixos-test -"
       ]
     }
     builders-use-substitutes = true

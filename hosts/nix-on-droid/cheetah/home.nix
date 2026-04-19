@@ -29,6 +29,28 @@
     gcc
 
     openssh
+    (writeShellScriptBin "sshd-start" ''
+      set -eu
+
+      home_dir="''${HOME:-/data/data/com.termux.nix/files/home}"
+      repo="''${RIX101_CONFIG:-$home_dir/.config/rix101}"
+      state_dir="$home_dir/.local/state/sshd"
+      config_file="$home_dir/.config/sshd/sshd_config"
+      host_key="$state_dir/ssh_host_ed25519_key"
+
+      mkdir -p "$state_dir"
+
+      if [ ! -f "$host_key" ]; then
+        nix shell --inputs-from "$repo" nixpkgs-for-nod#openssh -c \
+          ssh-keygen -t ed25519 -N "" -f "$host_key"
+      fi
+
+      exec nix shell --inputs-from "$repo" nixpkgs-for-nod#openssh -c \
+        sh -c 'exec "$(command -v sshd)" "$@"' sshd \
+        -E "$state_dir/sshd.log" \
+        -f "$config_file" \
+        "$@"
+    '')
     diffutils
     findutils
     util-linux
