@@ -8,5 +8,6 @@
   home-manager.modules = [
     "rix101-shell"
     "rix101-scm"
+    "rix101-firefox"
   ];
 }
