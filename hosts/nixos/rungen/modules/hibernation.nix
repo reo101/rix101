@@ -5,7 +5,7 @@
   ...
 }:
 {
-  boot.zfs.allowHibernation = true;
+  boot.zfs.unsafeAllowHibernation = true;
   boot.zfs.forceImportRoot = false;
 
   boot.kernelParams = [
@@ -25,7 +25,7 @@
   };
 
   virtualisation.vmVariantWithDisko = {
-    boot.zfs.allowHibernation = true;
+    boot.zfs.unsafeAllowHibernation = true;
     boot.zfs.forceImportRoot = false;
   };
 

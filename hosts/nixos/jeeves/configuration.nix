@@ -15,7 +15,6 @@
     ./modules/wireguard.nix
     ./modules/nginx.nix
     ./modules/nixarr.nix
-    ./modules/mindustry.nix
     # ./modules/home-assistant
     ./modules/samba
     # ./modules/steam.nix

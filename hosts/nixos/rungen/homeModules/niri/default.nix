@@ -186,22 +186,7 @@ in
 
   programs.niri = {
     enable = true;
-    # package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
-    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable.overrideAttrs (oldAttrs: let
-      src = pkgs.fetchFromGitHub {
-        owner = "niri-wm";
-        repo = "niri";
-        rev = "4c4863a29cbec643e24f211b111a8de98c980136";
-        hash = "sha256-dGRgX8apemRre1Za/p00ZhUiCjQqy9h0HHEgA96ZkYs=";
-      };
-    in {
-      inherit src;
-      version = "unstable-blur";
-      cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
-        inherit src;
-        hash = "sha256-soJYT6TavlyqtVqMD70QYDZ+8swn6TVXsFHadJxaxWo=";
-      };
-    });
+    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
     # Append raw KDL for options not yet in niri-flake's settings schema
     config = lib.mkOptionDefault (with inputs.niri.lib.kdl; [
       (plain "window-rule" [
@@ -234,6 +219,7 @@ in
           })
           [
             "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+            "${lib.getExe config.programs.noctalia-shell.package}"
             # NOTE: using Noctalia Shell for notifications
             # "${lib.getExe pkgs.wired}"
             # Defer xwayland-satellite until Noctalia registers on D-Bus

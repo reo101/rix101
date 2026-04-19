@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 
@@ -13,7 +12,7 @@ let
   relayServer = "${domain}:21117";
   publicDir = "/var/lib/rustdesk-public";
   publicKeyPath = "/id_ed25519.pub";
-  htnl = inputs.htnl.lib;
+  htnl = lib.htnl;
   inherit (htnl) bundle document raw;
   h = htnl.polymorphic.element;
   renderServerSetting =
