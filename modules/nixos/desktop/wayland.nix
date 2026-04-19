@@ -48,6 +48,7 @@ in
   options =
     let
       inherit (lib) types;
+      porttyTomlFormat = pkgs.formats.toml { };
     in
     {
       rix101.wayland = {
@@ -159,6 +160,24 @@ in
             example = "portty";
           };
 
+          defaultBackends = lib.mkOption {
+            type = types.listOf types.str;
+            description = "Default portal backend preference list";
+            default = [ "wlr" ];
+          };
+
+          screenCastBackends = lib.mkOption {
+            type = types.listOf types.str;
+            description = "Portal backend preference list for ScreenCast";
+            default = [ "gnome" ];
+          };
+
+          remoteDesktopBackends = lib.mkOption {
+            type = types.listOf types.str;
+            description = "Portal backend preference list for RemoteDesktop";
+            default = [ "gnome" ];
+          };
+
           portty = {
             package = lib.mkOption {
               type = types.package;
@@ -178,21 +197,28 @@ in
               example = [ "niri" ];
             };
 
-            configText = lib.mkOption {
-              type = types.lines;
+            settings = lib.mkOption {
+              type = porttyTomlFormat.type;
               description = ''
-                Contents of `~/.config/portty/config.toml`.
-                This defines terminal command and helper shims used by `portty` sessions.
+                Structured contents of `~/.config/portty/config.toml`.
+                Placeholder tokens are replaced after TOML generation.
               '';
-              default = ''
-                exec = "@PORTTY_TERMINAL@"
+              default = {
+                exec = "@PORTTY_TERMINAL@";
+                file-chooser = {
+                  exec = "@PORTTY_TERMINAL@";
+                  bin.pick = "${lib.getExe pkgs.fd} --type f --type d --hidden --exclude .git . | ${lib.getExe pkgs.fzf} --multi --height=100% --reverse --prompt='pick> ' | @PORTTY_SEL@ --stdin";
+                };
+              };
+            };
 
-                [file-chooser]
-                exec = "@PORTTY_TERMINAL@"
-
-                [file-chooser.bin]
-                pick = "${lib.getExe pkgs.fd} --type f --type d --hidden --exclude .git . | ${lib.getExe pkgs.fzf} --multi --height=100% --reverse --prompt='pick> ' | @PORTTY_SEL@ --stdin"
+            configText = lib.mkOption {
+              type = types.nullOr types.lines;
+              description = ''
+                Deprecated raw contents of `~/.config/portty/config.toml`.
+                Prefer `rix101.wayland.portal.portty.settings` for generated TOML.
               '';
+              default = null;
             };
           };
         };
@@ -294,7 +320,7 @@ in
     let
       hasImage = cfg.stylix.image != null;
       hasColorscheme = cfg.stylix.colorscheme != null;
-      hasHomeManager = config ? home-manager;
+      hasHomeManager = config ? home-manager && config.home-manager ? users;
       usePorttyBackend = cfg.portal.fileChooserBackend == "portty";
       portalBackendNameByBackend = {
         gnome = "gnome";
@@ -303,47 +329,11 @@ in
       };
       portalDesktopNames = [ "common" ] ++ cfg.portal.desktopNames;
       fileChooserPortalBackendName = portalBackendNameByBackend.${cfg.portal.fileChooserBackend};
-      portalPackageByBackend = {
-        gnome = pkgs.xdg-desktop-portal-gnome;
-        gtk = pkgs.xdg-desktop-portal-gtk;
-        portty = porttyPortalPackage;
-      };
-      fileChooserPortalPackage = portalPackageByBackend.${cfg.portal.fileChooserBackend};
       portalPreferredConfig = {
-        default = lib.mkDefault [ "wlr" ];
+        default = lib.mkDefault cfg.portal.defaultBackends;
         "org.freedesktop.impl.portal.FileChooser" = lib.mkDefault [ fileChooserPortalBackendName ];
-        "org.freedesktop.impl.portal.ScreenCast" = lib.mkDefault [ "gnome" ];
-        "org.freedesktop.impl.portal.RemoteDesktop" = lib.mkDefault [ "gnome" ];
-      };
-      porttyPortalUseInDesktops = lib.concatStringsSep ";" (
-        cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames
-      );
-      porttyPortalPackage = pkgs.symlinkJoin {
-        name = "portty-with-portal-metadata-${cfg.portal.portty.package.version or "unknown"}";
-        paths = [ cfg.portal.portty.package ];
-        postBuild = ''
-          portal_file="$out/share/xdg-desktop-portal/portals/tty.portal"
-          rm -f "$portal_file"
-          cp ${cfg.portal.portty.package}/share/xdg-desktop-portal/portals/tty.portal "$portal_file"
-
-          if grep -q '^UseIn=' "$portal_file"; then
-            use_in_value="$(sed -n 's/^UseIn=//p' "$portal_file")"
-            if [ -n '${porttyPortalUseInDesktops}' ]; then
-              use_in_value="$use_in_value;${porttyPortalUseInDesktops}"
-            fi
-
-            use_in_value="$(
-              printf '%s' "$use_in_value" \
-                | tr ';' '\n' \
-                | sed '/^$/d' \
-                | awk '!seen[$0]++' \
-                | paste -sd';' -
-            )"
-            sed -i "s|^UseIn=.*$|UseIn=$use_in_value|" "$portal_file"
-          elif [ -n '${porttyPortalUseInDesktops}' ]; then
-            printf 'UseIn=%s\n' '${porttyPortalUseInDesktops}' >> "$portal_file"
-          fi
-        '';
+        "org.freedesktop.impl.portal.ScreenCast" = lib.mkDefault cfg.portal.screenCastBackends;
+        "org.freedesktop.impl.portal.RemoteDesktop" = lib.mkDefault cfg.portal.remoteDesktopBackends;
       };
       hmNiriPackage = lib.attrByPath [
         "home-manager"
@@ -372,6 +362,61 @@ in
         portty = cfg.portal.portty.package;
         inherit (pkgs) zenity;
       };
+      porttyTomlFormat = pkgs.formats.toml { };
+      porttyConfigTemplate =
+        if cfg.portal.portty.configText != null then
+          pkgs.writeText "portty-config.toml" cfg.portal.portty.configText
+        else
+          porttyTomlFormat.generate "portty-config.toml" cfg.portal.portty.settings;
+      porttyConfigFile = pkgs.runCommandLocal "portty-config.toml" { } ''
+        substitute ${porttyConfigTemplate} "$out" \
+          --subst-var-by PORTTY_TERMINAL ${lib.escapeShellArg porttyTerminalExe} \
+          --subst-var-by PORTTY_SESSION_HOLDER ${lib.escapeShellArg (lib.getExe' porttyHelperPackage "portty-session-holder")} \
+          --subst-var-by PORTTY_SEL ${lib.escapeShellArg (lib.getExe' porttyHelperPackage "sel")} \
+          --subst-var-by PORTTY_SUBMIT ${lib.escapeShellArg (lib.getExe' porttyHelperPackage "submit")}
+      '';
+      porttyPortalUseIn = lib.unique (
+        cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames
+      );
+      porttyPortalPackage = pkgs.runCommandLocal "portty-portal-metadata-${cfg.portal.portty.package.version or "unknown"}" { } ''
+install -Dm644 /dev/stdin "$out/share/xdg-desktop-portal/portals/tty.portal" <<'EOF'
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.tty
+Interfaces=org.freedesktop.impl.portal.FileChooser;org.freedesktop.impl.portal.Screenshot
+UseIn=${lib.concatStringsSep ";" porttyPortalUseIn}
+EOF
+
+install -Dm644 /dev/stdin "$out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.tty.service" <<'EOF'
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.tty
+Exec=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
+SystemdService=portty.service
+EOF
+
+install -Dm644 /dev/stdin "$out/lib/systemd/user/portty.service" <<'EOF'
+[Unit]
+Description=Portty - XDG Desktop Portal for TTY
+After=graphical-session.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=
+Environment=GDK_BACKEND=wayland
+ExecStart=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+WantedBy=graphical-session.target
+EOF
+      '';
+      portalPackageByBackend = {
+        gnome = pkgs.xdg-desktop-portal-gnome;
+        gtk = pkgs.xdg-desktop-portal-gtk;
+        portty = porttyPortalPackage;
+      };
+      fileChooserPortalPackage = portalPackageByBackend.${cfg.portal.fileChooserBackend};
     in
     {
       assertions = [
@@ -477,45 +522,9 @@ in
             ];
 
             xdg.configFile = lib.mkIf usePorttyBackend {
-              "portty/config.toml".text =
-                lib.replaceStrings
-                  [
-                    "@PORTTY_TERMINAL@"
-                    "@PORTTY_SESSION_HOLDER@"
-                    "@PORTTY_SEL@"
-                    "@PORTTY_SUBMIT@"
-                  ]
-                  [
-                    porttyTerminalExe
-                    (lib.getExe' porttyHelperPackage "portty-session-holder")
-                    (lib.getExe' porttyHelperPackage "sel")
-                    (lib.getExe' porttyHelperPackage "submit")
-                  ]
-                  cfg.portal.portty.configText;
+              "portty/config.toml".source = porttyConfigFile;
             };
 
-            systemd.user.services.portty = lib.mkIf usePorttyBackend {
-              Unit = {
-                Description = "Portty - XDG Desktop Portal for TTY";
-                After = [ "graphical-session.target" ];
-              };
-              Service = {
-                Type = "simple";
-                Environment = [
-                  "DISPLAY="
-                  "GDK_BACKEND=wayland"
-                ];
-                ExecStart = "${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}";
-                Restart = "on-failure";
-                RestartSec = 5;
-              };
-              Install = {
-                WantedBy = [
-                  "default.target"
-                  "graphical-session.target"
-                ];
-              };
-            };
           };
       };
 

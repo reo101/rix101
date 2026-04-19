@@ -21,8 +21,9 @@ let
     strictDeps = true;
     cargoExtraArgs = "--package portty --package porttyd";
 
-    # Upstream currently gates linux pidfd/fifo APIs behind unstable features.
-    RUSTC_BOOTSTRAP = 1;
+    # Upstream currently requires nightly-only linux pidfd/fifo APIs
+    # Scope bootstrap to the daemon crate instead of enabling it workspace-wide
+    RUSTC_BOOTSTRAP = "porttyd";
   };
 
   cargoArtifacts = craneLib.buildDepsOnly commonArgs;
@@ -32,43 +33,13 @@ craneLib.buildPackage (
   // {
     inherit cargoArtifacts;
 
-    doCheck = false;
+    cargoTestExtraArgs = "--package libportty --package portty";
 
     installPhaseCommand = ''
       runHook preInstall
 
       install -Dm755 target/release/portty $out/bin/portty
       install -Dm755 target/release/porttyd $out/bin/porttyd
-      install -Dm755 target/release/porttyd $out/lib/portty/porttyd
-
-      install -Dm644 misc/tty.portal \
-        $out/share/xdg-desktop-portal/portals/tty.portal
-
-      mkdir -p $out/lib/systemd/user
-      mkdir -p $out/share/dbus-1/services
-
-      cat > $out/lib/systemd/user/portty.service <<EOF
-      [Unit]
-      Description=Portty - XDG Desktop Portal for TTY
-      After=graphical-session.target
-
-      [Service]
-      Type=simple
-      ExecStart=$out/lib/portty/porttyd
-      Restart=on-failure
-      RestartSec=5
-
-      [Install]
-      WantedBy=default.target
-      WantedBy=graphical-session.target
-      EOF
-
-      cat > $out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.tty.service <<EOF
-      [D-BUS Service]
-      Name=org.freedesktop.impl.portal.desktop.tty
-      Exec=$out/lib/portty/porttyd
-      SystemdService=portty.service
-      EOF
 
       runHook postInstall
     '';

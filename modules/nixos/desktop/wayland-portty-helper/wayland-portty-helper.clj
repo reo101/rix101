@@ -34,6 +34,10 @@
                                        "state")))]
       (fs/path state-home "portty" "active-session"))))
 
+(def pending-submission-file
+  (delay
+    (fs/path @portty-base-dir "pending" "submission")))
+
 (defn read-trimmed-file [path]
   (when (fs/exists? path)
     (some-> path str slurp str/trim not-empty)))
@@ -70,9 +74,6 @@
          (sort-by session-sort-key))
     []))
 
-(defn first-active-session []
-  (first (active-sessions)))
-
 (defn latest-active-session []
   (last (active-sessions)))
 
@@ -84,7 +85,7 @@
     (let [session-id (read-trimmed-file @active-session-file)]
       (when (session-exists? session-id)
         session-id))
-    (first-active-session)))
+    (latest-active-session)))
 
 (defn emit! [stream text]
   (when (seq text)
@@ -123,6 +124,40 @@
     (emit! *out* out)
     (emit! *err* err)
     exit))
+
+(defn expand-leading-home [value]
+  (let [home (or (System/getenv "HOME")
+                 (System/getProperty "user.home"))]
+    (cond
+      (and (= value "~") home) home
+      (and (str/starts-with? value "~/") home) (str home (subs value 1))
+      :else value)))
+
+(defn absolute-path-string [value]
+  (-> (java.nio.file.Paths/get (expand-leading-home value) (into-array String []))
+      .toAbsolutePath
+      .normalize
+      str))
+
+(defn normalize-file-uri [entry]
+  (try
+    (-> (java.nio.file.Paths/get (java.net.URI/create entry))
+        .toAbsolutePath
+        .normalize
+        .toUri
+        str)
+    (catch Exception _
+      entry)))
+
+(defn normalize-selection-entry [entry]
+  (let [entry (str/trim entry)]
+    (cond
+      (empty? entry) nil
+      (str/starts-with? entry "file://") (normalize-file-uri entry)
+      :else (absolute-path-string entry))))
+
+(defn normalize-selection-entries [items]
+  (vec (keep normalize-selection-entry items)))
 
 (defn start-command
   [cmd & {:keys [extra-env inherit?]}]
@@ -199,8 +234,33 @@
   (when (= (read-trimmed-file @active-session-file) session-id)
     (fs/delete @active-session-file)))
 
+(defn read-file-lines [path]
+  (if (fs/exists? path)
+    (->> (slurp (str path))
+         str/split-lines
+         (remove str/blank?)
+         vec)
+    []))
+
+(defn clear-pending-submission! []
+  (when (fs/exists? @pending-submission-file)
+    (spit (str @pending-submission-file) "")))
+
+(defn apply-pending-to-session! [session-id]
+  (let [entries (normalize-selection-entries (read-file-lines @pending-submission-file))]
+    (if (seq entries)
+      (let [exit (run-command (into ["portty" "--session" session-id "edit"] entries)
+                              :inherit? true)]
+        (when (zero? exit)
+          (clear-pending-submission!))
+        exit)
+      0)))
+
 (defn submit-session! [session-id]
-  (let [exit (run-command ["portty" "--session" session-id "submit"] :inherit? true)]
+  (let [pending-exit (apply-pending-to-session! session-id)
+        exit (if (zero? pending-exit)
+               (run-command ["portty" "--session" session-id "submit"] :inherit? true)
+               pending-exit)]
     (when (zero? exit)
       (clear-active-session! session-id))
     exit))
@@ -346,8 +406,13 @@
 (defn handle-sel [items]
   (if-let [session-id (resolve-session)]
     (if (seq items)
-      (exec-command! (into ["portty" "--session" session-id "edit"] items))
-      (exec-command! ["portty" "--session" session-id "edit" "--stdin"]))
+      (exec-command! (into ["portty" "--session" session-id "edit"]
+                           (normalize-selection-entries items)))
+      (let [stdin (->> (line-seq (java.io.BufferedReader. *in*))
+                       normalize-selection-entries
+                       (str/join "\n"))]
+        (run-command ["portty" "--session" session-id "edit" "--stdin"]
+                     :stdin (str stdin "\n"))))
     (fail! "portty-sel: no active portty session")))
 
 (defn handle-submit []
