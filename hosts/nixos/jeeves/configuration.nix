@@ -34,6 +34,7 @@
     ./modules/nix-ld.nix
     ./modules/atuin.nix
     ./modules/syncthing.nix
+    ./modules/ups.nix
     ./modules/monero.nix
     ./modules/syncyomi.nix
     ./modules/vaultwarden.nix
