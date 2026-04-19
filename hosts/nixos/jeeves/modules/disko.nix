@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, utils, ... }:
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -25,17 +25,70 @@
   boot.swraid.mdadmConf = "MAILADDR root";
 
   # HACK: for troubleshooting
-  # see https://github.com/NixOS/nixpkgs/blob/9d6655c6222211adada5eeec4a91cb255b50dcb6/nixos/modules/system/boot/stage-1-init.sh#L45-L49
-  boot.initrd.preFailCommands = ''
-    export allowShell=1
-  '';
+  boot.initrd.systemd.emergencyAccess = true;
 
-  # NOTE: doesn't get mounted early enough, see below
-  # fileSystems."/key" = {
-  #   device = "/dev/disk/by-partlabel/key";
-  #   fsType = "ext4";
-  #   neededForBoot = true;
-  # };
+  # LUKS key files live on a separate USB/ext4 partition. In systemd stage 1,
+  # mount the USB, copy the keys into initrd tmpfs, then let cryptsetup use the
+  # tmpfs copies. This avoids cryptsetup depending on /key, so /key can be
+  # unmounted before switch-root and the USB can be removed after boot.
+  boot.initrd.systemd.mounts = [
+    {
+      description = "Mount LUKS key partition";
+      what = "/dev/disk/by-partlabel/key";
+      where = "/key";
+      type = "ext4";
+      options = "ro";
+      wantedBy = [ "copy-luks-keys.service" ];
+      before = [
+        "copy-luks-keys.service"
+        "initrd-switch-root.target"
+        "shutdown.target"
+      ];
+      wants = [ "systemd-udev-trigger.service" ];
+      after = [
+        "systemd-modules-load.service"
+        "systemd-udev-trigger.service"
+      ];
+      conflicts = [
+        "initrd-switch-root.target"
+        "shutdown.target"
+      ];
+      unitConfig.DefaultDependencies = "no";
+    }
+  ];
+
+  boot.initrd.systemd.services.copy-luks-keys =
+    let
+      cryptsetupServices =
+        lib.map (name: "systemd-cryptsetup@${utils.escapeSystemdPath name}.service") [
+          "root"
+          "tank"
+        ];
+    in
+    {
+      description = "Copy LUKS keys into initrd tmpfs";
+      wantedBy = cryptsetupServices;
+      requires = [ "key.mount" ];
+      after = [ "key.mount" ];
+      before = cryptsetupServices;
+      conflicts = [
+        "initrd-switch-root.target"
+        "shutdown.target"
+      ];
+      unitConfig.DefaultDependencies = "no";
+      serviceConfig = {
+        Type = "oneshot";
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
+      };
+      path = [ pkgs.coreutils ];
+      script = ''
+        install -d -m 0700 /run/cryptsetup-keys.d
+        install -m 0400 /key/root /run/cryptsetup-keys.d/root
+        install -m 0400 /key/tank /run/cryptsetup-keys.d/tank
+        echo 'Copied LUKS keys from /key into initrd tmpfs'
+      '';
+    };
 
   disko = {
     devices = {
@@ -92,21 +145,8 @@
                   name = "root";
                   extraOpenArgs = [ ];
                   settings = {
-                    keyFile = "/key/root";
-                    # HACK: we need to manually wait for and mount the partition containing the keys
-                    preOpenCommands = ''
-                      # Prepare (kernel modules and directory for mounting)
-                      modprobe uas
-                      modprobe ext4
-                      mkdir -m "0755" -p "/key"
-
-                      # Loop until mounted (+ initial wait)
-                      sleep 5
-                      until mount -n -t "ext4" -o "ro" "/dev/disk/by-partlabel/key" "/key" 2>&1 1>/dev/null; do
-                        echo 'Could not find a partition with label `key` (at `/dev/disk/by-partlabel/key`), retrying...'
-                        sleep 2
-                      done
-                    '';
+                    keyFile = "/run/cryptsetup-keys.d/root";
+                    crypttabExtraOpts = [ "x-initrd.attach" ];
                   };
                   content = {
                     type = "btrfs";
@@ -166,7 +206,10 @@
             type = "luks";
             name = "tank";
             extraOpenArgs = [ "--allow-discards" ];
-            settings.keyFile = "/key/tank";
+            settings = {
+              keyFile = "/run/cryptsetup-keys.d/tank";
+              crypttabExtraOpts = [ "x-initrd.attach" ];
+            };
             content = {
               type = "btrfs";
               extraArgs = [ "-f" ]; # Override existing partition
