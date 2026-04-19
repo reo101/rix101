@@ -1,6 +1,16 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
+  imports = [
+    inputs.self.nixosModules.steam
+  ];
+
   environment.systemPackages = with pkgs; [
     mangohud
     protonup-ng
@@ -9,9 +19,13 @@
   ];
 
   # Steam
+  rix101.steam.extest = {
+    enable = true;
+    users = [ "jeeves" ];
+  };
+
   programs.steam = {
     enable = true;
-    extest.enable = true;
     protontricks.enable = true;
     gamescopeSession.enable = true;
     remotePlay.openFirewall = true;

@@ -1,15 +1,21 @@
 {
   config,
+  inputs,
   pkgs,
   lib,
   ...
 }:
 {
+  imports = [
+    inputs.self.nixosModules.steam
+  ];
+
   environment.systemPackages = [
     pkgs.mangohud
     pkgs.protonup-ng
     pkgs.r2modman
     pkgs.protontricks
+    pkgs.moonlight-qt
   ];
 
   environment.sessionVariables = {
@@ -29,9 +35,13 @@
     };
   };
 
+  rix101.steam.extest = {
+    enable = true;
+    users = [ "reo101" ];
+  };
+
   programs.steam = {
     enable = true;
-    extest.enable = true;
     protontricks.enable = true;
     gamescopeSession.enable = true;
     remotePlay.openFirewall = true;
