@@ -52,6 +52,11 @@ in
     allowedTCPPorts = [
       # SSH
       22
+      # USPD
+      (lib.findFirst
+        ({ address, ... }: lib.net.cidr.contains address microvm-network-cidr)
+        (throw "Could not find microvm network in ${config.power.ups.upsd.listen}")
+        config.power.ups.upsd.listen).port
     ];
     allowedUDPPorts = [
       # DNS queries to the host-side resolver

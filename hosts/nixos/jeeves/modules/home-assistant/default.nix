@@ -151,6 +151,8 @@ in
           "sonarr"
           # Radarr (movie management)
           "radarr"
+          # NUT (Network UPS Tools - UPS management)
+          "nut"
         ];
         config = {
           default_config = { };
