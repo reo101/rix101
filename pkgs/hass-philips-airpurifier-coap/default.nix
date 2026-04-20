@@ -4,7 +4,7 @@
   fetchFromGitHub,
   jq,
   moreutils,
-  python3Packages,
+  python314Packages,
 }:
 
 buildHomeAssistantComponent rec {
@@ -20,8 +20,8 @@ buildHomeAssistantComponent rec {
   };
 
   dependencies = [
-    python3Packages.aioairctrl
-    python3Packages.getmac
+    python314Packages.aioairctrl
+    python314Packages.getmac
   ];
 
   postPatch = ''
