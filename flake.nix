@@ -247,18 +247,12 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
-    zig-overlay = {
-      url = "github:mitchellh/zig-overlay";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        systems.follows = "systems";
-      };
-    };
+    zig-flake.url = "github:silversquirl/zig-flake";
     zls-overlay = {
       url = "github:zigtools/zls";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        zig-overlay.follows = "zig-overlay";
+        zig-flake.follows = "zig-flake";
       };
     };
   };

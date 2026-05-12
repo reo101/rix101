@@ -80,7 +80,7 @@
     ## Zig
     # zigpkgs."0.10.1"
     zigpkgs.master
-    # inputs.zls-overlay.packages.x86_64-linux.default
+    # inputs.zls.packages.x86_64-linux.default
   ];
 
   # Enable the GPG Agent daemon.

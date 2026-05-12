@@ -16,16 +16,14 @@
       inputs.flake-parts.follows = "flake-parts";
     };
 
-    zig-overlay = {
-      url = "github:mitchellh/zig-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.follows = "systems";
+    zig-flake = {
+      url = "github:silversquirl/zig-flake";
     };
 
     zls-overlay = {
       url = "github:zigtools/zls";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.zig-overlay.follows = "zig-overlay";
+      inputs.zig-flake.follows = "zig-flake";
     };
 
     wired = {
@@ -83,7 +81,6 @@
         # NOTE: overlays from flake inputs
         [
           inputs.neovim-nightly-overlay.overlays.default
-          inputs.zig-overlay.overlays.default
           inputs.nix-topology.overlays.default
           inputs.wired.overlays.default
           # NOTE: nix-on-droid overlay (needed for `proot`)

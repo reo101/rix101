@@ -99,7 +99,7 @@
 
     # Zig
     zigpkgs.master
-    # inputs.zls-overlay.packages.${pkgs.system}.default
+    # inputs.zls.packages.${pkgs.system}.default
 
     # Android
     android-tools
