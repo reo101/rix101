@@ -130,12 +130,10 @@ in
             snapshot = true;
             refreservation = "200GiB";
           };
-          "root/var/lib/docker" = mkDataset "/var/lib/docker" {
-            refreservation = "100GiB";
-          };
-          "root/var/lib/containers" = mkDataset "/var/lib/containers" {
-            refreservation = "100GiB";
-          };
+          "root/home/steamapps-common" = mkDataset "/home/reo101/.local/share/Steam/steamapps/common" { };
+          "root/home/steam-shadercache" = mkDataset "/home/reo101/.local/share/Steam/steamapps/shadercache" { };
+          "root/var/lib/docker" = mkDataset "/var/lib/docker" { };
+          "root/var/lib/containers" = mkDataset "/var/lib/containers" { };
         };
       };
     };
