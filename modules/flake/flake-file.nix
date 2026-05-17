@@ -162,6 +162,7 @@
 
       hardware = {
         url = "github:nixos/nixos-hardware";
+        inputs.nixpkgs.follows = "nixpkgs";
       };
 
       nixos-apple-silicon = {
@@ -174,6 +175,7 @@
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.flake-parts.follows = "flake-parts";
         inputs.systems.follows = "systems";
+        inputs.nur.follows = "nur";
       };
 
       nix-colors = {
