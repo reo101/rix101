@@ -16,7 +16,10 @@ in
     enable = true;
     package = pkgs.ghostty;
     settings = {
+      # TODO: setup from stylix.opacity
       background-opacity = 0.65;
+      background-opacity-cells = true;
+
       font-family = [
         "Maple Mono NF CN"
       ];
@@ -43,6 +46,7 @@ in
       enable = true;
     };
   };
-  stylix.targets.ghostty.enable = false;
 
+  # BUG: `red` in the `stylix` theme is gray
+  stylix.targets.ghostty.enable = false;
 }

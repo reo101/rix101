@@ -311,8 +311,12 @@ in
               };
             };
           };
+          opacity = lib.mkOption {
+            type = types.nullOr types.anything;
+            description = "Opacity settings passed on to Stylix";
+            default = null;
+          };
         };
-
       };
     };
 
@@ -463,6 +467,9 @@ EOF
       }
       // lib.optionalAttrs (cfg.stylix.cursor != null) {
         cursor = cfg.stylix.cursor;
+      }
+      // lib.optionalAttrs (cfg.stylix.opacity != null) {
+        opacity = cfg.stylix.opacity;
       };
 
       fonts.packages = lib.unique [

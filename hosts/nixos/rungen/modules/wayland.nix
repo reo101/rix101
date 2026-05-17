@@ -36,6 +36,10 @@ in
       fonts.monospace = mapleFont;
       fonts.serif = mapleFont;
       fonts.sansSerif = mapleFont;
+
+      opacity = {
+        terminal = 0.65;
+      };
     };
   };
 }
