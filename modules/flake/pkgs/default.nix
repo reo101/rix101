@@ -21,7 +21,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    zls-overlay = {
+    zls = {
       url = "github:zigtools/zls";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.zig-flake.follows = "zig-flake";

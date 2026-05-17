@@ -1820,6 +1820,7 @@
         "openwrt-imagebuilder": "openwrt-imagebuilder",
         "ragenix": "ragenix",
         "spicetify-nix": "spicetify-nix",
+        "steamlesslink": "steamlesslink",
         "stylix": "stylix",
         "systems": "systems",
         "ukiyo": "ukiyo",
@@ -1827,7 +1828,7 @@
         "yants": "yants",
         "yknotify-rs": "yknotify-rs",
         "zig-flake": "zig-flake",
-        "zls-overlay": "zls-overlay"
+        "zls": "zls"
       }
     },
     "rust-overlay": {
@@ -1945,6 +1946,41 @@
       "original": {
         "owner": "Gerg-L",
         "repo": "spicetify-nix",
+        "type": "github"
+      }
+    },
+    "steamlesslink": {
+      "inputs": {
+        "flake-file": [
+          "flake-file"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "zig-flake": [
+          "zig-flake"
+        ],
+        "zls": [
+          "zls"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780170253,
+        "narHash": "sha256-DrHwAhu3IJYf0bcRmKVu/rUbllu2nZWIeEFmFEGSef0=",
+        "owner": "reo101",
+        "repo": "SteamlessLink",
+        "rev": "df02bb107464f72d9cfa47ba16e653f8a5cc6526",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reo101",
+        "repo": "SteamlessLink",
         "type": "github"
       }
     },
@@ -2309,11 +2345,11 @@
     "xwayland-satellite-unstable": {
       "flake": false,
       "locked": {
-        "lastModified": 1773622265,
-        "narHash": "sha256-wToKwH7IgWdGLMSIWksEDs4eumR6UbbsuPQ42r0oTXQ=",
+        "lastModified": 1779745227,
+        "narHash": "sha256-yqY7RtEJGJiENzR0GwL6q69tSAy6xAAmAcLuIhLjPf8=",
         "owner": "Supreeeme",
         "repo": "xwayland-satellite",
-        "rev": "a879e5e0896a326adc79c474bf457b8b99011027",
+        "rev": "5d1efbc9dc3ab1c10160b656e0247f3325daf0f2",
         "type": "github"
       },
       "original": {
@@ -2368,11 +2404,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778599558,
-        "narHash": "sha256-+0lmCM5GTeM/hNxWkKT2YY2aZWyRlv2Ba14JBnMR0ws=",
+        "lastModified": 1780152801,
+        "narHash": "sha256-xCSRu85yHuluoZzXTh9WVQEUvc6pUCF7dP545kRTj8k=",
         "owner": "silversquirl",
         "repo": "zig-flake",
-        "rev": "fe5012101611ef01250746865a88b1bdcb1af595",
+        "rev": "2420364a60ac6da145f63f03dc81db902ba3cf0d",
         "type": "github"
       },
       "original": {
@@ -2381,7 +2417,7 @@
         "type": "github"
       }
     },
-    "zls-overlay": {
+    "zls": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -2391,11 +2427,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778621944,
-        "narHash": "sha256-PysSHbrzf/Yk1MEJbASSfnDOrn8v0bZ8SWYYNiMT1AA=",
+        "lastModified": 1779828480,
+        "narHash": "sha256-iWKBeY8I10sHZBgFdA12pvOBxTR6c28GKEmDx/YIQik=",
         "owner": "zigtools",
         "repo": "zls",
-        "rev": "5d97c95abe5325178f3553cfc5193b2436e2d82a",
+        "rev": "8da87d4f3305a550e7b739bad764e34bf1e46a08",
         "type": "github"
       },
       "original": {

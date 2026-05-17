@@ -218,6 +218,17 @@
         systems.follows = "systems";
       };
     };
+    steamlesslink = {
+      url = "github:reo101/SteamlessLink";
+      inputs = {
+        flake-file.follows = "flake-file";
+        flake-parts.follows = "flake-parts";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+        zig-flake.follows = "zig-flake";
+        zls.follows = "zls";
+      };
+    };
     stylix = {
       url = "github:danth/stylix";
       inputs = {
@@ -254,7 +265,7 @@
       url = "github:silversquirl/zig-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zls-overlay = {
+    zls = {
       url = "github:zigtools/zls";
       inputs = {
         nixpkgs.follows = "nixpkgs";

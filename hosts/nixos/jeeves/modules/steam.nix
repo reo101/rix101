@@ -7,6 +7,7 @@
 {
   imports = [
     inputs.self.nixosModules.steam
+    inputs.steamlesslink.nixosModules.steamless-uhid
   ];
 
   environment.systemPackages = [
@@ -14,21 +15,15 @@
     pkgs.protonup-ng
     pkgs.r2modman
     pkgs.protontricks
-    pkgs.custom.viiper
-    config.boot.kernelPackages.usbip
   ];
 
-  # VIIPER/USBIP input bridge
-  # NOTE: This lets a remote feeder (like a phone-side controller bridge)
-  # create a virtual USB controller on `jeeves`, while `VIIPER`
-  # auto-attaches it locally through the Linux `USB`/`IP` `VHCI` host.
-  boot.kernelModules = [ "vhci-hcd" ];
-  system.services.viiper.imports = [ pkgs.custom.viiper.services.default ];
-
-  # The remote feeder talks to `VIIPER`'s API port
-  # The raw `USB`/`IP` port remains firewalled
-  # Local auto-attach uses localhost
-  networking.firewall.allowedTCPPorts = [ config.system.services.viiper.viiper.apiPort ];
+  services.steamless-uhid = {
+    enable = true;
+    user = "jeeves";
+    listenHost = "0.0.0.0";
+    listenPort = 3244;
+    openFirewall = true;
+  };
 
   # Steam
   rix101.steam.extest = {

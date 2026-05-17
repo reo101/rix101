@@ -72,6 +72,16 @@
         inputs.flake-parts.follows = "flake-parts";
       };
 
+      steamlesslink = {
+        url = "github:reo101/SteamlessLink";
+        inputs.nixpkgs.follows = "nixpkgs";
+        inputs.flake-parts.follows = "flake-parts";
+        inputs.flake-file.follows = "flake-file";
+        inputs.systems.follows = "systems";
+        inputs.zig-flake.follows = "zig-flake";
+        inputs.zls.follows = "zls";
+      };
+
       crane = {
         url = "github:ipetkov/crane";
       };
