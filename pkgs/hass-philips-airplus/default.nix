@@ -18,7 +18,7 @@ buildHomeAssistantComponent rec {
   };
 
   dependencies = [
-    home-assistant.python.pkgs.paho-mqtt
+    home-assistant.python3Packages.paho-mqtt
   ];
 
   meta = with lib; {
