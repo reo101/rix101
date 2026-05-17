@@ -19,6 +19,82 @@ let
     mkMerge
     ;
 
+  carapaceBridges = "inshellisense,carapace,zsh,fish,bash";
+
+  # Cache dynamic shell init snippets at build time. Spawning helper binaries
+  # just to print mostly-static zsh is very visible on cold or slow filesystems.
+  # Keep the generated files in the Nix store (not XDG_CACHE_HOME) so deleting
+  # user caches never breaks shell startup. Syntax-check every snippet while
+  # building so upstream init-output changes fail early.
+  zshCachedInit =
+    name: nativeBuildInputs: script:
+    pkgs.runCommand "rix101-shell-zsh-${name}-init"
+      {
+        nativeBuildInputs = [ pkgs.zsh ] ++ nativeBuildInputs;
+      }
+      ''
+        mkdir -p "$out"
+        ${script}
+        zsh -n "$out/init.zsh"
+        zsh -fc 'zcompile -UR "$1"' -- "$out/init.zsh"
+      '';
+
+  zshAtuinInit = zshCachedInit "atuin" [ ] ''
+    export HOME="$TMPDIR/home"
+    export XDG_CONFIG_HOME="$TMPDIR/config"
+    export XDG_DATA_HOME="$TMPDIR/data"
+    mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
+
+    ${lib.getExe pkgs.atuin} init zsh > "$out/init.zsh"
+    substituteInPlace "$out/init.zsh" \
+      --replace-fail 'atuin ' '${lib.getExe pkgs.atuin} '
+    substituteInPlace "$out/init.zsh" \
+      --replace-fail 'export ATUIN_SESSION=$(${lib.getExe pkgs.atuin} uuid)' 'if [ -r /proc/sys/kernel/random/uuid ]; then
+        IFS= read -r ATUIN_SESSION < /proc/sys/kernel/random/uuid
+        export ATUIN_SESSION
+    else
+        export ATUIN_SESSION=$(${lib.getExe pkgs.atuin} uuid)
+    fi'
+  '';
+
+  zshCarapaceInit =
+    zshCachedInit "carapace"
+      (
+        [
+          pkgs.bashInteractive
+          pkgs.fish
+        ]
+        ++ lib.optional (
+          pkgs ? inshellisense && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.inshellisense
+        ) pkgs.inshellisense
+      )
+      ''
+        export HOME="$TMPDIR/home"
+        export XDG_CONFIG_HOME="$TMPDIR/config"
+        export CARAPACE_BRIDGES=${lib.escapeShellArg carapaceBridges}
+        mkdir -p "$HOME" "$XDG_CONFIG_HOME"
+
+        ${lib.getExe pkgs.carapace} _carapace zsh > "$out/init.zsh"
+        substituteInPlace "$out/init.zsh" \
+          --replace-fail "$XDG_CONFIG_HOME/carapace" '${config.xdg.configHome}/carapace'
+        substituteInPlace "$out/init.zsh" \
+          --replace-fail 'xargs carapace ' 'xargs ${lib.getExe pkgs.carapace} '
+      '';
+
+  zshDirenvInit = zshCachedInit "direnv" [ ] ''
+    ${lib.getExe pkgs.direnv} hook zsh > "$out/init.zsh"
+  '';
+
+  zshStarshipInit = zshCachedInit "starship" [ ] ''
+    ${lib.getExe pkgs.starship} init zsh > "$out/init.zsh"
+  '';
+
+  zshZoxideInit = zshCachedInit "zoxide" [ ] ''
+    ${lib.getExe pkgs.zoxide} init zsh > "$out/init.zsh"
+    substituteInPlace "$out/init.zsh" \
+      --replace-fail '\command zoxide' '\command ${lib.getExe pkgs.zoxide}'
+  '';
+
   shellAliases = {
     # cp = "${pkgs.custom.advcpmv}/bin/advcp -rvi";
     # mv = "${pkgs.custom.advcpmv}/bin/advmv -vi";
@@ -162,8 +238,7 @@ in
         ])
       ];
 
-    # Atuin
-    home.file."${config.xdg.configHome}/atuin/config.toml" = mkIf cfg.atuin {
+    xdg.configFile."atuin/config.toml" = mkIf cfg.atuin {
       # TODO: use pkgs.substituteAll
       # TODO: agenix?
       text = import ./atuin.nix {
@@ -174,6 +249,7 @@ in
     # Carapace
     programs.carapace = mkIf cfg.carapace {
       enable = true;
+      enableZshIntegration = false;
     };
 
     # Direnv
@@ -181,7 +257,7 @@ in
       enable = true;
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
-      enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      enableZshIntegration = false;
 
       nix-direnv = {
         enable = true;
@@ -199,7 +275,7 @@ in
       };
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
-      enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      enableZshIntegration = false;
     };
 
     # Zellij
@@ -220,7 +296,7 @@ in
       package = pkgs.zoxide;
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
-      enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      enableZshIntegration = false;
     };
 
     # GnuPG
@@ -245,6 +321,7 @@ in
             else
               pkgs.pinentry-tty;
           enableSshSupport = true;
+          enableZshIntegration = false;
           sshKeys = [
             # NOTE: will mainly be using `YubiKey`s, this is a fallback
             "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7"
@@ -253,7 +330,7 @@ in
       )
       // {
         enableNushellIntegration = builtins.elem "nushell" cfg.shells;
-        enableZshIntegration = builtins.elem "zsh" cfg.shells;
+        enableZshIntegration = false;
       };
 
     # Shell
@@ -264,10 +341,11 @@ in
             shellPackage = config.programs.${builtins.head cfg.shells}.package;
           in
           "${shellPackage}/${shellPackage.shellPath}";
+        EDITOR = "nvim";
         MANPAGER = "nvim +Man!";
       }
       (mkIf cfg.carapace {
-        CARAPACE_BRIDGES = "inshellisense,carapace,zsh,fish,bash";
+        CARAPACE_BRIDGES = carapaceBridges;
       })
       (mkIf cfg.direnv {
         DIRENV_WARN_TIMEOUT = "0";
@@ -290,45 +368,47 @@ in
         environmentVariables = { };
       })
       (mkIf cfg.atuin {
-        extraEnv = /* nu' */ ''
-          let atuin_cache = "${config.xdg.cacheHome}/atuin"
-          if not ($atuin_cache | path exists) {
-              mkdir $atuin_cache
-          }
-          ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
-        '';
+        extraEnv = # nu'
+          ''
+            let atuin_cache = "${config.xdg.cacheHome}/atuin"
+            if not ($atuin_cache | path exists) {
+                mkdir $atuin_cache
+            }
+            ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
+          '';
 
-        extraConfig = /* nu' */ ''
-          source ${config.xdg.cacheHome}/atuin/init.nu
+        extraConfig = # nu'
+          ''
+            source ${config.xdg.cacheHome}/atuin/init.nu
 
-          # Ctrl-R
-          $env.config = (
-              $env.config | upsert keybindings (
-                  $env.config.keybindings
-                  | append {
-                      name: atuin
-                      modifier: control
-                      keycode: char_r
-                      mode: [emacs, vi_normal, vi_insert]
-                      event: { send: executehostcommand cmd: (_atuin_search_cmd) }
-                  }
-              )
-          )
+            # Ctrl-R
+            $env.config = (
+                $env.config | upsert keybindings (
+                    $env.config.keybindings
+                    | append {
+                        name: atuin
+                        modifier: control
+                        keycode: char_r
+                        mode: [emacs, vi_normal, vi_insert]
+                        event: { send: executehostcommand cmd: (_atuin_search_cmd) }
+                    }
+                )
+            )
 
-          # Up
-          $env.config = (
-              $env.config | upsert keybindings (
-                  $env.config.keybindings
-                  | append {
-                      name: atuin
-                      modifier: none
-                      keycode: up
-                      mode: [emacs, vi_normal, vi_insert]
-                      event: { send: executehostcommand cmd: (_atuin_search_cmd '--shell-up-key-binding') }
-                  }
-              )
-          )
-        '';
+            # Up
+            $env.config = (
+                $env.config | upsert keybindings (
+                    $env.config.keybindings
+                    | append {
+                        name: atuin
+                        modifier: none
+                        keycode: up
+                        mode: [emacs, vi_normal, vi_insert]
+                        event: { send: executehostcommand cmd: (_atuin_search_cmd '--shell-up-key-binding') }
+                    }
+                )
+            )
+          '';
       })
     ];
 
@@ -338,6 +418,32 @@ in
       package = pkgs.zsh;
 
       enableCompletion = true;
+
+      completionInit = /* sh */ ''
+        autoload -Uz compinit
+
+        _rix101_zcompdump_dir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+        _rix101_zcompdump="$_rix101_zcompdump_dir/zcompdump-$HOST-$ZSH_VERSION"
+        mkdir -p "$_rix101_zcompdump_dir"
+
+        # Fast path: reuse the dump without compaudit. Fall back to a full
+        # compinit when the dump is missing or a Nix profile symlink changed
+        # since it was generated.
+        _rix101_compinit_flags=(-C)
+        if [ ! -s "$_rix101_zcompdump" ]; then
+          _rix101_compinit_flags=(-i)
+        else
+          for _rix101_profile in ''${(z)NIX_PROFILES}; do
+            if [ -e "$_rix101_profile" ] && [ "$_rix101_profile" -nt "$_rix101_zcompdump" ]; then
+              _rix101_compinit_flags=(-i)
+              break
+            fi
+          done
+        fi
+
+        compinit "''${_rix101_compinit_flags[@]}" -d "$_rix101_zcompdump"
+        unset _rix101_compinit_flags _rix101_profile _rix101_zcompdump _rix101_zcompdump_dir
+      '';
 
       dotDir = "${config.xdg.configHome}/zsh";
 
@@ -351,35 +457,73 @@ in
         path = "${config.xdg.dataHome}/zsh/history";
       };
 
-      initContent = lib.concatStringsSep "\n" [
-        ''
-          function take() {
-            mkdir -p "''$''\{@''\}" && cd "''$''\{@''\}"
-          }
-        ''
-        (optionalString cfg.atuin ''
-          export ATUIN_NOBIND="true"
-          eval "$(${pkgs.atuin}/bin/atuin init zsh)"
-          function zvm_after_init() {
-            # bindkey "^r" _atuin_search_widget
-            zvm_bindkey viins "^R" _atuin_search_widget
-          }
+      initContent = mkMerge [
+        (lib.mkOrder 565 /* sh */ ''
+          # - The stock Home Manager `fpath` loop adds the same zsh stdlib
+          #   directory once per profile
+          # - `compinit` then stats ~1200 files
+          #   for every duplicate on cold cache
+          # - Keep profile site/vendor completions,
+          #   but keep only the real zsh package's stdlib
+          fpath+=("${pkgs.zsh}/share/zsh/$ZSH_VERSION/functions")
+          typeset -U fpath
+          _rix101_fpath=()
+          for _rix101_dir in "''${fpath[@]}"; do
+            [ -d "$_rix101_dir" ] || continue
+            case "$_rix101_dir" in
+              */share/zsh/$ZSH_VERSION/functions)
+                [ "$_rix101_dir" = "${pkgs.zsh}/share/zsh/$ZSH_VERSION/functions" ] || continue
+                ;;
+            esac
+            _rix101_fpath+=("$_rix101_dir")
+          done
+          fpath=("''${_rix101_fpath[@]}")
+          unset _rix101_dir _rix101_fpath
         '')
-        # NOTE: done by `programs.direnv`
-        # (optionalString cfg.direnv ''
-        #   eval "$(${pkgs.direnv}/bin/direnv hook zsh)"
-        # '')
-        # NOTE: done by `programs.zoxide`
-        # (optionalString cfg.zoxide ''
-        #   eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
-        # '')
-        ''
-          # Prevent macOS updates from destroying nix
-          if [ -e "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ] && [ "''$''\{SHLVL''\}" -eq 1 ]; then
-            source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
-          fi
-        ''
-        # cfg.extraConfig
+
+        (lib.concatStringsSep "\n" [
+          /* sh */ ''
+            function take() {
+              mkdir -p "''$''\{@''\}" && cd "''$''\{@''\}"
+            }
+          ''
+          (optionalString cfg.atuin /* sh */ ''
+            export ATUIN_NOBIND="true"
+            source ${zshAtuinInit}/init.zsh
+            function zvm_after_init() {
+              # bindkey "^r" _atuin_search_widget
+              zvm_bindkey viins "^R" _atuin_search_widget
+            }
+          '')
+          (optionalString cfg.zoxide /* sh */ ''
+            source ${zshZoxideInit}/init.zsh
+          '')
+          /* sh */ ''
+            # Prevent macOS updates from destroying nix
+            if [ -e "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ] && [ "''$''\{SHLVL''\}" -eq 1 ]; then
+              source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+            fi
+          ''
+          (optionalString cfg.starship /* sh */ ''
+            if [ "''${TERM:-}" != "dumb" ]; then
+              source ${zshStarshipInit}/init.zsh
+            fi
+          '')
+          (optionalString cfg.direnv /* sh */ ''
+            source ${zshDirenvInit}/init.zsh
+          '')
+          (optionalString cfg.carapace /* sh */ ''
+            source ${zshCarapaceInit}/init.zsh
+          '')
+          (optionalString cfg.gpg.enable /* sh */ ''
+            # Keep `pinentry`'s TTY fresh,
+            # but never block prompt rendering on cold gpg/gnupg store paths
+            if [ -n "''${TTY:-}" ]; then
+              { ${lib.getExe' pkgs.gnupg "gpg-connect-agent"} --quiet updatestartuptty /bye >/dev/null 2>&1 &! }
+            fi
+          '')
+          # cfg.extraConfig
+        ])
       ];
 
       plugins = [
