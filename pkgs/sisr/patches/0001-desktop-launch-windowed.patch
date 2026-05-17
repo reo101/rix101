@@ -1,0 +1,13 @@
+diff --git a/sisr.desktop b/sisr.desktop
+index 8270056..743d773 100644
+--- a/sisr.desktop
++++ b/sisr.desktop
+@@ -3,7 +3,7 @@ Version=1.0
+ Type=Application
+ Name=SISR
+ Comment=Steam Input System Redirector
+-Exec=SISR
++Exec=SISR --window-create true --window-fullscreen false
+ Icon=SISR
+ Categories=Utility;Game;
+ Terminal=false

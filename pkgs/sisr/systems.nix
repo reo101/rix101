@@ -1,0 +1,3 @@
+{ stdenv, ... }:
+
+stdenv.hostPlatform.isLinux

@@ -1,0 +1,77 @@
+diff -ruN a/src/app/api/handler/create_marker_shortcut.rs b/src/app/api/handler/create_marker_shortcut.rs
+--- a/src/app/api/handler/create_marker_shortcut.rs	2026-05-20 03:53:10.207455708 +0300
++++ b/src/app/api/handler/create_marker_shortcut.rs	2026-05-20 03:53:10.222455708 +0300
+@@ -81,9 +81,13 @@
+             .into_response();
+     }
+ 
+-    let own_executable_path = std::env::current_exe()
++    let own_executable_path = std::env::var("SISR_EXECUTABLE_PATH")
+         .ok()
+-        .and_then(|path| path.into_os_string().into_string().ok())
++        .or_else(|| {
++            std::env::current_exe()
++                .ok()
++                .and_then(|path| path.into_os_string().into_string().ok())
++        })
+         .unwrap_or_else(|| "unknown".to_string());
+ 
+     let payload = format!(
+diff -ruN a/src/app/steam/util.rs b/src/app/steam/util.rs
+--- a/src/app/steam/util.rs	2026-05-20 03:53:10.210455707 +0300
++++ b/src/app/steam/util.rs	2026-05-20 03:53:10.222455708 +0300
+@@ -306,16 +306,27 @@
+ pub fn shortcuts_has_sisr_marker(shortcuts_path: &PathBuf) -> u32 {
+     let shortcuts = open_shortcuts_vdf(shortcuts_path);
+     trace!("Parsed shortcuts.vdf: {:?}", shortcuts);
+-    let running_executable_path = std::env::var("APPIMAGE")
++    let mut running_path_candidates = Vec::new();
++    if let Ok(path) = std::env::var("SISR_EXECUTABLE_PATH") {
++        running_path_candidates.push(std::path::PathBuf::from(path));
++    }
++    if let Some(path) = std::env::var("APPIMAGE")
+         .ok()
+         .and_then(|p| std::path::PathBuf::from(p).canonicalize().ok())
+-        .or_else(|| std::env::current_exe().ok())
+-        .unwrap_or_default();
+-    let running_path_str = running_executable_path
+-        .to_str()
+-        .unwrap_or_default()
+-        .to_lowercase();
+-    debug!("Current running executable path: {}", running_path_str);
++    {
++        running_path_candidates.push(path);
++    }
++    if let Ok(path) = std::env::current_exe() {
++        running_path_candidates.push(path);
++    }
++    let running_path_candidates: Vec<String> = running_path_candidates
++        .into_iter()
++        .filter_map(|path| path.to_str().map(|s| s.to_lowercase().replace("\\", "/")))
++        .collect();
++    debug!(
++        "Current running executable path candidates: {:?}",
++        running_path_candidates
++    );
+     if let Some(shortcuts_array) = shortcuts.as_object() {
+         for (_key, shortcut) in shortcuts_array {
+             let Some(path) = get_case_insensitive(shortcut, "exe") else {
+@@ -331,10 +342,14 @@
+                 continue;
+             };
+             trace!("Checking shortcut - Path: {}, Args: {}", path_str, args_str);
+-            if path_str
+-                .to_lowercase()
+-                .replace("\\", "/")
+-                .contains(&running_path_str.to_lowercase().replace("\\", "/"))
++            let shortcut_path = path_str.to_lowercase().replace("\\", "/");
++            let shortcut_name_matches = get_case_insensitive(shortcut, "AppName")
++                .and_then(|v| v.as_str())
++                .is_some_and(|name| name.eq_ignore_ascii_case("SISR Marker"));
++            if (shortcut_name_matches
++                || running_path_candidates
++                    .iter()
++                    .any(|running_path| shortcut_path.contains(running_path)))
+                 && args_str.to_lowercase().contains("--marker")
+             {
+                 let app_id = get_case_insensitive(shortcut, "appid")
