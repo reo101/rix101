@@ -1322,6 +1322,26 @@
         "type": "github"
       }
     },
+    "nixos-avf": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769132082,
+        "narHash": "sha256-cJVUBVP3qmRO2HGHqj18ChjOSztyo7eqElQJMRpWXw8=",
+        "owner": "nix-community",
+        "repo": "nixos-avf",
+        "rev": "d0a62c3f64b45a39570fde31a3a490b214bf19ee",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixos-avf",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1779877693,
@@ -1789,6 +1809,7 @@
         "nix-topology": "nix-topology",
         "nixarr": "nixarr",
         "nixos-apple-silicon": "nixos-apple-silicon",
+        "nixos-avf": "nixos-avf",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-for-nod": "nixpkgs-for-nod",
         "nixpkgs-stable": "nixpkgs-stable",

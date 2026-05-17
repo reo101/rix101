@@ -28,6 +28,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+
+    # NixOS for Android Virtualization Framework Terminal
+    nixos-avf = {
+      url = "github:nix-community/nixos-avf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     dnshack = {
       url = "github:ettom/dnshack";
       flake = false;
