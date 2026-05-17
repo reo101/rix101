@@ -34,11 +34,7 @@ let
       node
       // {
         children = builtins.map (
-          child:
-          if child.name == "mode" then
-            leaf "mode" "2560x1600@60.002"
-          else
-            batteryizeNiriNode child
+          child: if child.name == "mode" then leaf "mode" "2560x1600@60.002" else batteryizeNiriNode child
         ) (removeChildrenByName "variable-refresh-rate" node.children);
       }
     else if node.name == "animations" then
@@ -50,21 +46,16 @@ let
       node
       // {
         children = builtins.map (
-          child:
-          if child.name == "blur" then
-            leaf "blur" false
-          else
-            batteryizeNiriNode child
+          child: if child.name == "blur" then leaf "blur" false else batteryizeNiriNode child
         ) node.children;
       }
     else
       node // { children = transformChildren node.children; };
 
   batteryNiriConfig = builtins.map batteryizeNiriNode baseNiriConfig;
-  batteryNiriConfigFile = inputs.niri.lib.internal.validated-config-for
-    pkgs
-    config.programs.niri.package
-    (serialize.nodes batteryNiriConfig);
+  batteryNiriConfigFile =
+    inputs.niri.lib.internal.validated-config-for pkgs config.programs.niri.package
+      (serialize.nodes batteryNiriConfig);
 
   niriPowerSourceSync = pkgs.writeShellApplication {
     name = "niri-power-source-sync";
@@ -129,26 +120,10 @@ in
   imports = [
     inputs.niri.homeModules.niri
     ./noctalia.nix
-    # ./glue.nix
-    # {
-    #   options = let
-    #     inherit (lib) types;
-    #   in {
-    #     programs.niri.settings.layer-rules = lib.mkOption {
-    #       type = types.nullOr (types.listOf (types.submodule {
-    #         options.place-within-backdrop = lib.mkOption {
-    #           type = types.bool;
-    #           default = false;
-    #         };
-    #       }));
-    #     };
-    #   };
-    # }
   ];
 
-  home.packages = with pkgs; [
-    wofi
-    xwayland-satellite
+  home.packages = [
+    pkgs.xwayland-satellite
   ];
 
   xdg.configFile.niri-battery-config = {
@@ -188,27 +163,40 @@ in
     enable = true;
     package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
     # Append raw KDL for options not yet in niri-flake's settings schema
-    config = lib.mkOptionDefault (with inputs.niri.lib.kdl; [
-      (plain "window-rule" [
-        # (leaf "match" {
-        #   app-id = "^ghostty$";
-        # })
-        (plain "background-effect" [
-          (leaf "blur" true)
-          (leaf "xray" false)
+    # NOTE: watch for <https://github.com/sodiboo/niri-flake/issues/1493>
+    config = lib.mkOptionDefault (
+      with inputs.niri.lib.kdl;
+      [
+        (plain "window-rule" [
+          (leaf "match" {
+            app-id = "^com.mitchellh.ghostty$";
+          })
+          (plain "background-effect" [
+            (leaf "blur" true)
+            (leaf "xray" false)
+            (leaf "noise" 0.05)
+            (leaf "saturation" 0.6)
+          ])
         ])
-      ])
-    ]);
+      ]
+    );
     settings = {
       environment = {
         # CLUTTER_BACKEND = "wayland";
         DISPLAY = ":0";
         GDK_BACKEND = "wayland";
+        # Greetd/Niri is not reliably inheriting IME session vars from the
+        # system-level inputMethod module, so export them in the compositor
+        # environment that actually launches GUI apps.
+        GTK_IM_MODULE = "fcitx";
         GTK_USE_PORTAL = "1";
         MOZ_ENABLE_WAYLAND = "1";
         NIXOS_OZONE_WL = "1";
+        QT_IM_MODULE = "fcitx";
         # QT_QPA_PLATFORM = "wayland;xcb";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+        SDL_IM_MODULE = "fcitx";
+        XMODIFIERS = "@im=fcitx";
         # SDL_VIDEODRIVER = "wayland";
         # XDG_SESSION_TYPE = "wayland";
       };
@@ -220,15 +208,11 @@ in
           [
             "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
             "${lib.getExe config.programs.noctalia-shell.package}"
-            # NOTE: using Noctalia Shell for notifications
-            # "${lib.getExe pkgs.wired}"
-            # Defer xwayland-satellite until Noctalia registers on D-Bus
-            # Fixes notifications going to X11 instead of Noctalia on boot/resume
-            "sh -c 'while ! ${lib.getExe' pkgs.dbus "dbus-send"} --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames 2>/dev/null | grep -q org.freedesktop.Notifications; do sleep 0.1; done; ${lib.getExe pkgs.xwayland-satellite}'"
             "${lib.getExe pkgs.mpd-discord-rpc}"
           ];
       clipboard.disable-primary = true;
       hotkey-overlay.skip-at-startup = true;
+      gestures.hot-corners.enable = false;
       binds =
         let
           playerctl = lib.getExe pkgs.playerctl;
@@ -319,7 +303,9 @@ in
 
               "Mod+Shift+S" = {
                 repeat = false;
-                action = { screenshot = []; };
+                action = {
+                  screenshot = [ ];
+                };
               };
 
               "Mod+V" = {
@@ -332,7 +318,9 @@ in
               # Dynamic Cast Target (Presentation)
               "Mod+P" = {
                 repeat = false;
-                action = spawn "sh" "-c" "${niri} msg action set-dynamic-cast-window --id $(${niri} msg --json pick-window | ${jq} .id)";
+                action =
+                  spawn "sh" "-c"
+                    "${niri} msg action set-dynamic-cast-window --id $(${niri} msg --json pick-window | ${jq} .id)";
                 # action = spawn "sh" "-c" "${niri} msg action set-dynamic-cast-window --id $(${niri} msg --json list-windows | ${jq} '.[] | select(.is_active) | .id' | head -1)";
               };
               "Mod+Shift+P" = {
@@ -399,6 +387,9 @@ in
                 ))
 
                 {
+                  "Mod+Up".action = open-overview;
+                  "Mod+Down".action = close-overview;
+
                   "Mod+H".action = focus-window-up-or-column-left;
                   "Mod+J".action = focus-workspace-down;
                   "Mod+K".action = focus-workspace-up;
@@ -542,7 +533,17 @@ in
                 "^(notification)"
               ];
 
-          floatingRules = openFloatingApps ++ [ ];
+          floatingRules = openFloatingApps ++ [
+            {
+              matches = [
+                {
+                  app-id = "^(com\\.hex_rays\\.IDA\\.pro\\._\\d+_\\d+)$";
+                  title = "^(About|IDA: Quick start|[A-Z][a-z]+ [a-z]+\\.\\.\\.)$";
+                }
+              ];
+              open-floating = true;
+            }
+          ];
 
           windowRules = [
             # Float is Baba
@@ -557,12 +558,16 @@ in
             {
               geometry-corner-radius =
                 let
-                  corners = [
-                    "bottom-left"
-                    "bottom-right"
-                    "top-left"
-                    "top-right"
-                  ];
+                  corners = lib.mapCartesianProduct ({ vertical, horizontal }: "${vertical}-${horizontal}") {
+                    vertical = [
+                      "bottom"
+                      "top"
+                    ];
+                    horizontal = [
+                      "left"
+                      "right"
+                    ];
+                  };
                   radius = 10.0;
                 in
                 lib.genAttrs corners (lib.const radius);
@@ -656,6 +661,17 @@ in
                 relative-to = "top-right";
               };
             }
+
+            # # Blurry transparent terminals
+            # {
+            #   matches = [
+            #     { app-id = "^com.mitchellh.ghostty$"; }
+            #   ];
+            #   background-effect = {
+            #     blur = true;
+            #     xray = false;
+            #   };
+            # }
           ];
         in
         windowRules ++ floatingRules;
@@ -696,13 +712,16 @@ in
           xkb = {
             layout = "us,bg";
             variant = ",phonetic";
-            options = lib.pipe {
-              grp = "alt_shift_toggle";
-              # compose = "rctrl";
-            } [
-              (lib.mapAttrsToList (k: v: "${k}:${v}"))
-              (lib.concatStringsSep ",")
-            ];
+            options =
+              lib.pipe
+                {
+                  grp = "alt_shift_toggle";
+                  # compose = "rctrl";
+                }
+                [
+                  (lib.mapAttrsToList (k: v: "${k}:${v}"))
+                  (lib.concatStringsSep ",")
+                ];
           };
         };
         mouse = {
