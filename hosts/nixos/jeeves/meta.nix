@@ -83,5 +83,9 @@
     # Will also fetch all external dependencies from the target system's substituters.
     # This default to `false`
     remoteBuild = true;
+
+    # Give service restarts and activation confirmation enough time on this host.
+    activationTimeout = 600;
+    confirmTimeout = 60;
   };
 }

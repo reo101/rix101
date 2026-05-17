@@ -83,6 +83,20 @@ in {
             type = types.bool;
             default = false;
           };
+          activationTimeout = lib.mkOption {
+            description = ''
+              Timeout for profile activation.
+            '';
+            type = types.int;
+            default = 240;
+          };
+          confirmTimeout = lib.mkOption {
+            description = ''
+              Timeout for profile activation confirmation.
+            '';
+            type = types.int;
+            default = 30;
+          };
         };
       }));
       default = null;
