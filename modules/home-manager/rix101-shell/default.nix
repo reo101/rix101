@@ -114,7 +114,15 @@ let
                 ;
             in
             if isx86_64 && isLinux then
-              "sudo --validate && sudo nixos-rebuild"
+              let
+                nixForRebuild = lib.infuse pkgs.custom.nix-enraged {
+                  __input.monitored.__assign = true;
+                };
+                nixosRebuild = lib.infuse pkgs.nixos-rebuild-ng {
+                  __input.nix.__assign = nixForRebuild;
+                };
+              in
+              "sudo --validate && ${lib.getExe nixosRebuild} --no-reexec --sudo"
             else if isDarwin then
               "darwin-rebuild"
             else if isAarch64 then
