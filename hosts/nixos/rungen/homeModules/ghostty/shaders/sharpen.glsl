@@ -12,7 +12,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec2 texel = 1.0 / iResolution.xy;
   vec2 d = texel * RADIUS_PX;
 
-  vec3 c = texture(iChannel0, uv).rgb;
+  vec4 src = texture(iChannel0, uv);
+  vec3 c = src.rgb;
   vec3 l = texture(iChannel0, uv + vec2(-d.x, 0.0)).rgb;
   vec3 r = texture(iChannel0, uv + vec2(d.x, 0.0)).rgb;
   vec3 u = texture(iChannel0, uv + vec2(0.0, -d.y)).rgb;
@@ -27,5 +28,5 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   detail = clamp(detail, vec3(-CLAMP_MAX), vec3(CLAMP_MAX));
   vec3 outColor = c + detail * (SHARPEN_STRENGTH * mask);
 
-  fragColor = vec4(outColor, 1.0);
+  fragColor = vec4(outColor, src.a);
 }
