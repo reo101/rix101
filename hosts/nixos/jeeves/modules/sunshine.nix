@@ -251,6 +251,8 @@ in
   ];
 
   users.users.jeeves = {
+    linger = true;
+
     extraGroups = [
       "input"
       "uinput"
