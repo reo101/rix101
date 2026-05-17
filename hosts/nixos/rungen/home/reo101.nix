@@ -72,12 +72,6 @@ in
     ))
   ];
 
-  # Discord's Rich Presence (RPC)
-  services.arrpc = {
-    enable = true;
-    package = pkgs.arrpc;
-  };
-
   rix101 = {
     shell = {
       enable = true;
