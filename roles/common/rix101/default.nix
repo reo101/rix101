@@ -15,7 +15,8 @@
   ];
 
   home-manager.modules = [
-    "nix-general"
+    # TODO: have it leave the user `nix.conf` be extensible runtime (`cachix`, etc.)
+    # "nix-general"
     "rix101-shell"
     "rix101-scm"
     "rix101-firefox"
