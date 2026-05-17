@@ -3,12 +3,6 @@
   lib,
   ...
 }:
-let
-  mapleFont = rec {
-    package = pkgs.custom.maple-mono-custom;
-    name = package.fontName;
-  };
-in
 {
   services.xserver.xkb = {
     layout = "us,bg";
@@ -26,12 +20,18 @@ in
     '';
   };
 
+  fonts.packages = [
+    pkgs.custom.maple-mono-custom
+  ];
+
   services.kmscon = {
     enable = true;
     package = pkgs.kmscon;
 
     useXkbConfig = true;
-    hwRender = true;
-    fonts = [ mapleFont ];
+    config = {
+      hwaccel = true;
+      font-name = pkgs.custom.maple-mono-custom.fontName;
+    };
   };
 }

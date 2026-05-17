@@ -13,12 +13,21 @@
 
   services.getty.autologinUser = config.rix101.wayland.user;
 
+  fonts.packages = [
+    config.rix101.wayland.stylix.fonts.monospace.package
+  ];
+
+  # FIXME: still using old `services.kmscon.fonts` & `extraConfig`)
+  stylix.targets.kmscon.enable = false;
+
   services.kmscon = {
     enable = true;
     package = pkgs.kmscon;
 
     useXkbConfig = true;
-    hwRender = true;
-    fonts = [ config.rix101.wayland.stylix.fonts.monospace ];
+    config = {
+      hwaccel = true;
+      font-name = config.rix101.wayland.stylix.fonts.monospace.name;
+    };
   };
 }
