@@ -10,10 +10,12 @@
     extra-experimental-features = [ "pipe-operators" ];
     extra-substituters = [
       "https://nix-on-droid.cachix.org"
+      "https://nix-community.cachix.org"
       "https://rix101.cachix.org"
     ];
     extra-trusted-public-keys = [
       "nix-on-droid.cachix.org-1:56snoMJTXmDRC1Ei24CmKoUqvHJ9XCp+nidK7qkMQrU="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "rix101.cachix.org-1:2u9ZGi93zY3hJXQyoHkNBZpJK+GiXQyYf9J5TLzCpFY="
     ];
   };
