@@ -17,6 +17,9 @@ let
     extractDirectory
     ;
 
+  inputsFor = system:
+    lib.mapAttrs (lib.const (config.perInput system)) inputs;
+
   # Global `pkgs` with flake's overlays and packages
   # See <../pkgs/default.nix>
   pkgsFor =
@@ -130,6 +133,7 @@ let
         # Pass in `inputs` and `meta`
         extraSpecialArgs = {
           inherit inputs;
+          inputs' = inputsFor meta.system;
           inherit meta;
           # inherit lib;
         };
@@ -183,6 +187,7 @@ let
 
       specialArgs = {
         inherit inputs;
+        inputs' = inputsFor meta.system;
         inherit meta;
         inherit lib;
       };
@@ -224,6 +229,7 @@ let
 
       extraSpecialArgs = {
         inherit inputs;
+        inputs' = inputsFor meta.system;
         inherit meta;
         inherit lib;
       };
@@ -266,6 +272,7 @@ let
 
       specialArgs = {
         inherit inputs;
+        inputs' = inputsFor meta.system;
         inherit meta;
         inherit lib;
       };
@@ -288,6 +295,7 @@ let
 
       extraSpecialArgs = {
         inherit inputs;
+        inputs' = inputsFor meta.system;
         inherit meta;
         inherit lib;
       };
