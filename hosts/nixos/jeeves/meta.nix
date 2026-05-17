@@ -21,11 +21,10 @@
       };
       # limonka   = { publicKey = "+x4cKc16KxhW/M3wv64FU1J0AkiLyXT5Oar6I1n1xk4="; };
       # peshoDjam = { publicKey = "37QEe3Lsq5BTIzxqAh9z7clHYeaOaMH31oqi5YvAPBY="; };
-      s42 = {
-        publicKey = "pZF6M8TZ1FSBtTwFz4xzlMqwqRScEqgBfqHBk7ddixc=";
-        hostIndex = 5;
+      s24 = {
+        publicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0=";
+        hostIndex = 6;
       };
-      # a41       = { publicKey = "/YEBfjDO+CfmYOKg9pO//ZAZQNutAS5z/Ggt2pX2gn0="; };
       t420 = {
         publicKey = "YSTgtHXcvbCwYrnBCNujsTkLy+umVZWLGECtV88NIW0=";
         hostIndex = 7;
