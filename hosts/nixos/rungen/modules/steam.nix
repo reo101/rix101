@@ -1,8 +1,6 @@
 {
-  config,
   inputs,
   pkgs,
-  lib,
   ...
 }:
 {
@@ -28,6 +26,8 @@
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "/home/reo101/.steam/root/compatibilitytools.d";
   };
 
+  services.lact.enable = true;
+
   hardware = {
     graphics = {
       enable = true;
@@ -35,9 +35,8 @@
     };
 
     amdgpu = {
-      opencl = {
-        enable = true;
-      };
+      initrd.enable = true;
+      opencl.enable = true;
     };
   };
 
@@ -57,7 +56,8 @@
 
   programs.gamescope = {
     enable = true;
-    capSysNice = true;
+    # FIXME: <https://github.com/nixos/nixpkgs/issues/523200>
+    capSysNice = false;
   };
 
   programs.gamemode.enable = true;
