@@ -14,6 +14,8 @@
         "flakes"
       ];
 
+      max-jobs = lib.mkDefault "auto";
+      auto-optimise-store = lib.mkDefault false;
       keep-outputs = lib.mkDefault true;
       keep-derivations = lib.mkDefault true;
     };

@@ -14,6 +14,7 @@
         "flakes"
       ];
 
+      auto-optimise-store = lib.mkDefault true;
       keep-outputs = lib.mkDefault true;
       keep-derivations = lib.mkDefault true;
     };
