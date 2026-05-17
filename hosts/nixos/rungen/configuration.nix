@@ -16,9 +16,10 @@
     ./modules/nix.nix
     ./modules/sshd.nix
     ./modules/network.nix
+    ./modules/tailscale.nix
     ./modules/hardware.nix
     ./modules/wayland.nix
-    ./modules/graphics.nix
+    ./modules/steam.nix
     ./modules/virtualisation.nix
     ./modules/usb.nix
     {

@@ -40,7 +40,34 @@ in
         pkgs.steam.override (prev: {
           extraEnv = (prev.extraEnv or { }) // {
             LD_PRELOAD = "${cfg.package}/lib/libextest.so";
+
+            # Steam Remote Play's PipeWire capturer uses `GBM`. On NixOS the `GBM`
+            # backend lives under `/run/opengl-driver`, while `pressure-vessel`
+            # usually looks for `/usr/lib/.../gbm/dri_gbm.so`, failing to find
+            # it there and defaulting back to a black-frame stream
+            GBM_BACKENDS_PATH = "/run/opengl-driver/lib/gbm";
           };
+
+          # Required for Steam Remote Play desktop capture on Wayland
+          # Without this Steam falls back to Desktop OpenGL capture and logs:
+          # - ` WARNING: Desktop capture unavailable, try running Steam with -pipewire`
+          extraArgs = lib.concatStringsSep " " [
+            (prev.extraArgs or "")
+            "-pipewire"
+          ];
+
+          # Steam's hardware updater is a bundled `PyInstaller` app that `dlopen()`s
+          # `hidapi` by `soname`. Putting these in Steam's FHS environment lets
+          # Steam's own `steam-runtime-launch-client` updater checks work without
+          # relying on `LD_LIBRARY_PATH` being preserved
+          extraLibraries = pkgs':
+            (prev.extraLibraries or (_: [ ])) pkgs'
+            ++ [
+              pkgs'.hidapi
+              pkgs'.libusb1
+              pkgs'.mesa
+              pkgs'.zlib
+            ];
         })
       );
     };
