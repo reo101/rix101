@@ -6,7 +6,7 @@
   pnpmConfigHook,
   writableTmpDirAsHomeHook,
   sqlite,
-  nodejs_20,
+  nodejs_26,
   pnpm,
   pkg-config,
   formats,
@@ -16,29 +16,29 @@
 
 buildGoModule (finalAttrs: {
   pname = "syncyomi";
-  version = "1.1.4";
+  version = "1.1.7";
 
   src = fetchFromGitHub {
     owner = "syncyomi";
     repo = "syncyomi";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-pU3zxzixKoYnJsGpfvC/SVWIu0adsaiiVcLn0IZe64w=";
+    hash = "sha256-ot8c7+a/YLhjt9HkcI8QZ2ICgtBj3VGJhxtnhWC0f+0=";
   };
 
-  vendorHash = "sha256-fzPEljXFskr1/qzTsnASFNNc+8vA7kqO21mhMqwT44w=";
+  vendorHash = "sha256-7AySGQBQHaTp2M1uj5581ZqcpzgexI1KvanWMOc6rx0=";
 
   # NOTE: `pnpm` building of the `web` directory
   env.pnpmDeps = fetchPnpmDeps {
     pname = "${finalAttrs.pname}-web";
     inherit (finalAttrs) version;
     src = "${finalAttrs.src}/web";
-    fetcherVersion = 2;
-    hash = "sha256-jZi2b+Ng3ebz1xCuEJ+yg52RQTxTytiIanAwq/TH6Xc=";
+    fetcherVersion = 3;
+    hash = "sha256-o+zfqXkgHE9/3VPrJ0llb6ZRBe2R8J0ROM7xtvCVrv4=";
   };
   env.pnpmRoot = "web";
 
   nativeBuildInputs = [
-    nodejs_20
+    nodejs_26
     pkg-config
     pnpm
     # NOTE: uses `env.pnpmDeps` and `env.pnpmRoot` to wire up `PNPM_HOME` and offline store
