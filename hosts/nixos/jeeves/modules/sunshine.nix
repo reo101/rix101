@@ -146,7 +146,7 @@ let
 
     // Spawn gamescope+steam on steam workspace at startup
     // --steam enables Steam integration for controller passthrough
-    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "--output-width" "1920" "--output-height" "1080" "--nested-refresh" "144" "--fullscreen" "--steam" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot" "-steamos3"
+    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "--output-width" "1920" "--output-height" "1080" "--nested-refresh" "144" "--fullscreen" "--steam" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot"
   '';
 
   # Helper to run niri msg with the static socket symlink
