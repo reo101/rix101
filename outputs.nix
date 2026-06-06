@@ -20,6 +20,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       ./modules/flake/agenix
       ./modules/flake/topology
       ./modules/flake/packages
+      ./modules/flake/apps
       ./modules/flake/overlays
       ./modules/flake/shells
       ./modules/flake/templates
@@ -38,6 +39,9 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       # Automatic packages, see `./modules/flake/packages/default.nix`
       packages.enable = true;
 
+      # Automatic apps, see `./modules/flake/apps/default.nix`
+      apps.enable = true;
+
       # Automatic overlays, see `./modules/flake/overlays/default.nix`
       overlays.enable = true;
 
@@ -51,9 +55,6 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
     perSystem =
       { pkgs, ... }:
       {
-        # Apps (`nix run`)
-        apps = import ./apps { inherit pkgs; };
-
         # Formatter (`nix fmt`)
         formatter = pkgs.nixfmt;
       };

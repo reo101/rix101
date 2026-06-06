@@ -49,9 +49,10 @@
 
 - Everything is built upon [flake-parts](https://flake.parts/), with [flake modules](./modules/flake/) for automatic *stuff* extraction
   - Flake metadata (inputs, `description`, `nixConfig`) is managed by [`flake-file`](https://github.com/vic/flake-file) via a [dedicated flake-parts module](./modules/flake/flake-file.nix) — `flake.nix` is an auto-generated artifact (regenerated with `nix run .#write-flake`), keeping it a dumb dependency manifest while all real logic lives in the module tree
-  - Automatic classic (`callPackage`) and `dream2nix` packages extraction
-  - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
   - Automatic `nixos`, `nix-darwin`, `nix-on-droid` and `home-manager` configurations extraction
+  - Automatic `nixos`, `nix-darwin`, `nix-on-droid`, `home-manager` and `flake` modules extraction
+  - Automatic classic (`callPackage`) and `dream2nix` packages extraction
+  - Automatic apps extraction
   - Automatic overlays extraction
   - Automatic devShells extraction
   - Automatic flake templates extraction from `./templates/*/flake.nix`
@@ -61,6 +62,9 @@
   - Check [`./modules/flake/modules`](./modules/flake/modules) for more info on what is extracted from that directory
 - Packages can be found under `./pkgs/...`
   - Check [`./modules/flake/packages`](./modules/flake/packages) for more info on what is extracted from that directory
+- Apps can be found under `./apps/...`
+  - `*.nix` files and directories containing `default.nix` are exposed as `flake.apps`
+  - Check [`./modules/flake/apps`](./modules/flake/apps) for more info on what is extracted from that directory
 - Overlays can be found under `./overlays/...`
   - Check [`./modules/flake/overlays`](./modules/flake/overlays) for more info on what is extracted from that directory
 - Shells can be found under `./shells/...`
