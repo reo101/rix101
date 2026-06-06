@@ -47,17 +47,15 @@ in
     in
     {
       home.packages =
-        with pkgs;
         lib.concatLists [
           (optionals cfg.git.enable [
-            # git
-            gh
+            pkgs.gh
           ])
           (optionals cfg.jj.enable [
-            # jujutsu
-            watchman
-            # Generate jj fix config from .pre-commit-config.yaml
+            pkgs.watchman
+            # Generate `jj fix config` from `.pre-commit-config.yaml`
             pkgs.custom.jj-gen-fix-config
+            pkgs.jjui
           ])
         ];
 
