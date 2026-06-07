@@ -18,6 +18,7 @@
     # username = "reo101";
     homeDirectory = "/data/data/com.termux.nix/files/home";
     stateVersion = "23.05";
+    enableNixpkgsReleaseCheck = false;
   };
 
   # Let Home Manager install and manage itself.

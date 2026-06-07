@@ -53,7 +53,12 @@
   ];
 
   flake.overlays.additions = final: prev: {
-    inherit (config) lib;
+    lib = config.lib // {
+      # HACK: `lib.systems` must match the `nixpkgs` instance's platform records
+      systems = prev.lib.systems;
+      # HACK: old `nixpkgs` packages may reference maintainers missing from current `nixpkgs.lib`
+      maintainers = prev.lib.maintainers // config.lib.maintainers;
+    };
     custom = self.packages.${final.stdenv.hostPlatform.system};
   };
 
@@ -68,7 +73,14 @@
         input:
         import input {
           inherit system;
-          inherit overlays;
+          overlays =
+            overlays
+            ++ lib.optional (!(builtins.pathExists "${input}/lib/services/lib.nix")) (
+              _: _: {
+                # HACK: current Home Manager imports `pkgs.path + /lib/services/lib.nix`
+                path = inputs.nixpkgs;
+              }
+            );
           config = nixpkgsConfig;
         };
       # NOTE: `nixpkgs-stable` -> `pkgs.nixpkgs.stable.*`
