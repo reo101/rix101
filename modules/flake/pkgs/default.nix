@@ -53,6 +53,7 @@
   ];
 
   flake.overlays.additions = final: prev: {
+    inherit (config) lib;
     custom = self.packages.${final.stdenv.hostPlatform.system};
   };
 
