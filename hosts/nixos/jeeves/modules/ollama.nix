@@ -6,6 +6,10 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-rocm;
+    user = "ollama";
+    group = "ollama";
+    home = "/data/.state/ollama";
+    models = "/data/.state/ollama/models";
     host = "0.0.0.0";
     port = 11434;
     environmentVariables = {

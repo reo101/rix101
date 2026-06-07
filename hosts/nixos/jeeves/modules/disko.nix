@@ -233,14 +233,11 @@
                     "compress=zstd"
                   ];
                 };
+                "/data/.state" = { };
                 "/data/media" = { };
                 "/data/torrents" = { };
-                "/data/torrents/download" = { };
-                "/data/torrents/incomplete" = { };
                 "/data/media/jellyfin" = { };
                 "/data/samba" = { };
-                "/data/samba/private" = { };
-                "/data/samba/public" = { };
               };
             };
           };
