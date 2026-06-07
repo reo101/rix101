@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, lib, config, ... }:
 
 let
   microvm-interface = "microvm";
@@ -52,10 +52,11 @@ in
     allowedTCPPorts = [
       # SSH
       22
-      # USPD
+      # UPSD, exposed to guests on the MicroVM bridge only
       (lib.findFirst
-        ({ address, ... }: lib.net.cidr.contains address microvm-network-cidr)
-        (throw "Could not find microvm network in ${config.power.ups.upsd.listen}")
+        ({ address, ... }:
+          address == "0.0.0.0" || lib.net.cidr.contains address microvm-network-cidr)
+        (throw "Could not find UPSD listener for ${microvm-interface} in ${builtins.toJSON config.power.ups.upsd.listen}")
         config.power.ups.upsd.listen).port
     ];
     allowedUDPPorts = [
