@@ -127,7 +127,7 @@ in
               ]
             '';
             example = lib.literalExpression ''
-              [ "noctalia-shell" "ipc" "call" "lockScreen" "lock" ]
+              [ "noctalia" "msg" "session" "lock" ]
             '';
           };
         };

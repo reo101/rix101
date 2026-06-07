@@ -10,10 +10,9 @@ in
     enable = true;
     user = "reo101";
     lock.command = [
-      "noctalia-shell"
-      "ipc"
-      "call"
-      "lockScreen"
+      "noctalia"
+      "msg"
+      "session"
       "lock"
     ];
     portal = {

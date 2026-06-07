@@ -196,6 +196,7 @@ in
         # QT_QPA_PLATFORM = "wayland;xcb";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         SDL_IM_MODULE = "fcitx";
+        TERMINAL = lib.getExe config.programs.ghostty.package;
         XMODIFIERS = "@im=fcitx";
         # SDL_VIDEODRIVER = "wayland";
         # XDG_SESSION_TYPE = "wayland";
@@ -207,7 +208,7 @@ in
           })
           [
             "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
-            "${lib.getExe config.programs.noctalia-shell.package}"
+            "${lib.getExe config.programs.noctalia.package}"
             "${lib.getExe pkgs.mpd-discord-rpc}"
           ];
       clipboard.disable-primary = true;
@@ -231,6 +232,7 @@ in
           tesseract = lib.getExe pkgs.tesseract;
           emacsclient = lib.getExe' config.programs.emacs.package "emacsclient";
           niri = lib.getExe config.programs.niri.package;
+          noctalia = lib.getExe config.programs.noctalia.package;
           jq = lib.getExe pkgs.jq;
           defaultLockCommand = [
             (lib.getExe' pkgs.systemd "loginctl")
@@ -289,13 +291,10 @@ in
                 action = spawn "${foot}";
               };
 
-              "Mod+D".action.spawn = [
-                "noctalia-shell"
-                "ipc"
-                "call"
-                "launcher"
-                "toggle"
-              ];
+              "Mod+D" = {
+                repeat = false;
+                action = spawn "${noctalia}" "msg" "panel-toggle" "launcher";
+              };
               "Mod+Shift+D" = {
                 repeat = false;
                 action = spawn "${wofi}" "--show" "drun";
@@ -424,18 +423,18 @@ in
         {
           matches = [
             {
-              namespace = "^noctalia-overview-";
+              namespace = "^noctalia-wallpaper$";
             }
           ];
-          place-within-backdrop = true;
+          place-within-backdrop = false;
         }
         {
           matches = [
             {
-              namespace = "^noctalia-wallpaper-";
+              namespace = "^noctalia-backdrop$";
             }
           ];
-          place-within-backdrop = false;
+          place-within-backdrop = true;
         }
       ];
       layout = {
