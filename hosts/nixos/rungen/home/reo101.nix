@@ -25,6 +25,8 @@ in
     stateVersion = "25.05";
   };
 
+  rix101.firefox.enable = true;
+
   # NOTE: enable stuff like `Music` dir
   xdg.userDirs = {
     enable = true;

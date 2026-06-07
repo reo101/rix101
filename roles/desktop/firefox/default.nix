@@ -1,5 +1,5 @@
 {
   home-manager = [
-    "rix101-spotify"
+    "rix101-firefox"
   ];
 }

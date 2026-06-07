@@ -1,7 +1,5 @@
 {
-  description = "Shared nix-darwin modules for the author's workstation setup";
-
-  nix-darwin.modules = [
+  nix-darwin = [
     "system"
     "brew"
     "yabai"

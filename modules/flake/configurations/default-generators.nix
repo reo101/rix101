@@ -17,8 +17,7 @@ let
     extractDirectory
     ;
 
-  inputsFor = system:
-    lib.mapAttrs (lib.const (config.perInput system)) inputs;
+  inputsFor = system: lib.mapAttrs (lib.const (config.perInput system)) inputs;
 
   # Global `pkgs` with flake's overlays and packages
   # See <../pkgs/default.nix>
@@ -55,18 +54,6 @@ let
 
   getRole = roleName: (config.flake.roles or { }).${roleName} or (throw "Unknown role '${roleName}'");
 
-  expandRole =
-    path: roleName:
-    if builtins.elem roleName path then
-      throw "Circular role include detected: ${lib.concatStringsSep " -> " (path ++ [ roleName ])}"
-    else
-      let
-        role = getRole roleName;
-      in
-      lib.concatMap (expandRole (path ++ [ roleName ])) (role.includes or [ ]) ++ [ roleName ];
-
-  resolveRoles = roleNames: lib.unique (lib.concatMap (expandRole [ ]) roleNames);
-
   resolveRoleModules =
     hostType: roleNames:
     let
@@ -75,16 +62,11 @@ let
         moduleName:
         registry.${moduleName}
           or (throw "Unknown ${hostType} module '${moduleName}' referenced by role selection");
-      resolveFragment =
-        roleName:
-        let
-          fragment = (getRole roleName).${hostType} or { };
-        in
-        (lib.map resolveModule (fragment.modules or [ ]))
-        ++ (fragment.extraImports or [ ])
-        ++ lib.optional (fragment ? extraConfig && fragment.extraConfig != { }) fragment.extraConfig;
+      moduleNames = lib.unique (
+        lib.concatMap (roleName: (getRole roleName).${hostType} or [ ]) roleNames
+      );
     in
-    lib.concatMap resolveFragment (resolveRoles roleNames);
+    lib.map resolveModule moduleNames;
 
   agenix-module-for =
     host-type:

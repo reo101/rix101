@@ -1,24 +1,21 @@
 {
-  description = "Common rix101 modules for Nix, shell, and source-control tooling";
-
-  nixos.modules = [
+  nixos = [
     "default-editor"
     "nix-general"
   ];
 
-  nix-darwin.modules = [
+  nix-darwin = [
     "nix-general"
   ];
 
-  nix-on-droid.modules = [
+  nix-on-droid = [
     "nix-general"
   ];
 
-  home-manager.modules = [
+  home-manager = [
     # TODO: have it leave the user `nix.conf` be extensible runtime (`cachix`, etc.)
     # "nix-general"
     "rix101-shell"
     "rix101-scm"
-    "rix101-firefox"
   ];
 }

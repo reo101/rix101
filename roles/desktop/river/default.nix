@@ -1,7 +1,9 @@
 {
-  description = "Home Manager support for the custom river desktop setup";
+  nixos = [
+    "desktop"
+  ];
 
-  home-manager.modules = [
+  home-manager = [
     "rix101-river"
   ];
 }

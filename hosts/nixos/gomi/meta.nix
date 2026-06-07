@@ -4,6 +4,7 @@
   roles = [
     "common/rix101"
     "desktop/wayland"
+    "desktop/firefox"
     "system/battery-notify"
   ];
 

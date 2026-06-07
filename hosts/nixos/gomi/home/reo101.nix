@@ -22,6 +22,8 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  rix101.firefox.enable = true;
+
   home.packages = with pkgs; [
     ## Core
     # neovim

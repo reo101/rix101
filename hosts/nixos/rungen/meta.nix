@@ -4,6 +4,7 @@
   roles = [
     "common/rix101"
     "desktop/wayland"
+    "desktop/firefox"
   ];
 
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2SviyDaz+wZpQpn9PwYnz/Jl4C4MsxiK6A2NmfRKY2 root@rungen";

@@ -1,7 +1,5 @@
 {
-  description = "Shared self-hosted service modules used by server-style NixOS hosts";
-
-  nixos.modules = [
+  nixos = [
     "slskd"
     "taskchampion-sync-server"
     "vaultwarden"

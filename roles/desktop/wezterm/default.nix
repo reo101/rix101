@@ -1,7 +1,5 @@
 {
-  description = "Home Manager support for the shared WezTerm setup";
-
-  home-manager.modules = [
+  home-manager = [
     "rix101-wezterm"
   ];
 }
