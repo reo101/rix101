@@ -45,31 +45,38 @@ in
 
   options.syncyomi = {
     package = lib.mkOption {
+      type = types.package;
       description = "Package to use for SyncYomi.";
       defaultText = "The syncyomi package that provided this module.";
-      type = types.package;
     };
 
     dataDir = lib.mkOption {
       type = types.path;
-      default = defaultDataDir;
-      example = "/srv/syncyomi";
       description = ''
         State directory where SyncYomi stores its data.
 
         When left at the default, the systemd unit manages it through
         `StateDirectory`.
       '';
+      default = defaultDataDir;
+      example = "/srv/syncyomi";
     };
 
     configDir = lib.mkOption {
       type = types.path;
-      default = "${cfg.dataDir}/config";
       description = "Directory passed to `--config` (`SyncYomi` writes files here).";
+      default = "${cfg.dataDir}/config";
     };
 
     config = lib.mkOption {
       type = tomlFormat.type;
+      description = ''
+        Full declarative configuration for SyncYomi.
+        Written once to `${cfg.configDir}/config.toml` if it does not exist.
+
+        The `server.port` is automatically set from `syncyomi.port`
+        unless overridden here.
+      '';
       default = { };
       apply =
         serviceConfig:
@@ -80,54 +87,47 @@ in
           }
           serviceConfig
         ];
-      description = ''
-        Full declarative configuration for SyncYomi.
-        Written once to `${cfg.configDir}/config.toml` if it does not exist.
-
-        The `server.port` is automatically set from `syncyomi.port`
-        unless overridden here.
-      '';
     };
 
     user = lib.mkOption {
       type = types.nullOr types.str;
-      default = null;
-      example = "syncyomi";
       description = ''
         User the service runs as.
 
         When left as `null`, the unit uses `DynamicUser`.
       '';
+      default = null;
+      example = "syncyomi";
     };
 
     group = lib.mkOption {
       type = types.nullOr types.str;
-      default = null;
-      example = "syncyomi";
       description = ''
         Group the service runs as.
 
         When left as `null`, the unit uses `DynamicUser`.
       '';
+      default = null;
+      example = "syncyomi";
     };
 
     port = lib.mkOption {
       type = types.port;
-      default = 8282;
       description = "TCP port SyncYomi listens on.";
+      default = 8282;
     };
 
     extraArgs = lib.mkOption {
       type = types.listOf types.str;
+      description = "Extra command-line arguments passed to SyncYomi.";
       default = [ ];
       example = [ "--log-level=debug" ];
-      description = "Extra command-line arguments passed to SyncYomi.";
     };
 
     environment = lib.mkOption {
       type = types.attrsOf types.str;
-      default = { };
       description = "Extra environment variables for the service.";
+      default = { };
     };
   };
 

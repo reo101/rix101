@@ -21,15 +21,15 @@ in
 
     package = mkOption {
       type = types.package;
+      description = "extest package to preload into Steam.";
       default = pkgs.custom.extest;
       defaultText = "pkgs.custom.extest";
-      description = "extest package to preload into Steam.";
     };
 
     users = mkOption {
       type = types.listOf types.str;
-      default = [ ];
       description = "Users allowed to create virtual input devices for extest.";
+      default = [ ];
     };
   };
 
@@ -60,7 +60,8 @@ in
           # `hidapi` by `soname`. Putting these in Steam's FHS environment lets
           # Steam's own `steam-runtime-launch-client` updater checks work without
           # relying on `LD_LIBRARY_PATH` being preserved
-          extraLibraries = pkgs':
+          extraLibraries =
+            pkgs':
             (prev.extraLibraries or (_: [ ])) pkgs'
             ++ [
               pkgs'.hidapi

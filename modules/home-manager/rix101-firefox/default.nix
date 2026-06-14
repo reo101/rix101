@@ -161,11 +161,11 @@ in
 
     browsers = lib.mkOption {
       type = lib.types.listOf (lib.types.enum supportedBrowsers);
-      default = [ "librewolf" ];
-      apply = lib.unique;
       description = ''
         Firefox-like Home Manager `programs.*` modules to configure
       '';
+      default = [ "librewolf" ];
+      apply = lib.unique;
     };
   };
 

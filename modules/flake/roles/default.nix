@@ -29,9 +29,6 @@ in
   ];
 
   options.auto.roles = lib.mkOption {
-    description = ''
-      Automagically generate host-composition roles from the `roles/` registry
-    '';
     type = types.submodule (_: {
       options = {
         enable = lib.mkEnableOption "Automatic roles extraction";
@@ -54,6 +51,9 @@ in
         };
       };
     });
+    description = ''
+      Automagically generate host-composition roles from the `roles/` registry
+    '';
     default = { };
   };
 

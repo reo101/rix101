@@ -3,8 +3,8 @@
 in {
   options = {
     gui = lib.mkOption {
-      description = "Enable GUI features";
       type = types.bool;
+      description = "Enable GUI features";
       default = false;
     };
   };

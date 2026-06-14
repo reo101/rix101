@@ -18,32 +18,32 @@ in
       enable = mkEnableOption "rix101 Jellyfin config";
       image = mkOption {
         type = types.strMatching ".+/.+:.+";
-        default = "docker.io/jellyfin/jellyfin:latest";
-        defaultText = "docker.io/jellyfin/jellyfin:latest";
         description = ''
           The Docker image for Jellyfin
         '';
+        default = "docker.io/jellyfin/jellyfin:latest";
+        defaultText = "docker.io/jellyfin/jellyfin:latest";
       };
       volumes = mkOption {
         type = types.listOf (types.strMatching ".+:.+");
+        description = ''
+          The volumes the Jellyfin container should bind to
+        '';
         default = [
           "/var/cache/jellyfin/config:/config"
           "/var/cache/jellyfin/cache:/cache"
           "/var/log/jellyfin:/log"
           "/media:/media:ro"
         ];
-        description = ''
-          The volumes the Jellyfin container should bind to
-        '';
       };
       ports = mkOption {
         type = types.listOf (types.strMatching ".+:.+");
-        default = [
-          "8096:8096"
-        ];
         description = ''
           The ports the Jellyfin container should bind to
         '';
+        default = [
+          "8096:8096"
+        ];
       };
     };
   };

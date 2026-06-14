@@ -534,13 +534,13 @@ in
               };
               cachePath = mkOption {
                 type = types.nullOr types.path;
-                default = null;
                 description = ''
                   Optional path to a nix-openwrt-imagebuilder cache release directory.
                   You can point this to `${self}/modules/flake/configurations/openwrt-cache/<release>`
                   to reuse a repository-local shared cache override.
                   Useful when upstream package indexes drift before the input cache is refreshed.
                 '';
+                default = null;
               };
             };
         };

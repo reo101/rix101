@@ -26,32 +26,32 @@ in
 
     backupDir = mkOption {
       type = types.str;
-      default = "/var/local/vaultwarden/backup";
       description = "Directory used for Vaultwarden backups";
+      default = "/var/local/vaultwarden/backup";
     };
 
     signupsAllowed = mkOption {
       type = types.bool;
-      default = true;
       description = "Whether new Vaultwarden signups are allowed";
+      default = true;
     };
 
     rocketAddress = mkOption {
       type = types.str;
-      default = "127.0.0.1";
       description = "Address bound by the Rocket web server";
+      default = "127.0.0.1";
     };
 
     rocketPort = mkOption {
       type = types.port;
-      default = 8222;
       description = "Port bound by the Rocket web server";
+      default = 8222;
     };
 
     rocketLog = mkOption {
       type = types.str;
-      default = "critical";
       description = "Rocket log level";
+      default = "critical";
     };
 
     nginx = {

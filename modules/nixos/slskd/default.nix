@@ -21,8 +21,8 @@ in
 
     restartTriggerFiles = mkOption {
       type = types.listOf types.path;
-      default = [ ];
       description = "Files that should trigger a `slskd` restart when they change";
+      default = [ ];
     };
 
     domain = mkOption {
@@ -32,56 +32,56 @@ in
 
     dataDir = mkOption {
       type = types.str;
-      default = "/var/lib/slskd-data";
       description = "Base directory for large transfer payloads and downloads";
+      default = "/var/lib/slskd-data";
     };
 
     downloadsDir = mkOption {
       type = types.str;
-      default = "${cfg.dataDir}/downloads";
       description = "Directory for completed downloads";
+      default = "${cfg.dataDir}/downloads";
     };
 
     incompleteDir = mkOption {
       type = types.str;
-      default = "${cfg.dataDir}/incomplete";
       description = "Directory for in-progress downloads";
+      default = "${cfg.dataDir}/incomplete";
     };
 
     group = mkOption {
       type = types.str;
-      default = "media";
       description = "Primary group for the slskd service user";
+      default = "media";
     };
 
     shares = mkOption {
       type = types.listOf types.str;
-      default = [ ];
       description = "Directories shared with Soulseek peers";
+      default = [ ];
     };
 
     description = mkOption {
       type = types.str;
-      default = cfg.domain;
       description = "Soulseek peer description reported by slskd";
+      default = cfg.domain;
     };
 
     listenPort = mkOption {
       type = types.port;
-      default = 50300;
       description = "Soulseek listen port";
+      default = 50300;
     };
 
     openFirewall = mkOption {
       type = types.bool;
-      default = true;
       description = "Whether to open the upstream module's firewall rules";
+      default = true;
     };
 
     umask = mkOption {
       type = types.str;
-      default = "0002";
       description = "UMask applied to the slskd service";
+      default = "0002";
     };
 
     nginx = {

@@ -16,13 +16,12 @@ in
 
     batteryName = mkOption {
       type = types.nullOr types.str;
-      default = null;
       description = "Battery device name (e.g., BAT0). If null, auto-detection will be used.";
+      default = null;
       example = "BAT0";
     };
 
     thresholds = mkOption {
-      description = "thresholds for battery levels";
       type = types.submodule {
         options = {
           critical = mkOption {
@@ -44,18 +43,18 @@ in
           };
         };
       };
-      default = {};
+      description = "thresholds for battery levels";
+      default = { };
     };
 
     criticalTimeout = mkOption {
       type = types.int;
-      default = 30;
       description = "Timeout in seconds to wait for charging after critical notification.";
+      default = 30;
     };
 
     # Timer settings as a submodule
     timer = mkOption {
-      description = "Timer settings for battery checks";
       type = types.submodule {
         options = {
           checkIntervalMinutes = mkOption {
@@ -73,7 +72,8 @@ in
           };
         };
       };
-      default = {};
+      description = "Timer settings for battery checks";
+      default = { };
     };
   };
 
@@ -84,12 +84,15 @@ in
         assertion = cfg.criticalTimeout < (cfg.timer.checkIntervalMinutes * 60);
         message = ''
           Battery notification critical timeout (${toString cfg.criticalTimeout}s) must be less than check interval
-          (${toString cfg.timer.checkIntervalMinutes} minutes = ${toString (cfg.timer.checkIntervalMinutes * 60)}s)
+          (${toString cfg.timer.checkIntervalMinutes} minutes = ${
+            toString (cfg.timer.checkIntervalMinutes * 60)
+          }s)
           to prevent overlapping service executions.
         '';
       }
       {
-        assertion = cfg.thresholds.critical <= cfg.thresholds.low && cfg.thresholds.low <= cfg.thresholds.mid;
+        assertion =
+          cfg.thresholds.critical <= cfg.thresholds.low && cfg.thresholds.low <= cfg.thresholds.mid;
         message = ''
           Battery thresholds must be in non-decreasing order:
           critical (${toString cfg.thresholds.critical}) <= low (${toString cfg.thresholds.low}) <= mid (${toString cfg.thresholds.mid}).
@@ -109,7 +112,8 @@ in
           "BATTERY_LOW=${toString cfg.thresholds.low}"
           "BATTERY_MID=${toString cfg.thresholds.mid}"
           "BATTERY_TIMEOUT=${toString cfg.criticalTimeout}"
-        ] ++ (optional (cfg.batteryName != null) "BATTERY=${cfg.batteryName}");
+        ]
+        ++ (optional (cfg.batteryName != null) "BATTERY=${cfg.batteryName}");
       };
     };
 

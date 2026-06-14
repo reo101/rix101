@@ -16,8 +16,8 @@ in
 
     port = mkOption {
       type = types.port;
-      default = 10222;
       description = "Port for `services.taskchampion-sync-server`";
+      default = 10222;
     };
 
     domain = mkOption {

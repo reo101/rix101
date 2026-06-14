@@ -3,8 +3,8 @@
 in {
   options = {
     enable = lib.mkOption {
-      description = "Whether to enable this host's configuration";
       type = types.bool;
+      description = "Whether to enable this host's configuration";
       default = host != "__template__";
     };
   };

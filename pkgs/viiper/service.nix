@@ -18,40 +18,40 @@ in
 
   options.viiper = {
     package = lib.mkOption {
+      type = types.package;
       description = "Package to use for VIIPER.";
       defaultText = "The viiper package that provided this module.";
-      type = types.package;
     };
 
     usbAddress = lib.mkOption {
       type = types.str;
-      default = ":3241";
       description = "USB/IP server listen address.";
+      default = ":3241";
     };
 
     apiPort = lib.mkOption {
       type = types.port;
-      default = 3242;
       description = "VIIPER API server listen port.";
+      default = 3242;
     };
 
     apiAddress = lib.mkOption {
       type = types.str;
+      description = "VIIPER API server listen address.";
       default = ":${toString cfg.apiPort}";
       defaultText = ''":${toString config.viiper.apiPort}"'';
-      description = "VIIPER API server listen address.";
     };
 
     autoAttachLocalClient = lib.mkOption {
       type = types.bool;
-      default = true;
       description = "Whether VIIPER should auto-attach created devices to the local USB/IP client.";
+      default = true;
     };
 
     requireLocalhostAuth = lib.mkOption {
       type = types.bool;
-      default = false;
       description = "Whether localhost clients must authenticate to the VIIPER API.";
+      default = false;
     };
 
     logLevel = lib.mkOption {
@@ -62,21 +62,21 @@ in
         "warn"
         "error"
       ];
-      default = "info";
       description = "VIIPER log level.";
+      default = "info";
     };
 
     extraArgs = lib.mkOption {
       type = types.listOf types.str;
+      description = "Extra command-line arguments passed to `viiper server`.";
       default = [ ];
       example = [ "--connection-timeout=10s" ];
-      description = "Extra command-line arguments passed to `viiper server`.";
     };
 
     environment = lib.mkOption {
       type = types.attrsOf types.str;
-      default = { };
       description = "Extra environment variables for the service.";
+      default = { };
     };
   };
 

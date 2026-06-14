@@ -3,8 +3,8 @@
 in {
   options = {
     pubkey = lib.mkOption {
-      description = "The host SSH key, used for encrypting agenix secrets";
       type = types.nullOr types.str;
+      description = "The host SSH key, used for encrypting agenix secrets";
       default = null;
     };
   };

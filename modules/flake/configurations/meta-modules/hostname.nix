@@ -3,8 +3,8 @@
 in {
   options = {
     hostname = lib.mkOption {
-      description = "Hostname of the machine";
       type = types.str;
+      description = "Hostname of the machine";
       default = host;
     };
   };

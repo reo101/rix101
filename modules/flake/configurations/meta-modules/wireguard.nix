@@ -17,8 +17,6 @@ in
 {
   options = {
     wireguardServer = lib.mkOption {
-      description = "WireGuard server peer configuration";
-      default = null;
       type = types.nullOr (
         types.submodule (
           { config, options, ... }:
@@ -128,6 +126,8 @@ in
           }
         )
       );
+      description = "WireGuard server peer configuration";
+      default = null;
     };
   };
 }

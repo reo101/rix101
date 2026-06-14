@@ -18,17 +18,17 @@ in
       enable = mkEnableOption "rix101 Mindustry config";
       version = mkOption {
         type = types.str;
-        default = "146";
         description = ''
           Game version to run
         '';
+        default = "146";
       };
       # jarUrl = mkOption {
       #   type = types.str;
-      #   default = "https://github.com/Anuken/Mindustry/releases/download/v${cfg.version}/Mindustry.jar";
-      #   description = ''
-      #     URL of the game server jar
-      #   '';
+      description = ''
+        #     URL of the game server jar
+        #   '';
+      default = "https://github.com/Anuken/Mindustry/releases/download/v${cfg.version}/Mindustry.jar";
       # };
       # jarSha256 = mkOption {
       #   type = types.str;

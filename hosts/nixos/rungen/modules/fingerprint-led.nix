@@ -14,14 +14,14 @@ in
 
     ledPath = lib.mkOption {
       type = lib.types.str;
-      default = "/sys/class/leds/chromeos:white:power";
       description = "Path to the LED sysfs interface";
+      default = "/sys/class/leds/chromeos:white:power";
     };
 
     blinkInterval = lib.mkOption {
       type = lib.types.int;
-      default = 200;
       description = "Blink interval in milliseconds";
+      default = 200;
     };
   };
 

@@ -57,6 +57,7 @@ in
 
         user = lib.mkOption {
           type = types.str;
+          description = "Primary desktop user used by `greetd` and Home Manager lookups";
           default =
             let
               hmUsers = builtins.attrNames (lib.attrByPath [ "home-manager" "users" ] { } config);
@@ -66,7 +67,6 @@ in
               builtins.head hmUsers
             else
               throw "`rix101.wayland.user` must be set explicitly when home-manager user count is not exactly one (found ${builtins.toString hmUserCount})";
-          description = "Primary desktop user used by `greetd` and Home Manager lookups";
         };
 
         niri = {
@@ -379,42 +379,42 @@ in
           --subst-var-by PORTTY_SEL ${lib.escapeShellArg (lib.getExe' porttyHelperPackage "sel")} \
           --subst-var-by PORTTY_SUBMIT ${lib.escapeShellArg (lib.getExe' porttyHelperPackage "submit")}
       '';
-      porttyPortalUseIn = lib.unique (
-        cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames
-      );
-      porttyPortalPackage = pkgs.runCommandLocal "portty-portal-metadata-${cfg.portal.portty.package.version or "unknown"}" { } ''
-install -Dm644 /dev/stdin "$out/share/xdg-desktop-portal/portals/tty.portal" <<'EOF'
-[portal]
-DBusName=org.freedesktop.impl.portal.desktop.tty
-Interfaces=org.freedesktop.impl.portal.FileChooser;org.freedesktop.impl.portal.Screenshot
-UseIn=${lib.concatStringsSep ";" porttyPortalUseIn}
-EOF
+      porttyPortalUseIn = lib.unique (cfg.portal.portty.useInDesktops ++ cfg.portal.desktopNames);
+      porttyPortalPackage =
+        pkgs.runCommandLocal "portty-portal-metadata-${cfg.portal.portty.package.version or "unknown"}" { }
+          ''
+            install -Dm644 /dev/stdin "$out/share/xdg-desktop-portal/portals/tty.portal" <<'EOF'
+            [portal]
+            DBusName=org.freedesktop.impl.portal.desktop.tty
+            Interfaces=org.freedesktop.impl.portal.FileChooser;org.freedesktop.impl.portal.Screenshot
+            UseIn=${lib.concatStringsSep ";" porttyPortalUseIn}
+            EOF
 
-install -Dm644 /dev/stdin "$out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.tty.service" <<'EOF'
-[D-BUS Service]
-Name=org.freedesktop.impl.portal.desktop.tty
-Exec=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
-SystemdService=portty.service
-EOF
+            install -Dm644 /dev/stdin "$out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.tty.service" <<'EOF'
+            [D-BUS Service]
+            Name=org.freedesktop.impl.portal.desktop.tty
+            Exec=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
+            SystemdService=portty.service
+            EOF
 
-install -Dm644 /dev/stdin "$out/lib/systemd/user/portty.service" <<'EOF'
-[Unit]
-Description=Portty - XDG Desktop Portal for TTY
-After=graphical-session.target
+            install -Dm644 /dev/stdin "$out/lib/systemd/user/portty.service" <<'EOF'
+            [Unit]
+            Description=Portty - XDG Desktop Portal for TTY
+            After=graphical-session.target
 
-[Service]
-Type=simple
-Environment=DISPLAY=
-Environment=GDK_BACKEND=wayland
-ExecStart=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
-Restart=on-failure
-RestartSec=5
+            [Service]
+            Type=simple
+            Environment=DISPLAY=
+            Environment=GDK_BACKEND=wayland
+            ExecStart=${lib.getExe' porttyHelperPackage "porttyd-wayland-wrapper"}
+            Restart=on-failure
+            RestartSec=5
 
-[Install]
-WantedBy=default.target
-WantedBy=graphical-session.target
-EOF
-      '';
+            [Install]
+            WantedBy=default.target
+            WantedBy=graphical-session.target
+            EOF
+          '';
       portalPackageByBackend = {
         gnome = pkgs.xdg-desktop-portal-gnome;
         gtk = pkgs.xdg-desktop-portal-gtk;

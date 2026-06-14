@@ -15,22 +15,22 @@ in
 
     package = lib.mkOption {
       type = types.package;
-      default = pkgs.yubikey-touch-detector;
-      defaultText = "pkgs.yubikey-touch-detector";
       description = ''
         Package to use. Binary is expected to be called "yubikey-touch-detector".
       '';
+      default = pkgs.yubikey-touch-detector;
+      defaultText = "pkgs.yubikey-touch-detector";
     };
 
     socket.enable = lib.mkEnableOption "starting the process only when the socket is used";
 
     extraArgs = lib.mkOption {
       type = types.listOf types.str;
-      default = [ "--libnotify" ];
-      defaultText = lib.literalExpression ''[ "--libnotify" ]'';
       description = ''
         Extra arguments to pass to the tool. The arguments are not escaped.
       '';
+      default = [ "--libnotify" ];
+      defaultText = lib.literalExpression ''[ "--libnotify" ]'';
     };
   };
 

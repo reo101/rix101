@@ -145,17 +145,16 @@ in
     rix101.shell = {
       enable = mkEnableOption "rix101 shell setup";
       username = mkOption {
-        description = "Username to be used (for prompt)";
         type = types.str;
+        description = "Username to be used (for prompt)";
         default = "${config.home.username}";
       };
       hostname = mkOption {
-        description = "Hostname to be used (for `rebuild`)";
         type = types.nullOr types.str;
+        description = "Hostname to be used (for `rebuild`)";
         default = null;
       };
       shells = mkOption {
-        description = "Shells to be configured (first one is used for $SHELL)";
         type =
           lib.pipe
             [
@@ -166,29 +165,30 @@ in
               types.enum
               types.listOf
             ];
+        description = "Shells to be configured (first one is used for $SHELL)";
         default = [
           "nushell"
           "zsh"
         ];
       };
       starship = mkOption {
-        description = "Use starship prompt";
         type = types.bool;
+        description = "Use starship prompt";
         default = true;
       };
       atuin = mkOption {
-        description = "Integrate with atuin";
         type = types.bool;
+        description = "Integrate with atuin";
         default = true;
       };
       carapace = mkOption {
-        description = "Integrate with carapace";
         type = types.bool;
+        description = "Integrate with carapace";
         default = true;
       };
       direnv = mkOption {
-        description = "Integrate with direnv";
         type = types.bool;
+        description = "Integrate with direnv";
         default = true;
       };
       gpg = {
@@ -200,18 +200,18 @@ in
         };
       };
       zellij = mkOption {
-        description = "Integrate with zellij";
         type = types.bool;
+        description = "Integrate with zellij";
         default = true;
       };
       zoxide = mkOption {
-        description = "Integrate with zoxide";
         type = types.bool;
+        description = "Integrate with zoxide";
         default = true;
       };
       flakePath = mkOption {
-        description = "Flake path (for `rebuild`)";
         type = types.str;
+        description = "Flake path (for `rebuild`)";
         default = "${config.xdg.configHome}/rix101";
       };
     };
