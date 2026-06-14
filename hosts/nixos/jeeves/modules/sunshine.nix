@@ -183,6 +183,12 @@ in
 
   # NOTE: Base `sunshine` service configuration
 
+  system.services."sunshine-wol-restart" = {
+    imports = [ pkgs.custom.sunshine-wol-restart.services.default ];
+    sunshine-wol-restart.targetMac = config.systemd.network.links."10-eth0".matchConfig.PermanentMACAddress;
+  };
+  networking.firewall.allowedUDPPorts = [ config.system.services."sunshine-wol-restart".sunshine-wol-restart.port ];
+
   services.sunshine = {
     enable = true;
     autoStart = true;
@@ -281,7 +287,6 @@ in
   # Without this, fbcon holds the framebuffer and blocks other DRM clients
   systemd.services.unbind-fbcon = {
     description = "Unbind fbcon to allow headless compositors";
-    wantedBy = [ "multi-user.target" ];
     after = [ "systemd-vconsole-setup.service" ];
     serviceConfig = {
       Type = "oneshot";
@@ -295,6 +300,8 @@ in
   systemd.user.services.sunshine = {
     serviceConfig = {
       PrivateDevices = false;
+      KillSignal = "SIGKILL";
+      TimeoutStopSec = "5s";
     };
   };
 
@@ -325,12 +332,16 @@ in
 
     serviceConfig = {
       Type = "simple";
-      ExecStartPre = "${lib.getExe pkgs.bash} -c 'echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true'";
+      ExecStartPre = pkgs.writeShellScript "niri-prep" ''
+        unlink ${niriSocket} 2>/dev/null || true
+        rm -f /run/user/$(id -u)/niri.*.sock
+        echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+      '';
       ExecStart = "${lib.getExe pkgs.niri} -c ${niriConfig}";
       ExecStartPost = pkgs.writeShellScript "niri-save-socket" ''
         # Wait for niri to create socket (poll up to 10 seconds)
         for i in $(seq 1 20); do
-          SOCKET=$(ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
+          SOCKET=$(ls -t /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
           [ -n "$SOCKET" ] && break
           sleep 0.5
         done
@@ -346,6 +357,8 @@ in
         sleep 0.5
         echo 1 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
       '';
+      KillSignal = "SIGKILL";
+      TimeoutStopSec = "5s";
       Restart = "on-failure";
       RestartSec = "5s";
     };
