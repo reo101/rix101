@@ -1,5 +1,4 @@
 {
-  fetchFromGitHub,
   callPackage,
   rustPlatform,
   ...
@@ -7,11 +6,10 @@
 
 let
   version = "0.2.9";
-  src = fetchFromGitHub {
-    owner = "rustonbsd";
-    repo = "iroh-ssh";
-    rev = version;
-    hash = "sha256-0G2RZbxyxi96FpVPEamfcTrOgPxpFYHmyYg1kQfo7TQ=";
+  # NOTE: not using `fetchFromGitHub`, since that required `IFD`
+  src = builtins.fetchTarball {
+    url = "https://github.com/rustonbsd/iroh-ssh/archive/${version}.tar.gz";
+    sha256 = "sha256-0G2RZbxyxi96FpVPEamfcTrOgPxpFYHmyYg1kQfo7TQ=";
   };
   pkg = callPackage "${src}/nix/package.nix" { };
 in
