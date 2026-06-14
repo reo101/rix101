@@ -1,4 +1,4 @@
-{ inputs, meta, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, config, meta, ... }:
 
 let
   cfg = config.reo101.sherlock;

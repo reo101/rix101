@@ -1,9 +1,4 @@
-{
-  inputs,
-  pkgs,
-  lib,
-  ...
-}:
+{ inputs, lib, pkgs, ... }:
 {
   services.udev.packages = [
     pkgs.qmk-udev-rules

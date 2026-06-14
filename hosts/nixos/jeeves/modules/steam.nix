@@ -1,9 +1,4 @@
-{
-  config,
-  inputs,
-  pkgs,
-  ...
-}:
+{ inputs, pkgs, config, ... }:
 {
   imports = [
     inputs.self.nixosModules.steam

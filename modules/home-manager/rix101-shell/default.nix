@@ -1,10 +1,4 @@
-{
-  meta,
-  lib,
-  pkgs,
-  config,
-  ...
-}:
+{ lib, pkgs, config, meta, ... }:
 
 let
   cfg = config.rix101.shell;

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ lib, pkgs, config, ... }:
 
 let
   # NOTE: GPU and display configuration

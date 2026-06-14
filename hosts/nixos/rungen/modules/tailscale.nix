@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 {
   services.tailscale = {
     enable = true;

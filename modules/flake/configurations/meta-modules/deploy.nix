@@ -1,4 +1,6 @@
-{ config, lib, ... }: let
+{ lib, config, ... }:
+
+let
   inherit (lib) types;
 in {
   options = {

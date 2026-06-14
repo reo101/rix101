@@ -1,9 +1,4 @@
-{
-  inputs,
-  pkgs,
-  lib,
-  ...
-}:
+{ inputs, lib, pkgs, ... }:
 {
   imports = [
     inputs.hardware.nixosModules.framework-16-7040-amd

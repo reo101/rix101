@@ -1,6 +1,9 @@
-{ config, lib, host, ... }: let
+{ lib, config, host, ... }:
+
+let
   inherit (lib) types;
-in {
+in
+{
   options = {
     hostname = lib.mkOption {
       type = types.str;

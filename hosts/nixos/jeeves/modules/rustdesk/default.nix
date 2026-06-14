@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 
 let
   ACMEHost = "jeeves.reo101.xyz";

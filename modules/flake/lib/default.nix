@@ -1,9 +1,4 @@
-{
-  lib,
-  config,
-  self,
-  ...
-}:
+{ self, lib, config, ... }:
 
 {
   key = "rix101.modules.flake.lib";

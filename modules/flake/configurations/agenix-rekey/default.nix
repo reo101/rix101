@@ -1,4 +1,4 @@
-{ inputs, meta, lib, pkgs, config, options, ... }:
+{ inputs, lib, pkgs, config, options, meta, ... }:
 {
   config = {
     # NOTE: `(r)agenix` and `agenix-rekey` modules are imported by `../default.nix`

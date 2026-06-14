@@ -1,9 +1,5 @@
-{
-  inputs,
-  config,
-  lib,
-  ...
-}:
+{ inputs, lib, config, ... }:
+
 let
   inherit (lib) types;
 in

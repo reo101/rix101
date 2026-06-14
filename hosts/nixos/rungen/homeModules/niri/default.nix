@@ -1,11 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  osConfig ? null,
-  pkgs,
-  ...
-}:
+{ inputs, lib, pkgs, config, osConfig ? null, ... }:
 
 let
   inherit (inputs.niri.lib.kdl)

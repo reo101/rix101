@@ -1,4 +1,4 @@
-{ lib, config, self, inputs, ... }:
+{ inputs, self, lib, config, ... }:
 
 {
   key = "rix101.modules.flake.agenix";

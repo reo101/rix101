@@ -1,4 +1,4 @@
-{ inputs, config, lib, osConfig ? null, pkgs, ... }:
+{ inputs, lib, pkgs, config, osConfig ? null, ... }:
 
 {
   imports = [

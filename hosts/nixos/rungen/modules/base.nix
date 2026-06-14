@@ -1,9 +1,4 @@
-{
-  inputs,
-  pkgs,
-  lib,
-  ...
-}:
+{ inputs, lib, pkgs, ... }:
 {
   programs.zsh.enable = true;
 

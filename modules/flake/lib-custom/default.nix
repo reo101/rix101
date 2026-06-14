@@ -1,10 +1,4 @@
-{
-  inputs,
-  lib,
-  config,
-  self,
-  ...
-}:
+{ inputs, self, lib, config, ... }:
 
 {
   key = "rix101.modules.flake.lib-custom";

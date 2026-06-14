@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 
 let
   cfg = config.rix101.steam.extest;

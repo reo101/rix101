@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  config,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 
 let
   cfg = config.services.fingerprint-led;

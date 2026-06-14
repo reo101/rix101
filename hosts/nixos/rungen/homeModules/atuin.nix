@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 {
   # NOTE: See <https://github.com/atuinsh/atuin/issues/952>
   systemd.user.services.atuin-daemon = {

@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 {
   environment.systemPackages = [
     pkgs.powertop

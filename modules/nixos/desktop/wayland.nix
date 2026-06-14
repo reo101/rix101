@@ -1,10 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ inputs, lib, pkgs, config, ... }:
 
 let
   cfg = config.rix101.wayland;

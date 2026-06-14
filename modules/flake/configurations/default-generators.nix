@@ -1,11 +1,4 @@
-{
-  lib,
-  config,
-  self,
-  inputs,
-  withSystem,
-  ...
-}:
+{ inputs, self, lib, config, withSystem, ... }:
 
 let
   # HACK: doesn't get automatically overriden for some reason

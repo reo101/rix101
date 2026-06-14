@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 {
   services.xserver.xkb = {
     layout = "us,bg";

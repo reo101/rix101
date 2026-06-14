@@ -1,10 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  options,
-  ...
-}:
+{ lib, pkgs, config, options, ... }:
 
 {
   config = lib.optionalAttrs (options ? disko) {

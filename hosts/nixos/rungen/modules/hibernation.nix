@@ -1,9 +1,4 @@
-{
-  inputs,
-  pkgs,
-  lib,
-  ...
-}:
+{ inputs, lib, pkgs, ... }:
 {
   boot.zfs.unsafeAllowHibernation = true;
   boot.zfs.forceImportRoot = false;

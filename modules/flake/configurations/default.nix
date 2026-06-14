@@ -1,4 +1,4 @@
-{ lib, config, self, inputs, withSystem, ... }:
+{ inputs, self, lib, config, withSystem, ... }:
 
 {
   key = "rix101.modules.flake.configurations";

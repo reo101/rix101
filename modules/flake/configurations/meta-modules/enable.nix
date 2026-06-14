@@ -1,6 +1,9 @@
-{ config, lib, host, ... }: let
+{ lib, config, host, ... }:
+
+let
   inherit (lib) types;
-in {
+in
+{
   options = {
     enable = lib.mkOption {
       type = types.bool;

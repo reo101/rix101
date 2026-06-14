@@ -1,4 +1,5 @@
-{ config, pkgs, lib, ... }:
+{ lib, pkgs, config, ... }:
+
 let
   inherit (lib)
     types

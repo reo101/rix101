@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ lib, config, ... }:
 
 let
   inherit (lib) types;

@@ -1,11 +1,4 @@
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  meta,
-  ...
-}:
+{ inputs, lib, pkgs, config, meta, ... }:
 
 let
   jeeves-meta = inputs.self.nixosConfigurations.jeeves.meta;
