@@ -76,7 +76,7 @@ let
       age.rekey.localStorageDir =
         {
           nixos = "${inputs.self}/secrets/rekeyed/nixos/${meta.hostname}";
-          homeManager = "${inputs.self}/secrets/rekeyed/home-manager/${config.home.username}@${meta.hostname}";
+          homeManager = "${inputs.self}/secrets/rekeyed/home-manager/${meta.hostname}/${config.home.username}";
         }
         .${host-type} or (throw "agenix-module-for: unsupported host-type '${host-type}'");
     };
