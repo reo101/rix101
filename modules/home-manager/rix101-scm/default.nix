@@ -204,9 +204,9 @@ in
               "stragglers"
             ];
             touch = [
-              "describe"
-              "--reset-author"
-              "--no-edit"
+              "metaedit"
+              "--update-author"
+              "--update-author-timestamp"
             ];
             gh-pr = [
               "util"
