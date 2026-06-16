@@ -7,6 +7,7 @@
     dream2nix = {
       url = "github:nix-community/dream2nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.purescript-overlay.inputs.flake-compat.follows = "flake-compat";
     };
   };
 

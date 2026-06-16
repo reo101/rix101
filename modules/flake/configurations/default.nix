@@ -54,15 +54,17 @@
       inputs.cl-nix-lite.inputs.systems.follows = "systems";
       inputs.cl-nix-lite.inputs.nixpkgs.follows = "nixpkgs";
       inputs.cl-nix-lite.inputs.flake-parts.follows = "flake-parts";
-      inputs.cl-nix-lite.inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.inputs.systems.follows = "systems";
-      inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cl-nix-lite.inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.utils.inputs.systems.follows = "systems";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.utils.follows = "flake-utils";
     };
 
     openwrt-imagebuilder = {

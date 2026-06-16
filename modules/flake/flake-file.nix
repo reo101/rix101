@@ -25,12 +25,6 @@
         url = "github:nix-systems/default";
       };
 
-      nix = {
-        url = "github:DeterminateSystems/nix-src";
-        # inputs.nixpkgs.follows = "nixpkgs";
-        inputs.flake-parts.follows = "flake-parts";
-      };
-
       # Nixpkgs
       nixpkgs = {
         url = "github:nixos/nixpkgs/nixos-unstable";
@@ -65,12 +59,33 @@
         url = "github:vic/flake-file";
       };
 
+       flake-compat = {
+         url = "github:edolstra/flake-compat";
+         flake = false;
+       };
+ 
+       flake-utils = {
+         url = "github:numtide/flake-utils";
+         inputs.systems.follows = "systems";
+       };
+ 
+       gitignore = {
+         url = "github:hercules-ci/gitignore.nix";
+         inputs.nixpkgs.follows = "nixpkgs";
+       };
+ 
+       treefmt-nix = {
+         url = "github:numtide/treefmt-nix";
+         inputs.nixpkgs.follows = "nixpkgs";
+       };
+ 
       steamlesslink = {
         url = "github:reo101/SteamlessLink";
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.flake-parts.follows = "flake-parts";
         inputs.flake-file.follows = "flake-file";
         inputs.systems.follows = "systems";
+        inputs.crane.follows = "crane";
         inputs.zig-flake.follows = "zig-flake";
         inputs.zls.follows = "zls";
       };
@@ -83,11 +98,6 @@
         url = "github:reo101/yknotify-rs";
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.flake-parts.follows = "flake-parts";
-      };
-
-      flake-compat = {
-        url = "github:inclyc/flake-compat";
-        flake = false;
       };
 
       impermanence = {
@@ -121,6 +131,7 @@
       nixarr = {
         url = "github:nix-media-server/nixarr";
         inputs.nixpkgs.follows = "nixpkgs";
+        inputs.treefmt-nix.follows = "treefmt-nix";
       };
 
       # Nix User Repository
@@ -161,6 +172,7 @@
       nixos-apple-silicon = {
         url = "github:tpwrules/nixos-apple-silicon";
         inputs.nixpkgs.follows = "nixpkgs";
+        inputs.flake-compat.follows = "flake-compat";
       };
 
       stylix = {

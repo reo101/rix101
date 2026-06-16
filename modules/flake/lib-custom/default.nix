@@ -44,6 +44,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.systems.follows = "systems";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.dedupe_flake-compat.follows = "flake-compat";
+      inputs.git-hooks.inputs.flake-compat.follows = "flake-compat";
+      inputs.git-hooks.inputs.gitignore.follows = "gitignore";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     nix-optics = {

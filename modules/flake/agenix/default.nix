@@ -19,13 +19,17 @@
       inputs.crane.follows = "crane";
       inputs.agenix.follows = "agenix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.inputs.systems.follows = "systems";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
 
     agenix-rekey = {
       url = "github:oddlama/agenix-rekey";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";
+      inputs.pre-commit-hooks.inputs.gitignore.follows = "gitignore";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
   };
 

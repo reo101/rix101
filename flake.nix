@@ -35,6 +35,11 @@
       inputs = {
         flake-parts.follows = "flake-parts";
         nixpkgs.follows = "nixpkgs";
+        pre-commit-hooks.inputs = {
+          flake-compat.follows = "flake-compat";
+          gitignore.follows = "gitignore";
+        };
+        treefmt-nix.follows = "treefmt-nix";
       };
     };
     alloc = {
@@ -49,8 +54,9 @@
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs = {
+        flake-compat.follows = "flake-compat";
         nixpkgs.follows = "nixpkgs";
-        utils.inputs.systems.follows = "systems";
+        utils.follows = "flake-utils";
       };
     };
     disko = {
@@ -71,16 +77,27 @@
     };
     dream2nix = {
       url = "github:nix-community/dream2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        purescript-overlay.inputs.flake-compat.follows = "flake-compat";
+      };
     };
     flake-compat = {
-      url = "github:inclyc/flake-compat";
+      url = "github:edolstra/flake-compat";
       flake = false;
     };
     flake-file.url = "github:vic/flake-file";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.systems.follows = "systems";
+    };
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     hardware = {
       url = "github:nixos/nixos-hardware";
@@ -93,9 +110,15 @@
     htnl = {
       url = "github:molybdenumsoftware/htnl";
       inputs = {
+        dedupe_flake-compat.follows = "flake-compat";
         flake-parts.follows = "flake-parts";
+        git-hooks.inputs = {
+          flake-compat.follows = "flake-compat";
+          gitignore.follows = "gitignore";
+        };
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
+        treefmt-nix.follows = "treefmt-nix";
       };
     };
     ida-pro = {
@@ -129,12 +152,13 @@
           flake-parts.follows = "flake-parts";
           nixpkgs.follows = "nixpkgs";
           systems.follows = "systems";
-          treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+          treefmt-nix.follows = "treefmt-nix";
         };
-        flake-utils.inputs.systems.follows = "systems";
+        flake-compat.follows = "flake-compat";
+        flake-utils.follows = "flake-utils";
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
-        treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "treefmt-nix";
       };
     };
     microvm = {
@@ -143,7 +167,10 @@
     };
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
-      inputs.flake-parts.follows = "flake-parts";
+      inputs = {
+        flake-parts.follows = "flake-parts";
+        nixpkgs.follows = "nixpkgs";
+      };
     };
     niri = {
       url = "github:sodiboo/niri-flake";
@@ -151,10 +178,6 @@
         nixpkgs.follows = "nixpkgs";
         nixpkgs-stable.follows = "nixpkgs-stable";
       };
-    };
-    nix = {
-      url = "github:DeterminateSystems/nix-src";
-      inputs.flake-parts.follows = "flake-parts";
     };
     nix-colors.url = "github:misterio77/nix-colors";
     nix-darwin = {
@@ -183,11 +206,17 @@
     };
     nixarr = {
       url = "github:nix-media-server/nixarr";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "treefmt-nix";
+      };
     };
     nixos-apple-silicon = {
       url = "github:tpwrules/nixos-apple-silicon";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        flake-compat.follows = "flake-compat";
+        nixpkgs.follows = "nixpkgs";
+      };
     };
     nixos-avf = {
       url = "github:nix-community/nixos-avf";
@@ -237,9 +266,14 @@
       inputs = {
         agenix.follows = "agenix";
         crane.follows = "crane";
-        flake-utils.inputs.systems.follows = "systems";
+        flake-utils.follows = "flake-utils";
         nixpkgs.follows = "nixpkgs";
+        rust-overlay.follows = "rust-overlay";
       };
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
@@ -270,6 +304,10 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     ukiyo = {
       url = "github:74k1/ukiyo";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -279,7 +317,7 @@
       inputs = {
         flake-parts.follows = "flake-parts";
         nixpkgs.follows = "nixpkgs";
-        rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+        rust-overlay.follows = "rust-overlay";
       };
     };
     yants = {
