@@ -46,9 +46,9 @@ let
     hostType:
     {
       nixos = config.flake.nixosModules;
-      "nix-on-droid" = config.flake.nixOnDroidModules;
-      "nix-darwin" = config.flake.darwinModules;
-      "home-manager" = config.flake.homeManagerModules;
+      nix-on-droid = config.flake.nixOnDroidModules;
+      nix-darwin = config.flake.darwinModules;
+      home-manager = config.flake.homeManagerModules;
     }
     .${hostType} or { };
 
@@ -228,14 +228,6 @@ let
       modules = [
         # Main configuration
         configuration
-
-        # (r)agenix && agenix-rekey
-        inputs.ragenix.darwinModules.default
-        inputs.agenix-rekey.darwinModules.default
-        (lib.optionalAttrs (meta.pubkey != null) {
-          age.rekey.hostPubkey = meta.pubkey;
-        })
-        ./agenix-rekey
 
         # Home Manager
         inputs.home-manager.darwinModules.home-manager
@@ -446,9 +438,11 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = resolveRoleModules "nix-darwin" meta.roles;
+          extraModules = resolveRoleModules "nix-darwin" meta.roles ++ [
+            (agenix-module-for "darwin")
+          ];
           extraHomeModules = resolveRoleModules "home-manager" meta.roles ++ [
-            # (agenix-module-for "darwin")
+            (agenix-module-for "homeManager")
           ];
         }
       );
