@@ -1,22 +1,25 @@
 { inputs }:
-{ pkgs
-, lib
-, runCommand
-, makeWrapper
-, writeShellApplication
-, capnproto
+{
+  pkgs,
+  lib,
+  runCommand,
+  makeWrapper,
+  writeShellApplication,
+  capnproto,
 
-, system ? pkgs.stdenv.hostPlatform.system
-, nix' ? pkgs.nixVersions.nix_2_34
-# , nix' ? inputs.nix.packages.${system}.nix
-, nix-monitored' ? inputs.nix-monitored.packages.${system}.default.override {
+  targetSystem ? pkgs.stdenv.hostPlatform.system,
+  nix' ? pkgs.nixVersions.nix_2_34,
+  # , nix' ? inputs.nix.packages.${targetSystem}.nix
+  nix-monitored' ? inputs.nix-monitored.packages.${targetSystem}.default.override {
     nix = nix';
     nix-output-monitor = pkgs.nix-output-monitor;
-  }
-, monitored ? false
-, nix-plugins' ? pkgs.nix-plugins.overrideAttrs (oldAttrs:
+  },
+  monitored ? false,
+  nix-plugins' ? pkgs.nix-plugins.overrideAttrs (
+    oldAttrs:
     let
       isLix = (nix'.pname or null) == "lix";
+
       nixComponentPnames = [
         "nix"
         "nix-cmd"
@@ -27,8 +30,9 @@
         "nix-store"
         "nix-util"
       ];
-    in {
-      buildInputs = lib.pipe (oldAttrs.buildInputs or []) [
+    in
+    {
+      buildInputs = lib.pipe (oldAttrs.buildInputs or [ ]) [
         (lib.filter (drv: !(lib.elem (drv.pname or null) nixComponentPnames)))
         (buildInputs: [ nix' ] ++ lib.optionals isLix [ capnproto ] ++ buildInputs)
       ];
@@ -41,10 +45,11 @@
             ./nix-plugins-nix-2.34.patch
         )
       ];
-    })
-, coreutils
-, rage
-, ...
+    }
+  ),
+  coreutils,
+  rage,
+  ...
 }:
 
 let
@@ -54,56 +59,73 @@ let
   # TODO: rewrite the script in another language
   rage-decrypt-and-cache = writeShellApplication {
     name = "rage-decrypt-and-cache";
-    runtimeInputs = [ coreutils rage ];
+    runtimeInputs = [
+      coreutils
+      rage
+    ];
     text = builtins.readFile ./rage-import-encrypted/rage-decrypt-and-cache.sh;
   };
 
   # Create a modified version of the `extra-builtins` file that uses the wrapped script
-  extra-builtins = runCommand "extra-builtins.nix" {} ''
+  extra-builtins = runCommand "extra-builtins.nix" { } ''
     substitute ${./rage-import-encrypted/default.nix} $out \
       --replace "./rage-decrypt-and-cache.sh" ${lib.getExe rage-decrypt-and-cache}
   '';
 
   # Helper function to convert attrset to Nix config string
-  makeNixConfig = cfg: lib.pipe cfg [
-    (lib.mapAttrsToList (k: v: "${k} = ${toString v}"))
-    (lib.concatStringsSep "\n")
-  ];
+  makeNixConfig =
+    cfg:
+    lib.pipe cfg [
+      (lib.mapAttrsToList (k: v: "${k} = ${toString v}"))
+      (lib.concatStringsSep "\n")
+    ];
 
   # Default Nix configuration
   defaultNixConfig = makeNixConfig {
-    "extra-experimental-features" = lib.concatStringsSep " " ([
-      "nix-command"
-      "flakes"
-    ] ++ lib.optionals (!isLix) [
-      "pipe-operators"
-    ]);
+    "extra-experimental-features" = lib.concatStringsSep " " (
+      [
+        "nix-command"
+        "flakes"
+      ]
+      ++ lib.optionals (!isLix) [
+        "pipe-operators"
+      ]
+    );
     "plugin-files" = "${nix-plugins'}/lib/nix/plugins";
     "extra-builtins-file" = "${extra-builtins}";
   };
   suffix = if monitored then "-monitored" else "";
-  drv = runCommand "nix-enraged${suffix}" {
-    buildInputs = [ makeWrapper ];
-  } ''
-    mkdir $out
-    cp -r ${if monitored then nix-monitored' else nix'}/* $out/
-    chmod +w $out/bin
-    # chmod +w $out/bin/nix${suffix}
+  drv =
+    runCommand "nix-enraged${suffix}"
+      {
+        buildInputs = [ makeWrapper ];
+      }
+      ''
+        mkdir $out
+        cp -r ${if monitored then nix-monitored' else nix'}/* $out/
+        chmod +w $out/bin
+        # chmod +w $out/bin/nix${suffix}
 
-    wrapProgram $out/bin/nix${suffix} \
-      --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
-  '';
-in builtins.addErrorContext "while evaluating nix-enraged (nix' = ${nix'.name or "???"}, pname = ${nix'.pname or "???"})" (drv // {
-  # name = "nix-enraged";
-  out = drv.out // {
-    inherit (nix') pname version;
-    passthru =  drv.out.passthru // {
+        wrapProgram $out/bin/nix${suffix} \
+          --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
+      '';
+in
+builtins.addErrorContext
+  "while evaluating nix-enraged (nix' = ${nix'.name or "???"}, pname = ${nix'.pname or "???"})"
+  (
+    drv
+    // {
+      # name = "nix-enraged";
+      out = drv.out // {
+        inherit (nix') pname version;
+        passthru = drv.out.passthru // {
+          inherit (nix') pname version;
+        };
+      };
+      passthru = {
+        inherit nix';
+      };
+      inherit (nix') dev;
       inherit (nix') pname version;
-    };
-  };
-  passthru = {
-    inherit nix';
-  };
-  inherit (nix') dev;
-  inherit (nix') pname version;
-})
+    }
+  )
