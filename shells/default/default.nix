@@ -16,7 +16,8 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram "$out/bin/${pkgs.deploy-rs.meta.mainProgram}" \
-        --prefix PATH : ${lib.makeBinPath [ nix-enraged-monitored ]}
+        --prefix PATH : ${lib.makeBinPath [ nix-enraged-monitored ]} \
+        --add-flags "--skip-checks"
     '';
   };
 in

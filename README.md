@@ -129,7 +129,7 @@ agenix generate
 nix run nixpkgs#nixos-anywhere -- --flake ".#${HOSTNAME}" --build-on-remote --ssh-port 22 "root@${HOSTNAME}" --no-reboot
 
 # Deploy
-deploy ".#${HOSTNAME}" --skip-checks
+deploy ".#${HOSTNAME}"
 ```
 
 ## MacOS / Darwin (silicon) setup
