@@ -218,7 +218,7 @@ in
         };
       } // lib.pipe hass-theme-packages [
         (lib.concatMap (pkg: lib.map
-          (file: lib.nameValuePair "/var/lib/hass/themes/${file}" { L.argument = "${pkg}/themes/${file}"; })
+          (file: lib.nameValuePair "/var/lib/hass/themes/${file}" { "L+".argument = "${pkg}/themes/${file}"; })
           (lib.attrNames (builtins.readDir "${pkg}/themes"))))
         lib.listToAttrs
       ];
