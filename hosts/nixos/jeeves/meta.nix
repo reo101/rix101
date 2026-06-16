@@ -54,6 +54,10 @@
       iso = {
         hostIndex = 10;
       };
+      dtd = {
+        publicKey = "EC2gIHyM4KSYKYxQWh6azQPHp/IZ0xMpYEZhXSFwFmM=";
+        hostIndex = 11;
+      };
     };
   };
 
