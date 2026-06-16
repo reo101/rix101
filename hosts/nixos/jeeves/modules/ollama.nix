@@ -18,9 +18,9 @@
     };
   };
 
-  services.nginx.virtualHosts."ollama.jeeves.lan" = {
-    enableACME = false;
-    forceSSL = false;
+  services.nginx.virtualHosts."ollama.jeeves.reo101.xyz" = {
+    forceSSL = true;
+    useACMEHost = "jeeves.reo101.xyz";
     locations."/" = {
       proxyPass = "http://127.0.0.1:${builtins.toString config.services.ollama.port}";
       proxyWebsockets = true;
@@ -44,9 +44,9 @@
     # openFirewall = true;
   };
 
-  services.nginx.virtualHosts."openwebui.jeeves.lan" = {
-    enableACME = false;
-    forceSSL = false;
+  services.nginx.virtualHosts."openwebui.jeeves.reo101.xyz" = {
+    forceSSL = true;
+    useACMEHost = "jeeves.reo101.xyz";
     locations."/" = {
       proxyPass = "http://127.0.0.1:${builtins.toString config.services.open-webui.port}";
       proxyWebsockets = true;
