@@ -1,0 +1,65 @@
+diff --git a/src/wayland.rs b/src/wayland.rs
+--- a/src/wayland.rs
++++ b/src/wayland.rs
+@@ -24,20 +24,51 @@ struct OutputData {
+ /// Returns the largest dimensions of the detected monitors
+ #[must_use]
+ pub fn get_axes_range() -> DisplaySize {
+-    let conn = Connection::connect_to_env().unwrap();
++    let fallback = DisplaySize {
++        width: 1920,
++        height: 1080,
++    };
++
++    let conn = match Connection::connect_to_env() {
++        Ok(conn) => conn,
++        Err(err) => {
++            eprintln!(
++                "extest: failed to connect to Wayland compositor ({err:?}); using fallback axes {}x{}",
++                fallback.width, fallback.height
++            );
++            return fallback;
++        }
++    };
++
+     let display = conn.display();
+     let mut queue = conn.new_event_queue();
+     let handle = queue.handle();
+     display.get_registry(&handle, ());
+     let mut data = OutputData::default();
+-    queue.roundtrip(&mut data).unwrap();
++
++    if let Err(err) = queue.roundtrip(&mut data) {
++        eprintln!("extest: failed to query Wayland registry ({err:?}); using fallback axes");
++        return fallback;
++    }
++
++    let Some(output_man) = data.output_man.as_ref() else {
++        eprintln!("extest: compositor has no xdg-output manager; using fallback axes");
++        return fallback;
++    };
+ 
+     for output in data.wl_outputs.iter() {
+-        data.output_man
+-            .as_ref()
+-            .unwrap()
+-            .get_xdg_output(output, &handle, ());
++        output_man.get_xdg_output(output, &handle, ());
++    }
++
++    if let Err(err) = queue.roundtrip(&mut data) {
++        eprintln!("extest: failed to query Wayland outputs ({err:?}); using fallback axes");
++        return fallback;
++    }
++
++    if data.max_size.width <= 0 || data.max_size.height <= 0 {
++        eprintln!("extest: no Wayland output size found; using fallback axes");
++        fallback
++    } else {
++        data.max_size
+     }
+-    queue.roundtrip(&mut data).unwrap();
+-    data.max_size
+ }
+ 
+ impl Dispatch<zxdg_output_v1::ZxdgOutputV1, ()> for OutputData {
