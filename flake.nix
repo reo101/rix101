@@ -212,6 +212,17 @@
         systems.follows = "systems";
       };
     };
+    otzade = {
+      url = "github:reo101/otzade";
+      inputs = {
+        flake-file.follows = "flake-file";
+        flake-parts.follows = "flake-parts";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+        zig-flake.follows = "zig-flake";
+        zls.follows = "zls";
+      };
+    };
     ragenix = {
       url = "github:yaxitech/ragenix";
       inputs = {

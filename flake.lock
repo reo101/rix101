@@ -1670,6 +1670,41 @@
         "type": "github"
       }
     },
+    "otzade": {
+      "inputs": {
+        "flake-file": [
+          "flake-file"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "zig-flake": [
+          "zig-flake"
+        ],
+        "zls": [
+          "zls"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782693240,
+        "narHash": "sha256-pxJwnlfNqoiUlXAOFk/+Ul03AzK2pDwXUkevaXCatog=",
+        "owner": "reo101",
+        "repo": "otzade",
+        "rev": "0b9aa4ade17de47620308723a081c8760c056dab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reo101",
+        "repo": "otzade",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1810,6 +1845,7 @@
         "noctalia": "noctalia",
         "nur": "nur",
         "openwrt-imagebuilder": "openwrt-imagebuilder",
+        "otzade": "otzade",
         "ragenix": "ragenix",
         "spicetify-nix": "spicetify-nix",
         "steamlesslink": "steamlesslink",

@@ -179,6 +179,16 @@
         url = "github:astro/microvm.nix";
         inputs.nixpkgs.follows = "nixpkgs";
       };
+
+      otzade = {
+        url = "github:reo101/otzade";
+        inputs.nixpkgs.follows = "nixpkgs";
+        inputs.flake-parts.follows = "flake-parts";
+        inputs.flake-file.follows = "flake-file";
+        inputs.systems.follows = "systems";
+        inputs.zig-flake.follows = "zig-flake";
+        inputs.zls.follows = "zls";
+      };
     };
   };
 }
