@@ -180,6 +180,14 @@
         inputs.nixpkgs.follows = "nixpkgs";
       };
 
+      ida-pro = {
+        url = "github:reo101/ida-pro-nix";
+        inputs.nixpkgs.follows = "nixpkgs";
+        inputs.flake-parts.follows = "flake-parts";
+        inputs.flake-file.follows = "flake-file";
+        inputs.systems.follows = "systems";
+      };
+
       otzade = {
         url = "github:reo101/otzade";
         inputs.nixpkgs.follows = "nixpkgs";

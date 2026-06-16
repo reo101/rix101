@@ -98,6 +98,15 @@
         systems.follows = "systems";
       };
     };
+    ida-pro = {
+      url = "github:reo101/ida-pro-nix";
+      inputs = {
+        flake-file.follows = "flake-file";
+        flake-parts.follows = "flake-parts";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+      };
+    };
     impermanence = {
       url = "github:nix-community/impermanence";
       inputs = {

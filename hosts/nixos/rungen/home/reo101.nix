@@ -12,6 +12,7 @@ in
     ../homeModules/games.nix
     ../homeModules/ghostty
     ../homeModules/easyeffects.nix
+    inputs.self.modules.home-manager.ida-pro
   ];
 
   home = {

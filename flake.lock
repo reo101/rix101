@@ -823,6 +823,35 @@
         "type": "github"
       }
     },
+    "ida-pro": {
+      "inputs": {
+        "flake-file": [
+          "flake-file"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783470458,
+        "narHash": "sha256-uQSI60+ZUS/13HoP7K5pS61ml+Fg0eSnu3sS2UZ1pUg=",
+        "owner": "reo101",
+        "repo": "ida-pro-nix",
+        "rev": "b9a618686f5f1afc52f73d6685a12827c7e35ff3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reo101",
+        "repo": "ida-pro-nix",
+        "type": "github"
+      }
+    },
     "impermanence": {
       "inputs": {
         "home-manager": [
@@ -1818,6 +1847,7 @@
         "hardware": "hardware",
         "home-manager": "home-manager",
         "htnl": "htnl",
+        "ida-pro": "ida-pro",
         "impermanence": "impermanence",
         "infuse": "infuse",
         "jovian-nixos": "jovian-nixos",
