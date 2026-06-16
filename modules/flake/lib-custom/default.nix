@@ -284,6 +284,12 @@
         (lib.concatMapStrings (mutFirstChar lib.toUpper))
         (mutFirstChar lib.toLower)
       ];
+      # s:
+      # mutFirstChar
+      #   lib.toLower
+      #     (lib.concatMapStrings
+      #       (mutFirstChar lib.toUpper)
+      #       (lib.splitString "-" s));
 
       uci = lib.makeExtensible (self: {
         escape = value: lib.replaceStrings [ "\\" "\"" ] [ "\\\\" "\\\"" ] (toString value);
@@ -302,12 +308,5 @@
 
         renderBatch = lines: lib.concatStringsSep "\n" lines;
       });
-
-      # s:
-      # mutFirstChar
-      #   lib.toLower
-      #     (lib.concatMapStrings
-      #       (mutFirstChar lib.toUpper)
-      #       (lib.splitString "-" s));
     };
 }
