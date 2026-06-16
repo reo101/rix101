@@ -59,7 +59,7 @@
       # HACK: old `nixpkgs` packages may reference maintainers missing from current `nixpkgs.lib`
       maintainers = prev.lib.maintainers // config.lib.maintainers;
     };
-    custom = self.packages.${final.stdenv.hostPlatform.system};
+    custom = self.legacyPackages.${final.stdenv.hostPlatform.system};
   };
 
   perSystem =
