@@ -1,7 +1,7 @@
 { inputs, lib, ... }:
 
 final: prev:
-lib.infuse prev {
+(lib.infuse prev {
   lib.maintainers.reo101.__assign = {
     name = "Pavel Atanasov";
     email = "pavel.atanasov2001@gmail.com";
@@ -74,11 +74,30 @@ lib.infuse prev {
 
   # NOTE: this overlay is applied after neovim-nightly-overlay in rix101, so we
   #       can re-override the nightly packages directly to use the patched LuaJIT.
-  neovim.__input.${if builtins.hasAttr "luajit" prev.neovim.override.__functionArgs then "luajit" else "lua"}.__assign = final.custom.luajitcoroutineclone;
+  neovim.__input.${
+    if builtins.hasAttr "luajit" prev.neovim.override.__functionArgs then "luajit" else "lua"
+  }.__assign =
+    final.custom.luajitcoroutineclone;
   neovim-unwrapped.__assign = final.neovim;
   neovim-debug.__input.neovim.__assign = final.neovim;
   neovim-developer.__input = {
     neovim-debug.__assign = final.neovim-debug;
     neovim-unwrapped.__assign = final.neovim-unwrapped;
   };
-}
+})
+// lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") (
+  let
+    millennium = prev.callPackage "${inputs.millennium}/millennium.nix" {
+      millennium-src = inputs.millennium.inputs.millennium-src;
+    };
+    millennium-steam = prev.callPackage "${inputs.millennium}/steam.nix" {
+      inherit millennium;
+    };
+  in
+  {
+    inherit
+      millennium
+      millennium-steam
+      ;
+  }
+)

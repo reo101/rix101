@@ -21,6 +21,13 @@ in
       defaultText = "pkgs.custom.extest";
     };
 
+    steamPackage = mkOption {
+      type = types.package;
+      description = "Steam package to wrap with extest.";
+      default = pkgs.steam;
+      defaultText = "pkgs.steam";
+    };
+
     users = mkOption {
       type = types.listOf types.str;
       description = "Users allowed to create virtual input devices for extest.";
@@ -32,7 +39,7 @@ in
     programs.steam = {
       extest.enable = true;
       package = lib.mkDefault (
-        pkgs.steam.override (prev: {
+        cfg.steamPackage.override (prev: {
           extraEnv = (prev.extraEnv or { }) // {
             LD_PRELOAD = "${cfg.package}/lib/libextest.so";
 

@@ -42,6 +42,7 @@
 
   rix101.steam.extest = {
     enable = true;
+    steamPackage = pkgs.millennium-steam;
     users = [ "reo101" ];
   };
 

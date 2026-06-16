@@ -23,6 +23,7 @@
   # Steam
   rix101.steam.extest = {
     enable = true;
+    steamPackage = pkgs.millennium-steam;
     users = [ "jeeves" ];
   };
 
