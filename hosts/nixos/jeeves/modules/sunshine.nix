@@ -1,6 +1,11 @@
 { lib, pkgs, config, ... }:
 
 let
+  sunshineUser = "jeeves";
+  sunshineGroup = "users";
+  niriTTY = "tty3";
+  niriVT = "3";
+
   # NOTE: GPU and display configuration
   #
   # card0 / renderD129 = iGPU (AMD Raphael integrated)
@@ -44,14 +49,14 @@ let
     in assert (builtins.stringLength name) <= 12; name;
 
   # Generate EDID binaries using edid-generator with cvt-generated modelines
-  generatedEdids = pkgs.edid-generator.overrideAttrs (old: {
-    nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.libxcvt ];
-    clean = true;
+  generatedEdids = lib.infuse pkgs.edid-generator {
+    __output.nativeBuildInputs.__append = [ pkgs.libxcvt ];
+    __output.clean.__assign = true;
     # Skip validation for non-standard aspect ratios
-    doCheck = false;
+    __output.doCheck.__assign = false;
 
     # Patch modeline2edid to use closest ratio instead of failing on unknown
-    postPatch = (old.postPatch or "") + /* bash */ ''
+    __output.postPatch.__append = /* bash */ ''
       substituteInPlace modeline2edid \
         --replace-fail "[[ \$ratio != 'UNKNOWN' ]] || return 1" \
                        ": # Allow unknown ratios - will use closest match"
@@ -61,7 +66,7 @@ let
                        "find-supported-ratio \$hdisp \$vdisp '16:9'"
     '';
 
-    preConfigure = ''
+    __output.preConfigure.__assign = ''
       # Generate modeline from width, height, refresh, name, and optional ratio
       gen_modeline() {
         local width="$1" height="$2" refresh="$3" name="$4" ratio="$5"
@@ -87,7 +92,7 @@ let
       } > "$NIX_BUILD_TOP/modelines"
       export modelines="$(cat "$NIX_BUILD_TOP/modelines")"
     '';
-  });
+  };
 
   # Primary virtual display (first in list)
   virtualDisplay = builtins.head virtualDisplays;
@@ -99,6 +104,18 @@ let
   sunshineNiriDir = "/var/lib/sunshine-niri";
   niriSocket = "${sunshineNiriDir}/niri.sock";
 
+  steamBigPicture = pkgs.writeShellScript "steam-big-picture" ''
+    exec ${lib.getExe' pkgs.util-linux "setpriv"} --ambient-caps -all --inh-caps -all \
+      ${lib.getExe pkgs.gamescope} \
+        --backend wayland \
+        --output-width 1920 \
+        --output-height 1080 \
+        --nested-refresh 144 \
+        --fullscreen \
+        --steam \
+        -- ${lib.getExe config.programs.steam.package} -tenfoot
+  '';
+
   # Niri config for persistent session with named workspaces
   niriConfig = pkgs.writeText "niri-sunshine.kdl" /* kdl */ ''
     debug {
@@ -108,15 +125,14 @@ let
       ignore-drm-device "/dev/dri/${gpuCards.igpu.render}"
     }
 
-    // Disable physical outputs so niri only uses the virtual display DP-3
-    // NOTE: This prevents fbcon from using DP-1 while niri is running
+    // Keep niri off the real monitor; HDMI stays for tty1 on VT1
+    output "HDMI-A-1" {
+      off
+    }
     output "DP-1" {
       off
     }
     output "DP-2" {
-      off
-    }
-    output "HDMI-A-1" {
       off
     }
 
@@ -143,10 +159,6 @@ let
 
     // Spawn foot on desktop workspace at startup
     spawn-at-startup "${lib.getExe pkgs.foot}"
-
-    // Spawn gamescope+steam on steam workspace at startup
-    // --steam enables Steam integration for controller passthrough
-    spawn-at-startup "${lib.getExe pkgs.gamescope}" "--backend" "wayland" "--output-width" "1920" "--output-height" "1080" "--nested-refresh" "144" "--fullscreen" "--steam" "--" "${lib.getExe config.programs.steam.package}" "-tenfoot"
   '';
 
   # Helper to run niri msg with the static socket symlink
@@ -158,13 +170,37 @@ let
       exit 1
     fi
   '';
+
+  niriFocus = pkgs.writeShellScript "niri-focus" ''
+    for i in $(seq 1 40); do
+      SOCKET=$(ls -t /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
+      if [ -n "$SOCKET" ]; then
+        ln -sfn "$SOCKET" ${niriSocket}
+        ${niriMsg} action focus-workspace "$1" && exit 0
+      fi
+      sleep 0.25
+    done
+    exit 1
+  '';
+
+  steamStart = pkgs.writeShellScript "steam-start" ''
+    ${niriFocus} steam
+    if ! ${lib.getExe' pkgs.procps "pgrep"} -u $(id -u) -f 'gamescope.*steam' >/dev/null; then
+      ${niriMsg} action spawn -- ${steamBigPicture}
+    fi
+  '';
+
+  steamStop = pkgs.writeShellScript "steam-stop" ''
+    ${niriFocus} desktop || true
+    ${lib.getExe' pkgs.procps "pkill"} -TERM -u $(id -u) -f 'gamescope.*steam' || true
+  '';
 in
 {
-  # NOTE: EDID firmware injection for virtual display on dGPU
+  # NOTE: EDID firmware injection for virtual display on `dGPU`
   #
-  # This makes the GPU think a 1080p monitor is connected to DP-3,
-  # allowing GPU-accelerated rendering without a physical display.
-  # Uses pkgs.edid-generator to create the EDID from a modeline.
+  # This makes the GPU think a `1080p` monitor is connected to `DP-3`
+  # allowing GPU-accelerated rendering without a physical display
+  # Uses `pkgs.edid-generator` to create the EDID from a modeline
 
   hardware.display = {
     edid.packages = [ generatedEdids ];
@@ -185,7 +221,11 @@ in
 
   system.services."sunshine-wol-restart" = {
     imports = [ pkgs.custom.sunshine-wol-restart.services.default ];
-    sunshine-wol-restart.targetMac = config.systemd.network.links."10-eth0".matchConfig.PermanentMACAddress;
+    sunshine-wol-restart = {
+      targetMac = config.systemd.network.links."10-eth0".matchConfig.PermanentMACAddress;
+      user = sunshineUser;
+      restartServices = [ "sunshine.service" ];
+    };
   };
   networking.firewall.allowedUDPPorts = [ config.system.services."sunshine-wol-restart".sunshine-wol-restart.port ];
 
@@ -201,8 +241,8 @@ in
       capture = "kms";
       # adapter_name is for VAAPI encoding
       adapter_name = "/dev/dri/${gpuCards.dgpu.render}";
-      # NOTE: output_name is NOT set - Sunshine auto-selects the first available
-      # display which will be DP-3 (connector 110) since it's the only virtual display
+      # Sunshine wants the KMS monitor index from its startup log, not the connector name
+      output_name = "0";
     };
     applications = {
       env = {
@@ -222,8 +262,8 @@ in
           image-path = "steam.png";
           prep-cmd = [
             {
-              do = "${niriMsg} action focus-workspace steam";
-              undo = "${niriMsg} action focus-workspace desktop";
+              do = "${steamStart}";
+              undo = "${steamStop}";
             }
           ];
         }
@@ -232,7 +272,7 @@ in
           image-path = "desktop.png";
           prep-cmd = [
             {
-              do = "${niriMsg} action focus-workspace desktop";
+              do = "${niriFocus} desktop";
               undo = "";
             }
           ];
@@ -256,7 +296,7 @@ in
     ''KERNEL=="uinput", MODE="0660", GROUP="input", SYMLINK+="uinput"''
   ];
 
-  users.users.jeeves = {
+  users.users.${sunshineUser} = {
     linger = true;
 
     extraGroups = [
@@ -275,25 +315,12 @@ in
   # Enable seatd for seat management (required for headless compositor launch via SSH)
   services.seatd = {
     enable = true;
-    user = "jeeves";
+    user = "${sunshineUser}";
   };
 
-  # Keep getty on tty1 and tty2 for console access
-  # Disable getty on tty3 so niri can use it via seatd
-  systemd.services."getty@tty3".enable = false;
-  systemd.services."autovt@tty3".enable = false;
-
-  # Unbind fbcon from the dGPU so compositors can acquire DRM master
-  # Without this, fbcon holds the framebuffer and blocks other DRM clients
-  systemd.services.unbind-fbcon = {
-    description = "Unbind fbcon to allow headless compositors";
-    after = [ "systemd-vconsole-setup.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${lib.getExe pkgs.bash} -c 'echo 0 > /sys/class/vtconsole/vtcon1/bind || true'";
-    };
-  };
+  # Keep tty1 for emergency console access; niri uses tty3 only while streaming
+  systemd.services."getty@${niriTTY}".enable = false;
+  systemd.services."autovt@${niriTTY}".enable = false;
 
   # NOTE: Augmentation of the `sunshine` user service (generated by the module)
 
@@ -305,62 +332,50 @@ in
     };
   };
 
-  # NOTE: Persistent niri session for Sunshine streaming
-  # Starts automatically with sunshine and provides workspaces for Steam and Desktop
+  # NOTE: Niri session for Sunshine streaming
+  # Kept running so Sunshine has a KMS display to capture before app prep runs
 
   # Ensure state directory exists
   systemd.tmpfiles.settings."sunshine-niri" = {
     "${sunshineNiriDir}".d = {
-      user = "jeeves";
-      group = "users";
+      user = "${sunshineUser}";
+      group = "${sunshineGroup}";
       mode = "0755";
     };
   };
 
-  systemd.user.services.sunshine-niri = {
+  systemd.services.sunshine-niri = {
     description = "Niri compositor for Sunshine streaming";
-    wantedBy = [ "sunshine.service" ];
-    after = [ "sunshine.service" ];
+    conflicts = [ "getty@${niriTTY}.service" "autovt@${niriTTY}.service" ];
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-user-sessions.service" ];
 
     environment = {
+      XDG_RUNTIME_DIR = "/run/user/%U";
       WLR_DRM_DEVICES = "/dev/dri/${gpuCards.dgpu.card}";
-      LIBSEAT_BACKEND = "seatd";
       WLR_DRM_CONNECTORS = virtualDisplayPort;
-      # NOTE: Use VT3 so tty1/tty2 remain available for console
-      XDG_VTNR = "3";
+      XDG_VTNR = niriVT;
     };
 
     serviceConfig = {
       Type = "simple";
-      ExecStartPre = pkgs.writeShellScript "niri-prep" ''
-        unlink ${niriSocket} 2>/dev/null || true
+      User = sunshineUser;
+      Group = sunshineGroup;
+      PAMName = "login";
+      WorkingDirectory = "/home/${sunshineUser}";
+      TTYPath = "/dev/${niriTTY}";
+      TTYReset = true;
+      TTYVHangup = true;
+      StandardInput = "tty";
+      StandardOutput = "journal";
+      ExecStart = pkgs.writeShellScript "niri-run" ''
         rm -f /run/user/$(id -u)/niri.*.sock
-        echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
-      '';
-      ExecStart = "${lib.getExe pkgs.niri} -c ${niriConfig}";
-      ExecStartPost = pkgs.writeShellScript "niri-save-socket" ''
-        # Wait for niri to create socket (poll up to 10 seconds)
-        for i in $(seq 1 20); do
-          SOCKET=$(ls -t /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
-          [ -n "$SOCKET" ] && break
-          sleep 0.5
-        done
-        if [ -n "$SOCKET" ]; then
-          unlink ${niriSocket} 2>/dev/null || true
-          ln -s "$SOCKET" ${niriSocket}
-        fi
-      '';
-      ExecStopPost = pkgs.writeShellScript "niri-cleanup" ''
-        unlink ${niriSocket} 2>/dev/null || true
-        # Rebind fbcon to restore console on DP-1 (unbind then bind to re-initialize)
-        echo 0 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
-        sleep 0.5
-        echo 1 | /run/wrappers/bin/sudo tee /sys/class/vtconsole/vtcon1/bind > /dev/null || true
+        exec ${lib.getExe pkgs.niri} -c ${niriConfig}
       '';
       KillSignal = "SIGKILL";
       TimeoutStopSec = "5s";
-      Restart = "on-failure";
-      RestartSec = "5s";
+      Restart = "always";
+      RestartSec = "2s";
     };
   };
 
