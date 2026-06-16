@@ -2009,6 +2009,9 @@
     },
     "steamlesslink": {
       "inputs": {
+        "crane": [
+          "crane"
+        ],
         "flake-file": [
           "flake-file"
         ],
@@ -2029,11 +2032,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780170253,
-        "narHash": "sha256-DrHwAhu3IJYf0bcRmKVu/rUbllu2nZWIeEFmFEGSef0=",
+        "lastModified": 1781981668,
+        "narHash": "sha256-fuoOKsnDNV+v1M6T8/cNmdBPaxuhHgVRrlr+WqQSQ1U=",
         "owner": "reo101",
         "repo": "SteamlessLink",
-        "rev": "df02bb107464f72d9cfa47ba16e653f8a5cc6526",
+        "rev": "4a36eceb3221d39c9fbee6441c9f5f7e559022a3",
         "type": "github"
       },
       "original": {

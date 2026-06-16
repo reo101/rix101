@@ -17,7 +17,7 @@
     user = "jeeves";
     listenHost = "0.0.0.0";
     listenPort = 3244;
-    openFirewall = true;
+    iroh.enable = true;
   };
 
   # Steam

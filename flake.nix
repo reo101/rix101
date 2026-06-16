@@ -251,6 +251,7 @@
     steamlesslink = {
       url = "github:reo101/SteamlessLink";
       inputs = {
+        crane.follows = "crane";
         flake-file.follows = "flake-file";
         flake-parts.follows = "flake-parts";
         nixpkgs.follows = "nixpkgs";
