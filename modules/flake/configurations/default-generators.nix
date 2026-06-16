@@ -1,4 +1,11 @@
-{ inputs, self, lib, config, withSystem, ... }:
+{
+  inputs,
+  self,
+  lib,
+  config,
+  withSystem,
+  ...
+}:
 
 let
   # HACK: doesn't get automatically overriden for some reason
@@ -71,14 +78,8 @@ let
         (lib.optionalAttrs (meta.pubkey != null) {
           age.rekey.hostPubkey = meta.pubkey;
         })
-        ./agenix-rekey
+        (lib.modules.importApply ./agenix-rekey { inherit host-type; })
       ];
-      age.rekey.localStorageDir =
-        {
-          nixos = "${inputs.self}/secrets/rekeyed/nixos/${meta.hostname}";
-          homeManager = "${inputs.self}/secrets/rekeyed/home-manager/${meta.hostname}/${config.home.username}";
-        }
-        .${host-type} or (throw "agenix-module-for: unsupported host-type '${host-type}'");
     };
 
   homeManagerModule =
