@@ -6,6 +6,7 @@
   makeWrapper,
   writeShellApplication,
   capnproto,
+  bash,
 
   targetSystem ? pkgs.stdenv.hostPlatform.system,
   nix' ? pkgs.nixVersions.nix_2_34,
@@ -15,6 +16,7 @@
     nix-output-monitor = pkgs.nix-output-monitor;
   },
   monitored ? false,
+  script ? "sh",
   nix-plugins' ? pkgs.nix-plugins.overrideAttrs (
     oldAttrs:
     let
@@ -48,28 +50,55 @@
     }
   ),
   coreutils,
+  nushell ? pkgs.nushell,
   rage,
+  util-linux,
   ...
 }:
 
 let
   isLix = (nix'.pname or null) == "lix";
+  script' =
+    if lib.elem script [
+      "sh"
+      "nu"
+    ] then
+      script
+    else
+      throw "nix-enraged: script must be one of: sh, nu";
 
   # Create a wrapped version of the decrypt script with all required runtime dependencies
-  # TODO: rewrite the script in another language
-  rage-decrypt-and-cache = writeShellApplication {
-    name = "rage-decrypt-and-cache";
-    runtimeInputs = [
-      coreutils
-      rage
-    ];
-    text = builtins.readFile ./rage-import-encrypted/rage-decrypt-and-cache.sh;
-  };
+  rage-decrypt-and-cache =
+    if script' == "nu" then
+      writeShellApplication {
+        name = "rage-decrypt-and-cache";
+        runtimeInputs = [
+          bash
+          coreutils
+          nushell
+          rage
+          util-linux
+        ];
+        text = ''
+          exec nu -n ${./rage-import-encrypted/rage-decrypt-and-cache.nu} "$@"
+        '';
+      }
+    else
+      writeShellApplication {
+        name = "rage-decrypt-and-cache";
+        runtimeInputs = [
+          bash
+          coreutils
+          rage
+          util-linux
+        ];
+        text = builtins.readFile ./rage-import-encrypted/rage-decrypt-and-cache.sh;
+      };
 
   # Create a modified version of the `extra-builtins` file that uses the wrapped script
   extra-builtins = runCommand "extra-builtins.nix" { } ''
     substitute ${./rage-import-encrypted/default.nix} $out \
-      --replace "./rage-decrypt-and-cache.sh" ${lib.getExe rage-decrypt-and-cache}
+      --replace-fail "./rage-decrypt-and-cache.sh" ${lib.getExe rage-decrypt-and-cache}
   '';
 
   # Helper function to convert attrset to Nix config string
@@ -107,7 +136,7 @@ let
         # chmod +w $out/bin/nix${suffix}
 
         wrapProgram $out/bin/nix${suffix} \
-          --prefix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
+          --suffix NIX_CONFIG $'\n' ${lib.escapeShellArg defaultNixConfig}
       '';
 in
 builtins.addErrorContext
@@ -123,7 +152,19 @@ builtins.addErrorContext
         };
       };
       passthru = {
-        inherit nix';
+        nix = nix';
+        nixPlugins = nix-plugins';
+        extraBuiltins = extra-builtins;
+        rageDecryptAndCache = rage-decrypt-and-cache;
+        script = script';
+
+        inherit
+          defaultNixConfig
+          extra-builtins
+          nix'
+          nix-plugins'
+          rage-decrypt-and-cache
+          ;
       };
       inherit (nix') dev;
       inherit (nix') pname version;

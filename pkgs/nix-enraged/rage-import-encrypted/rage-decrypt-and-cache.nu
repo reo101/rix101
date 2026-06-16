@@ -1,55 +1,110 @@
 #!/usr/bin/env nu
 
-def process-identities [identities: list<string>] -> list<string> {
-    let primary_identity = ($env.AGENIX_REKEY_PRIMARY_IDENTITY? | default "")
-    let primary_only = ($env.AGENIX_REKEY_PRIMARY_IDENTITY_ONLY? | default "false")
+def usage [] {
+    print -e "usage: rage-decrypt-and-cache [--print-out-path] <file.nix.age> [identity ...]"
+    exit 64
+}
 
-    if $primary_only == "true" {
-        if $primary_identity == "" {
-            error make {
-                msg: "AGENIX_REKEY_PRIMARY_IDENTITY_ONLY is true, but AGENIX_REKEY_PRIMARY_IDENTITY is not set"
-            }
-        }
-        return [$primary_identity]
-    } else {
-        if $primary_identity != "" {
-            # Check if primary identity is not already in the list
-            let is_unique = ($identities | find $primary_identity | is-empty)
+def die [message: string] {
+    error make { msg: $"rage-decrypt-and-cache: ($message)" }
+}
 
-            if $is_unique {
-                return ([$primary_identity] | append $identities)
-            }
-        }
-
-        return $identities
+def is-true [value: string]: nothing -> bool {
+    match ($value | str downcase) {
+        "1" | "true" | "yes" | "on" => true,
+        _ => false,
     }
 }
 
-def calculate-output-path [input_file: path] -> path {
-    let hash = (
-        open --raw $input_file
-        | hash sha512
-        | str substring 0..32
-    )
+def is-false [value: string]: nothing -> bool {
+    match ($value | str downcase) {
+        "" | "0" | "false" | "no" | "off" => true,
+        _ => false,
+    }
+}
 
-    let basename = (
-        $input_file
-        | path basename
-        | str replace ".age$" ""
-        | str replace "/" "%"
-    )
+def process-identities [identities: list<string>]: nothing -> list<string> {
+    let primary_identity = ($env.AGENIX_REKEY_PRIMARY_IDENTITY? | default "")
+    let primary_only = ($env.AGENIX_REKEY_PRIMARY_IDENTITY_ONLY? | default "")
 
-    let output_dir = (
-        $env.TMPDIR?
-        | default "/tmp"
-        | path join "nix-import-encrypted"
-        | path join ($env.USER? | default "unknown")
-    )
+    if not (is-true $primary_only) and not (is-false $primary_only) {
+        die "AGENIX_REKEY_PRIMARY_IDENTITY_ONLY must be one of: true, false, 1, 0, yes, no, on, off"
+    }
 
-    # Ensure directory exists
-    mkdir $output_dir
+    if (is-true $primary_only) {
+        if $primary_identity == "" {
+            die "AGENIX_REKEY_PRIMARY_IDENTITY_ONLY is true, but AGENIX_REKEY_PRIMARY_IDENTITY is not set"
+        }
+        return [$primary_identity]
+    }
+
+    if $primary_identity != "" {
+        let already_present = ($identities | any { |identity| $identity == $primary_identity })
+
+        if not $already_present {
+            return ([$primary_identity] | append $identities)
+        }
+    }
+
+    $identities
+}
+
+def usable-dir [dir: path]: nothing -> bool {
+    if not ($dir | path exists) {
+        return false
+    }
+
+    if ($dir | path type) != "dir" {
+        return false
+    }
+
+    ((^test -w $dir | complete).exit_code == 0) and ((^test -x $dir | complete).exit_code == 0)
+}
+
+def cache-root []: nothing -> path {
+    let uid = ($env.UID? | default (^id -u | str trim))
+
+    if ($env.NIX_ENRAGED_CACHE_DIR? | default "") != "" {
+        return $env.NIX_ENRAGED_CACHE_DIR
+    }
+
+    let xdg_runtime_dir = ($env.XDG_RUNTIME_DIR? | default "")
+    if $xdg_runtime_dir != "" and (usable-dir $xdg_runtime_dir) {
+        return ($xdg_runtime_dir | path join "nix-import-encrypted" $uid)
+    }
+
+    ($env.TMPDIR? | default "/tmp" | path join "nix-import-encrypted" $uid)
+}
+
+def cache-basename [input_file: path]: nothing -> string {
+    let file = ($input_file | into string)
+    mut basename = ($file | str replace --regex '\.age$' '')
+
+    if ($file | str starts-with "/nix/store/") {
+        $basename = ($basename | str replace --regex '^/nix/store/[^-]+-' '')
+    }
+
+    if ($file | str starts-with "./") {
+        $basename = ($basename | str replace --regex '^\./' '')
+    }
+
+    $basename | str replace --all "/" "%"
+}
+
+def calculate-output-path [input_file: path]: nothing -> path {
+    let hash = (^sha512sum $input_file | split row " " | get 0 | str substring 0..<32)
+    let basename = (cache-basename $input_file)
+    let output_dir = (cache-root)
 
     $output_dir | path join $"($hash)-($basename)"
+}
+
+def lock-wait-timeout []: nothing -> int {
+    let raw = ($env.NIX_ENRAGED_LOCK_WAIT_TIMEOUT? | default "300")
+    if not ($raw =~ '^\d+$') {
+        die "NIX_ENRAGED_LOCK_WAIT_TIMEOUT must be seconds"
+    }
+    $raw | into int
 }
 
 def decrypt-file [
@@ -57,26 +112,68 @@ def decrypt-file [
     identities: list<path>,
     output_path: path
 ] {
-    if not ($output_path | path exists) {
-        let identity_args = (
-            $identities
-            | each { |id| ["-i", $id] }
-            | flatten
-        )
+    if ($output_path | path exists) {
+        return
+    }
 
-        try {
-            rage -d ...$identity_args -o $output_path $input_file
-        } catch {
-            error make { msg: "Decryption failed for file: $input_file" }
+    let output_dir = ($output_path | path dirname)
+    let lock_file = $"($output_path).lock"
+    mkdir $output_dir
+    ^chmod 700 $output_dir | complete | ignore
+
+    let tmp_output = (^mktemp $"($output_path).tmp.XXXXXXXXXX" | str trim)
+    let identity_args = (
+        $identities
+        | each { |identity| ["-i", $identity] }
+        | flatten
+    )
+    let critical = '
+        out=$1
+        tmp=$2
+        file=$3
+        shift 3
+
+        if [ ! -e "$out" ]; then
+            rage -d "$@" -o "$tmp" "$file"
+            chmod 600 -- "$tmp"
+            mv -f -- "$tmp" "$out"
+        fi
+    '
+
+    let result = (
+        ^flock -E 75 -x -w (lock-wait-timeout) $lock_file bash -euo pipefail -c $critical rage-decrypt-and-cache $output_path $tmp_output $input_file ...$identity_args
+        | complete
+    )
+
+    if ($tmp_output | path exists) {
+        ^rm -f $tmp_output | complete | ignore
+    }
+
+    if $result.exit_code == 75 {
+        die $"timed out waiting for decrypt cache lock: ($lock_file)"
+    }
+
+    if $result.exit_code != 0 {
+        if $result.stderr != "" {
+            print -e $result.stderr
         }
+        exit $result.exit_code
     }
 }
 
 def main [
     --print-out-path (-p)
-    input_file: path
+    input_file?: path
     ...identities: path
 ] {
+    if $input_file == null {
+        usage
+    }
+
+    if not ($input_file | path exists) {
+        die $"encrypted file does not exist: ($input_file)"
+    }
+
     let processed_identities = (process-identities $identities)
     let output_path = (calculate-output-path $input_file)
 
@@ -85,8 +182,6 @@ def main [
     if $print_out_path {
         echo $output_path
     } else {
-        open $output_path
+        open --raw $output_path
     }
 }
-
-main ...$argv
