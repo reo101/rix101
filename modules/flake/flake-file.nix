@@ -65,13 +65,6 @@
         url = "github:vic/flake-file";
       };
 
-      htnl = {
-        url = "github:molybdenumsoftware/htnl";
-        inputs.nixpkgs.follows = "nixpkgs";
-        inputs.systems.follows = "systems";
-        inputs.flake-parts.follows = "flake-parts";
-      };
-
       steamlesslink = {
         url = "github:reo101/SteamlessLink";
         inputs.nixpkgs.follows = "nixpkgs";

@@ -32,6 +32,13 @@
       url = "github:Aleksanaa/alloc.nix";
       flake = false;
     };
+
+    htnl = {
+      url = "github:molybdenumsoftware/htnl";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      inputs.flake-parts.follows = "flake-parts";
+    };
   };
 
   config.lib-overlays = [
