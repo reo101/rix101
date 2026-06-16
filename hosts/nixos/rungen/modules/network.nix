@@ -21,7 +21,7 @@ in
 
       settings = {
         General = {
-          EnableNetworkConfiguration = true;
+          EnableNetworkConfiguration = false;
         };
         Wireless = {
           PowerSave = "off";
@@ -64,6 +64,26 @@ in
   ];
 
   systemd.network = {
+    enable = true;
+
+    networks."10-eth0" = {
+      matchConfig.Name = "eth0";
+      networkConfig.DHCP = "yes";
+    };
+    links."10-eth0" = {
+      matchConfig.PermanentMACAddress = "9c:bf:0d:00:a1:af";
+      linkConfig.Name = "eth0";
+    };
+
+    networks."15-wlan0" = {
+      matchConfig.Name = "wlan0";
+      networkConfig.DHCP = "yes";
+    };
+    links."15-wlan0" = {
+      matchConfig.PermanentMACAddress = "04:68:74:dd:fe:ef";
+      linkConfig.Name = "wlan0";
+    };
+
     netdevs."50-${wireguard-interface}" = {
       netdevConfig = {
         Kind = "wireguard";
