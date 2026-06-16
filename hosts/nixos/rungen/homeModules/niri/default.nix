@@ -108,6 +108,17 @@ let
       done
     '';
   };
+
+  niriFloatSticky = pkgs.writeShellApplication {
+    name = "niri-float-sticky-start";
+    runtimeInputs = [
+      config.programs.niri.package
+      pkgs.custom.niri-float-sticky
+    ];
+    text = ''
+      exec niri-float-sticky
+    '';
+  };
 in
 {
   imports = [
@@ -203,6 +214,7 @@ in
             "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
             "${lib.getExe config.programs.noctalia.package}"
             "${lib.getExe pkgs.mpd-discord-rpc}"
+            "${lib.getExe niriFloatSticky}"
           ];
       clipboard.disable-primary = true;
       hotkey-overlay.skip-at-startup = true;
