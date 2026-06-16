@@ -10,9 +10,9 @@
     xwayland-satellite
   ];
 
-  services.swww = {
+  services.awww = {
     enable = true;
-    package = pkgs.swww;
+    package = pkgs.awww;
   };
 
   programs.niri = {
