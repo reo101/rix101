@@ -49,7 +49,7 @@
       backdrop = {
         enabled = true;
         blur_intensity = 0.2;
-        tint_intensity = 0.6;
+        tint_intensity = 0.4;
       };
       brightness = {
         enable_ddcutil = true;
