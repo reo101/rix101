@@ -1255,6 +1255,22 @@
         "type": "github"
       }
     },
+    "nix-optics": {
+      "locked": {
+        "lastModified": 1783003970,
+        "narHash": "sha256-qy+AFzmD0cBvmVWbE+Fh5QPAgZhmvk88gLVyxKTVy2U=",
+        "owner": "reo101",
+        "repo": "nix-optics",
+        "rev": "3b72220b2b2f0ac3422f77502aa983e3700553dd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reo101",
+        "ref": "feat/indexed",
+        "repo": "nix-optics",
+        "type": "github"
+      }
+    },
     "nix-topology": {
       "inputs": {
         "flake-parts": [
@@ -1780,6 +1796,7 @@
         "nix-lib-net": "nix-lib-net",
         "nix-monitored": "nix-monitored",
         "nix-on-droid": "nix-on-droid",
+        "nix-optics": "nix-optics",
         "nix-topology": "nix-topology",
         "nixarr": "nixarr",
         "nixos-apple-silicon": "nixos-apple-silicon",

@@ -1,4 +1,10 @@
-{ inputs, self, lib, config, ... }:
+{
+  inputs,
+  self,
+  lib,
+  config,
+  ...
+}:
 
 {
   key = "rix101.modules.flake.lib-custom";
@@ -38,6 +44,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.systems.follows = "systems";
       inputs.flake-parts.follows = "flake-parts";
+    };
+
+    nix-optics = {
+      url = "github:reo101/nix-optics?ref=feat/indexed";
     };
   };
 
@@ -110,6 +120,10 @@
               htnl = base;
             };
         };
+    })
+    # Optics
+    (final: prev: {
+      optics = import "${inputs.nix-optics.outPath}/default.nix";
     })
   ];
 
@@ -315,5 +329,122 @@
 
         renderBatch = lines: lib.concatStringsSep "\n" lines;
       });
+
+      timestampIso =
+        let
+          # HACK: want to use `lib` directly
+          inherit (config.lib) optics;
+          to = lib.flip lib.pipe [
+            (builtins.match (
+              let
+                digit = "[[:digit:]]";
+                non-digit = "[^[:digit:]]";
+                sep = "${non-digit}?";
+                times =
+                  what: n: more:
+                  let
+                    sn = builtins.toString n;
+                  in
+                  "${what}{${sn},${lib.optionalString (!more) sn}}";
+              in
+              lib.concatStrings [
+                # year
+                "(${times digit 1 true})"
+                # year-month sep
+                "(${sep})"
+                # month
+                "(${times digit 2 false})"
+                # month-day sep
+                "(${sep})"
+                # day
+                "(${times digit 2 false})"
+                # date-time sep
+                "(${sep})"
+                # hour
+                "(${times digit 2 false})"
+                # hour-minute sep
+                "(${sep})"
+                # minute
+                "(${times digit 2 false})"
+                # minute-second sep
+                "(${sep})"
+                # second
+                "(${times digit 2 false})"
+              ]
+            ))
+            (lib.mapNullable (
+              m:
+              let
+                parseInt =
+                  s: lib.mapNullable (n: builtins.fromJSON (builtins.head n)) (builtins.match "0*([[:digit:]]+)" s);
+                # NOTE: parse all numbers, at even positions
+                pm = optics.over (optics.compose [
+                  optics.ieach
+                  (optics.ifiltered (i: _: lib.mod i 2 == 0))
+                ]) parseInt m;
+                year = builtins.elemAt pm 0;
+                sep1 = builtins.elemAt pm 1;
+                month = builtins.elemAt pm 2;
+                sep2 = builtins.elemAt pm 3;
+                day = builtins.elemAt pm 4;
+                sep3 = builtins.elemAt pm 5;
+                hour = builtins.elemAt pm 6;
+                sep4 = builtins.elemAt pm 7;
+                minute = builtins.elemAt pm 8;
+                sep5 = builtins.elemAt pm 9;
+                second = builtins.elemAt pm 10;
+              in
+              {
+                date = {
+                  inherit
+                    year
+                    month
+                    day
+                    ;
+                };
+                time = {
+                  inherit
+                    hour
+                    minute
+                    second
+                    ;
+                };
+                # NOTE: as per RFC3339, Section 5.6
+                separators = {
+                  date =
+                    assert sep1 == sep2;
+                    sep1;
+                  date-time = sep3;
+                  time =
+                    assert sep4 == sep5;
+                    sep4;
+                };
+              }
+            ))
+          ];
+          from =
+            self:
+            let
+              # NOTE: stringify all numbers
+              dt = optics.iover (optics.compose [
+                optics.ieach
+                (optics.ifiltered (class: _: class != "separators"))
+                optics.ieach
+              ]) (key: if key == "year" then builtins.toString else lib.fixedWidthNumber 2) self;
+            in
+            lib.concatStringsSep dt.separators.date-time [
+              (lib.concatStringsSep dt.separators.date [
+                dt.date.year
+                dt.date.month
+                dt.date.day
+              ])
+              (lib.concatStringsSep dt.separators.time [
+                dt.time.hour
+                dt.time.minute
+                dt.time.second
+              ])
+            ];
+        in
+        optics.iso to from;
     };
 }

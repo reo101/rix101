@@ -164,6 +164,7 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+    nix-optics.url = "github:reo101/nix-optics?ref=feat/indexed";
     nix-topology = {
       url = "github:oddlama/nix-topology";
       inputs = {
