@@ -48,7 +48,10 @@
   networking.hostName = "jeeves";
 
   boot = {
-    loader.systemd-boot.enable = true;
+    loader.systemd-boot = {
+      enable = true;
+      configurationLimit = 10;
+    };
     kernelPackages = pkgs.linuxPackages_latest;
     binfmt.emulatedSystems = [ "aarch64-linux" ];
     initrd = {
@@ -74,7 +77,7 @@
       ];
 
       experimental-features = "nix-command flakes";
-      auto-optimise-store = true;
+      auto-optimise-store = false;
     };
   };
 
