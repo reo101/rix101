@@ -16,9 +16,14 @@
     '';
   };
 
-  fonts.packages = [
-    pkgs.custom.maple-mono-custom
-  ];
+  fonts = {
+    fontconfig.enable = lib.mkForce true;
+    packages = [
+      pkgs.custom.maple-mono-custom
+    ];
+  };
+
+  hardware.graphics.enable = true;
 
   services.kmscon = {
     enable = true;
