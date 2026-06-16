@@ -175,6 +175,11 @@ in
         description = "Integrate with atuin";
         default = true;
       };
+      atuinDataDir = mkOption {
+        description = "Directory for Atuin data files.";
+        type = types.nullOr types.str;
+        default = null;
+      };
       carapace = mkOption {
         type = types.bool;
         description = "Integrate with carapace";
@@ -202,6 +207,11 @@ in
         type = types.bool;
         description = "Integrate with zoxide";
         default = true;
+      };
+      historyPath = mkOption {
+        description = "Path to the zsh history file.";
+        type = types.str;
+        default = "${config.xdg.dataHome}/zsh/history";
       };
       flakePath = mkOption {
         type = types.str;
@@ -244,9 +254,41 @@ in
       # TODO: use pkgs.substituteAll
       # TODO: agenix?
       text = import ./atuin.nix {
-        keyPath = "${config.xdg.dataHome}/atuin/key";
+        inherit lib;
+        dataDir = cfg.atuinDataDir;
+        keyPath =
+          if cfg.atuinDataDir != null then
+            "${cfg.atuinDataDir}/key"
+          else
+            "${config.xdg.dataHome}/atuin/key";
       };
     };
+
+    home.activation.rix101ShellState =
+      let
+        defaultAtuinDataDir = "${config.xdg.dataHome}/atuin";
+        defaultHistoryPath = "${config.xdg.dataHome}/zsh/history";
+      in
+      lib.mkIf (cfg.atuinDataDir != null || cfg.historyPath != defaultHistoryPath) (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          ${optionalString (cfg.atuinDataDir != null) ''
+            old=${lib.escapeShellArg defaultAtuinDataDir}
+            new=${lib.escapeShellArg cfg.atuinDataDir}
+            if [ -d "$old" ] && [ ! -e "$new/history.db" ]; then
+              $DRY_RUN_CMD mkdir -p "$new"
+              $DRY_RUN_CMD cp -a "$old/." "$new/"
+            fi
+          ''}
+          ${optionalString (cfg.historyPath != defaultHistoryPath) ''
+            old=${lib.escapeShellArg defaultHistoryPath}
+            new=${lib.escapeShellArg cfg.historyPath}
+            if [ -f "$old" ] && [ ! -e "$new" ]; then
+              $DRY_RUN_CMD mkdir -p "$(${pkgs.coreutils}/bin/dirname "$new")"
+              $DRY_RUN_CMD cp -a "$old" "$new"
+            fi
+          ''}
+        ''
+      );
 
     # Carapace
     programs.carapace = mkIf cfg.carapace {
@@ -456,7 +498,7 @@ in
 
       history = {
         size = 10000;
-        path = "${config.xdg.dataHome}/zsh/history";
+        path = cfg.historyPath;
       };
 
       initContent = mkMerge [

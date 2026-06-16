@@ -1,6 +1,14 @@
-{ keyPath, ... }:
+{
+  lib,
+  dataDir ? null,
+  keyPath,
+  ...
+}:
 
 /* toml */ ''
+  ## Base directory for Atuin data files (databases, keys, session, etc.)
+  ${lib.optionalString (dataDir != null) ''data_dir = "${dataDir}"''}
+
   ## where to store your database, default is your system data directory
   ## mac: ~/Library/Application Support/com.elliehuxtable.atuin/history.db
   ## linux: ~/.local/share/atuin/history.db

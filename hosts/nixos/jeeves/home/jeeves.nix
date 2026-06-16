@@ -57,6 +57,8 @@
       ];
       starship = true;
       atuin = true;
+      atuinDataDir = "/var/lib/rix101-shell/jeeves/atuin";
+      historyPath = "/var/lib/rix101-shell/jeeves/zsh/history";
       carapace = true;
       direnv = true;
       gpg.enable = true;
