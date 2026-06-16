@@ -9,12 +9,12 @@
     settings = {
       trusted-users = [
         "root"
-          "reo101"
+        "reo101"
       ];
 
       experimental-features = [
         "nix-command"
-          "flakes"
+        "flakes"
       ];
     };
   };
