@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,5 +1,7 @@
+@@ -1,12 +1,14 @@
  cmake_minimum_required (VERSION 3.9)
  project (nix-plugins)
 +set (CMAKE_CXX_STANDARD 23)
@@ -8,7 +8,6 @@
  set (nix-plugins_VERSION_MAJOR 16)
  set (nix-plugins_VERSION_MINOR 0)
  set (nix-plugins_VERSION_PATCH 0)
-@@ -5,7 +7,7 @@ set (nix-plugins_VERSION_PATCH 0)
  
  find_package(PkgConfig)
  
@@ -17,6 +16,14 @@
  
  find_path(BOOST_INCLUDE_DIR boost/format.hpp)
  if(BOOST_INCLUDE_DIR STREQUAL "BOOST_INCLUDE_DIR-NOTFOUND")
+@@ -22,6 +24,6 @@
+ configure_file(nix-plugins-config.h.in nix-plugins-config.h)
+ target_include_directories(nix-extra-builtins PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+ target_include_directories(nix-extra-builtins PUBLIC ${NIX_INCLUDE_DIRS})
+-target_compile_options(nix-extra-builtins PUBLIC ${NIX_CFLAGS_OTHER})
++target_compile_options(nix-extra-builtins PUBLIC ${NIX_CFLAGS_OTHER} -UNDEBUG)
+ 
+ install(TARGETS nix-extra-builtins DESTINATION lib/nix/plugins)
 --- a/extra-builtins.cc
 +++ b/extra-builtins.cc
 @@ -1,11 +1,12 @@
@@ -40,10 +47,12 @@
  
  #include "nix-plugins-config.h"
  
-@@ -22,41 +23,42 @@
+@@ -20,66 +21,72 @@
  
- static GlobalConfig::Register rp(&extraBuiltinsSettings);
+ static ExtraBuiltinsSettings extraBuiltinsSettings;
  
+-static GlobalConfig::Register rp(&extraBuiltinsSettings);
+-
 -static void extraBuiltins(EvalState & state, const PosIdx pos,
 +static void extraBuiltins(EvalState & state,
      Value ** _args, Value & v)
@@ -58,8 +67,7 @@
 -        auto fun = state.allocValue();
 -        state.evalFile(extraBuiltinsFile, *fun);
 -        Value * arg;
-+        Value fun;
-+        state.evalFile(extraBuiltinsFile, fun);
++        Value fun = state.evalFile(extraBuiltinsFile);
 +        Value arg;
          if (evalSettings.enableNativeCode) {
 -            arg = state.baseEnv.values[0];
@@ -70,65 +78,83 @@
  
 -            auto sExec = state.symbols.create("exec");
 -            attrs.alloc(sExec).mkPrimOp(new PrimOp {
-+            auto sExec = state.ctx.symbols.create("exec");
-+            attrs.alloc(sExec).mkPrimOp(new PrimOp(PrimOpDetails{
++            static PrimOp execPrimOp(PrimOpDetails{
                  .name = "exec",
                  .arity = 1,
                  .fun = prim_exec,
--            });
-+            }));
+             });
++            attrs.alloc("exec") = Value(NewValueAs::primop, execPrimOp);
  
 -            auto sImportNative = state.symbols.create("importNative");
 -            attrs.alloc(sImportNative).mkPrimOp(new PrimOp {
-+            auto sImportNative = state.ctx.symbols.create("importNative");
-+            attrs.alloc(sImportNative).mkPrimOp(new PrimOp(PrimOpDetails{
++            static PrimOp importNativePrimOp(PrimOpDetails{
                  .name = "importNative",
                  .arity = 2,
                  .fun = prim_importNative,
--            });
-+            }));
+             });
++            attrs.alloc("importNative") = Value(NewValueAs::primop, importNativePrimOp);
  
 -            arg = state.allocValue();
 -            arg->mkAttrs(attrs);
-+            arg.mkAttrs(attrs);
++            arg = Value(NewValueAs::attrs, attrs.finish());
          }
 -        v.mkApp(fun, arg);
 -        state.forceValue(v, pos);
-+        v = {NewValueAs::app, state.ctx.mem, fun, arg};
-+        state.forceValue(v, noPos);
 -    } catch (FileNotFound &) {
 -        v.mkNull();
++        v = Value(NewValueAs::app, state.ctx.mem, fun, arg);
++        state.forceValue(v, noPos);
 +    } catch (SysError & e) {
 +        if (e.errNo == ENOENT)
-+            v.mkNull();
++            v = Value(NewValueAs::null);
 +        else
 +            throw;
      }
-@@ -63,23 +65,23 @@
  }
  
 -static RegisterPrimOp rp1({
-+static RegisterPrimOp rp1(PrimOpDetails{
-     .name = "__extraBuiltins",
-     .arity = 0,
-     .fun = extraBuiltins,
- });
- 
+-    .name = "__extraBuiltins",
+-    .arity = 0,
+-    .fun = extraBuiltins,
+-});
+-
 -static void cflags(EvalState & state, const PosIdx _pos,
 +static void cflags(EvalState & state,
      Value ** _args, Value & v)
  {
 -    auto attrs = state.buildBindings(3);
+-    attrs.alloc("NIX_INCLUDE_DIRS").mkString(NIX_INCLUDE_DIRS);
+-    attrs.alloc("NIX_CFLAGS_OTHER").mkString(NIX_CFLAGS_OTHER);
+-    attrs.alloc("BOOST_INCLUDE_DIR").mkString(BOOST_INCLUDE_DIR);
+-    v.mkAttrs(attrs);
 +    auto attrs = state.ctx.buildBindings(3);
-     attrs.alloc("NIX_INCLUDE_DIRS").mkString(NIX_INCLUDE_DIRS);
-     attrs.alloc("NIX_CFLAGS_OTHER").mkString(NIX_CFLAGS_OTHER);
-     attrs.alloc("BOOST_INCLUDE_DIR").mkString(BOOST_INCLUDE_DIR);
-     v.mkAttrs(attrs);
++    attrs.alloc("NIX_INCLUDE_DIRS") = Value(NewValueAs::string, NIX_INCLUDE_DIRS);
++    attrs.alloc("NIX_CFLAGS_OTHER") = Value(NewValueAs::string, NIX_CFLAGS_OTHER);
++    attrs.alloc("BOOST_INCLUDE_DIR") = Value(NewValueAs::string, BOOST_INCLUDE_DIR);
++    v = Value(NewValueAs::attrs, attrs.finish());
  }
  
 -static RegisterPrimOp rp2({
-+static RegisterPrimOp rp2(PrimOpDetails{
-     .name = "__nix-cflags",
-     .arity = 0,
-     .fun = cflags,
- });
+-    .name = "__nix-cflags",
+-    .arity = 0,
+-    .fun = cflags,
+-});
++struct RegisterNixPlugins
++{
++    RegisterNixPlugins()
++    {
++        GlobalConfig::registerGlobalConfig(extraBuiltinsSettings);
++        PluginPrimOps::add(PrimOpDetails{
++            .name = "__extraBuiltins",
++            .arity = 0,
++            .fun = extraBuiltins,
++        });
++        PluginPrimOps::add(PrimOpDetails{
++            .name = "__nix-cflags",
++            .arity = 0,
++            .fun = cflags,
++        });
++    }
++};
++
++static RegisterNixPlugins registerNixPlugins;
