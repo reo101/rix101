@@ -54,8 +54,10 @@ in
 
     # Communication
     pkgs.discord
+    pkgs.discord-ptb
     pkgs.legcord
     pkgs.mumble
+    pkgs.element-desktop
 
     # Learning
     (pkgs.anki.withAddons (
