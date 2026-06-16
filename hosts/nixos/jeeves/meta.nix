@@ -10,6 +10,22 @@
   # The host SSH key, used for encrypting agenix secrets
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";
 
+  nixBuildServer = {
+    hostName = "jeeves.reo101.xyz";
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
+    maxJobs = 16;
+    speedFactor = 4;
+    supportedFeatures = [
+      "benchmark"
+      "big-parallel"
+      "kvm"
+      "nixos-test"
+    ];
+  };
+
   # WireGuard server peer registry
   wireguardServer = {
     cidr = "10.100.0.0/24";

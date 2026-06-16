@@ -325,6 +325,7 @@ in
             metaModules.deploy
             metaModules.gui
             metaModules.wireguard
+            metaModules.nix-build
           ];
         };
       mkHost = (
@@ -335,6 +336,7 @@ in
           users = genUsers configurationFiles;
           extraModules = resolveRoleModules "nixos" meta.roles ++ [
             (agenix-module-for "nixos")
+            ../../nixos/nix-build
           ];
           extraHomeModules = resolveRoleModules "home-manager" meta.roles ++ [
             (agenix-module-for "homeManager")
