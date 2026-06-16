@@ -30,6 +30,9 @@
   # From `nixpkgs/nixos/modules/profiles/installation-device.nix`, but using `lib.getExe'`
   boot.swraid.mdadmConf = "PROGRAM ${lib.getExe' pkgs.coreutils "true"}";
 
+  # Don't auto-force-import foreign pools on installer/rescue media.
+  boot.zfs.forceImportRoot = false;
+
   # From `nixpkgs/nixos/modules/profiles/base.nix`
   networking.hostId = "8425e349";
 
