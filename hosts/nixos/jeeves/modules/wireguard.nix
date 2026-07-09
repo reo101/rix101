@@ -1,4 +1,11 @@
-{ inputs, lib, pkgs, config, meta, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  meta,
+  ...
+}:
 
 let
   wgServer = meta.wireguardServer;
@@ -6,6 +13,24 @@ let
   wireguard-network-cidr = wgServer.cidr;
   wireguard-network-host-cidr = lib.net.cidr.hostCidr 1 wireguard-network-cidr;
   wireguard-network-gateway = lib.net.cidr.host 1 wireguard-network-cidr;
+  restrictedPeers = lib.filterAttrs (_: peer: peer ? allowedTCPPorts) wgServer.peers;
+  peerIP = peer: lib.net.cidr.host peer.hostIndex wireguard-network-cidr;
+  peerFirewallRules =
+    peer:
+    lib.concatMapStringsSep "\n" (port: /* bash */ ''
+      iptables -A INPUT -i ${wireguard-interface} -s ${peerIP peer} -p tcp --dport ${toString port} -j ACCEPT
+    '') peer.allowedTCPPorts
+    + /* bash */ ''
+      iptables -A INPUT -i ${wireguard-interface} -s ${peerIP peer} -j DROP
+    '';
+  peerFirewallStopRules =
+    peer:
+    lib.concatMapStringsSep "\n" (port: /* bash */ ''
+      iptables -D INPUT -i ${wireguard-interface} -s ${peerIP peer} -p tcp --dport ${toString port} -j ACCEPT 2>/dev/null || true
+    '') peer.allowedTCPPorts
+    + /* bash */ ''
+      iptables -D INPUT -i ${wireguard-interface} -s ${peerIP peer} -j DROP 2>/dev/null || true
+    '';
 in
 {
   environment.systemPackages = with pkgs; [
@@ -22,13 +47,21 @@ in
     mode = "077";
     rekeyFile = lib.custom.repoSecret "home/jeeves/wireguard/key.age";
     generator = {
-      script = { lib, pkgs, file, ... }: let
-        wg = lib.getExe' pkgs.wireguard-tools "wg";
-      in /* bash */ ''
-        priv=$(${wg} genkey)
-        ${wg} pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
-        echo "$priv"
-      '';
+      script =
+        {
+          lib,
+          pkgs,
+          file,
+          ...
+        }:
+        let
+          wg = lib.getExe' pkgs.wireguard-tools "wg";
+        in
+        /* bash */ ''
+          priv=$(${wg} genkey)
+          ${wg} pubkey <<< "$priv" > ${lib.escapeShellArg (lib.removeSuffix ".age" file + ".pub")}
+          echo "$priv"
+        '';
     };
   };
 
@@ -44,7 +77,17 @@ in
   # Open ports in the firewall
   networking.firewall = {
     allowedTCPPorts = [ 53 ];
-    allowedUDPPorts = [ 53 51820 ];
+    allowedUDPPorts = [
+      53
+      51820
+    ];
+
+    # A peer with `allowedTCPPorts` is denied everything else before NixOS's
+    # general firewall rules (which otherwise apply to every WireGuard peer).
+    extraCommands = lib.concatMapAttrsStringSep "\n" (_: peer: peerFirewallRules peer) restrictedPeers;
+    extraStopCommands = lib.concatMapAttrsStringSep "\n" (
+      _: peer: peerFirewallStopRules peer
+    ) restrictedPeers;
   };
 
   # Local DNS resolving, mainly for `jeeves.lan`
@@ -89,15 +132,12 @@ in
           PrivateKeyFile = config.age.secrets."wireguard.privateKey".path;
           ListenPort = 51820;
         };
-        wireguardPeers =
-          lib.mapAttrsToList
-            (_host: peer: {
-              PublicKey = peer.publicKey;
-              AllowedIPs = [
-                (lib.net.cidr.host peer.hostIndex wireguard-network-cidr)
-              ];
-            })
-            wgServer.peers;
+        wireguardPeers = lib.mapAttrsToList (_host: peer: {
+          PublicKey = peer.publicKey;
+          AllowedIPs = [
+            (lib.net.cidr.host peer.hostIndex wireguard-network-cidr)
+          ];
+        }) wgServer.peers;
       };
     };
 
