@@ -59,10 +59,12 @@
 let
   isLix = (nix'.pname or null) == "lix";
   script' =
-    if lib.elem script [
-      "sh"
-      "nu"
-    ] then
+    if
+      lib.elem script [
+        "sh"
+        "nu"
+      ]
+    then
       script
     else
       throw "nix-enraged: script must be one of: sh, nu";
@@ -128,6 +130,7 @@ let
     runCommand "nix-enraged${suffix}"
       {
         buildInputs = [ makeWrapper ];
+        inherit (nix') pname version;
       }
       ''
         mkdir $out
