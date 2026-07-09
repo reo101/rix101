@@ -103,17 +103,34 @@ let
   # We create a symlink to the dynamic socket after niri starts
   sunshineNiriDir = "/var/lib/sunshine-niri";
   niriSocket = "${sunshineNiriDir}/niri.sock";
+  sunshineSink = "sink-sunshine-stereo";
+  sunshineSurround51Sink = "sink-sunshine-surround51";
+  sunshineSurround71Sink = "sink-sunshine-surround71";
 
   steamBigPicture = pkgs.writeShellScript "steam-big-picture" ''
+    width="''${1:-1920}"
+    height="''${2:-1080}"
+    refresh="''${3:-144}"
+
+    export PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native"
+    export PULSE_SINK=${lib.escapeShellArg sunshineSink}
+    export SDL_AUDIODRIVER=pulse
+    export WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d'
+
     exec ${lib.getExe' pkgs.util-linux "setpriv"} --ambient-caps -all --inh-caps -all \
       ${lib.getExe pkgs.gamescope} \
         --backend wayland \
-        --output-width 1920 \
-        --output-height 1080 \
-        --nested-refresh 144 \
+        --output-width "$width" \
+        --output-height "$height" \
+        --nested-refresh "$refresh" \
         --fullscreen \
         --steam \
-        -- ${lib.getExe config.programs.steam.package} -tenfoot
+        -- ${lib.getExe' pkgs.coreutils "env"} \
+          PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native" \
+          PULSE_SINK=${lib.escapeShellArg sunshineSink} \
+          SDL_AUDIODRIVER=pulse \
+          WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d' \
+          ${lib.getExe config.programs.steam.package} -tenfoot
   '';
 
   # Niri config for persistent session with named workspaces
@@ -136,6 +153,10 @@ let
       off
     }
 
+    hotkey-overlay {
+      skip-at-startup
+    }
+
     // Named workspaces (steam first = top row)
     workspace "steam" {
       open-on-output "${virtualDisplayPort}"
@@ -156,9 +177,6 @@ let
       Alt+Return { spawn "${lib.getExe pkgs.ghostty}"; }
       Alt+Up { toggle-overview; }
     }
-
-    // Spawn foot on desktop workspace at startup
-    spawn-at-startup "${lib.getExe pkgs.foot}"
   '';
 
   # Helper to run niri msg with the static socket symlink
@@ -183,16 +201,60 @@ let
     exit 1
   '';
 
+  niriFocusApp = pkgs.writeShellScript "niri-focus-app" ''
+    app_id="$1"
+    for i in $(seq 1 40); do
+      id=$(${niriMsg} -j windows | ${lib.getExe pkgs.jq} -r --arg app_id "$app_id" 'map(select(.app_id == $app_id)) | last | .id // empty')
+      if [ -n "$id" ]; then
+        ${niriMsg} action focus-window --id "$id" && exit 0
+      fi
+      sleep 0.25
+    done
+    exit 1
+  '';
+
+  sunshineMode = pkgs.writeShellScript "sunshine-mode" ''
+    width="''${SUNSHINE_CLIENT_WIDTH:-1920}"
+    height="''${SUNSHINE_CLIENT_HEIGHT:-1080}"
+    refresh="''${SUNSHINE_CLIENT_FPS:-144}"
+
+    case "$width:$height:$refresh" in
+      *[!0-9:]* | :* | *: | *::*) width=1920; height=1080; refresh=144 ;;
+    esac
+
+    printf '%sx%s@%s\n' "$width" "$height" "$refresh" > /tmp/sunshine-client-mode
+    ${niriMsg} output ${virtualDisplayPort} custom-mode "''${width}x''${height}@''${refresh}" || true
+    ${niriMsg} output ${virtualDisplayPort} scale 1 || true
+  '';
+
   steamStart = pkgs.writeShellScript "steam-start" ''
+    pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
+    # Hide physical sinks while gaming so Wine/Proton only enumerates Sunshine.
+    "$pactl" list short cards | ${lib.getExe' pkgs.gawk "awk"} '{print $2}' | while read -r card; do
+      "$pactl" set-card-profile "$card" off || true
+    done
+    systemctl --user restart sunshine-audio-sinks.service || true
     ${niriFocus} steam
-    if ! ${lib.getExe' pkgs.procps "pgrep"} -u $(id -u) -f 'gamescope.*steam' >/dev/null; then
-      ${niriMsg} action spawn -- ${steamBigPicture}
+    . ${sunshineMode}
+    if ${lib.getExe' pkgs.procps "pgrep"} -a -u $(id -u) -f '/bin/gamescope( |$)' >/tmp/sunshine-gamescope 2>/dev/null; then
+      if ! grep -q -- "--output-width $width --output-height $height --nested-refresh $refresh" /tmp/sunshine-gamescope; then
+        echo "gamescope already running with different size; not restarting it" >&2
+      fi
+    else
+      ${niriMsg} action spawn -- ${steamBigPicture} "$width" "$height" "$refresh"
     fi
+    ${niriFocusApp} gamescope || true
   '';
 
   steamStop = pkgs.writeShellScript "steam-stop" ''
     ${niriFocus} desktop || true
-    ${lib.getExe' pkgs.procps "pkill"} -TERM -u $(id -u) -f 'gamescope.*steam' || true
+    ${lib.getExe' pkgs.procps "pkill"} -TERM -u $(id -u) -f '/bin/gamescope( |$)' || true
+    systemctl --user restart wireplumber.service sunshine-audio-sinks.service || true
+  '';
+
+  desktopStart = pkgs.writeShellScript "desktop-start" ''
+    ${niriFocus} desktop
+    . ${sunshineMode}
   '';
 in
 {
@@ -243,6 +305,8 @@ in
       adapter_name = "/dev/dri/${gpuCards.dgpu.render}";
       # Sunshine wants the KMS monitor index from its startup log, not the connector name
       output_name = "0";
+      # Capture the monitor for the virtual sink Steam is routed to
+      audio_sink = sunshineSink;
     };
     applications = {
       env = {
@@ -272,7 +336,7 @@ in
           image-path = "desktop.png";
           prep-cmd = [
             {
-              do = "${niriFocus} desktop";
+              do = "${desktopStart}";
               undo = "";
             }
           ];
@@ -324,7 +388,38 @@ in
 
   # NOTE: Augmentation of the `sunshine` user service (generated by the module)
 
+  systemd.user.services.sunshine-audio-sinks = {
+    description = "Sunshine virtual audio sinks";
+    after = [ "pipewire-pulse.service" ];
+    wants = [ "pipewire-pulse.service" ];
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "sunshine-audio-sinks" ''
+        pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
+        has_sink() { "$pactl" list short sinks | grep -q '^.*[[:space:]]'"$1"'[[:space:]]'; }
+        has_loopback() { "$pactl" list modules | grep -q "source=$1.monitor sink=${sunshineSink}"; }
+
+        has_sink ${sunshineSink} || \
+          "$pactl" load-module module-null-sink sink_name=${sunshineSink} channels=2 rate=48000 sink_properties=device.description=Sunshine-Stereo
+        has_sink ${sunshineSurround51Sink} || \
+          "$pactl" load-module module-null-sink sink_name=${sunshineSurround51Sink} channels=6 rate=48000 channel_map=front-left,front-right,front-center,lfe,rear-left,rear-right sink_properties=device.description=Sunshine-Surround-5.1
+        has_sink ${sunshineSurround71Sink} || \
+          "$pactl" load-module module-null-sink sink_name=${sunshineSurround71Sink} channels=8 rate=48000 channel_map=front-left,front-right,front-center,lfe,rear-left,rear-right,side-left,side-right sink_properties=device.description=Sunshine-Surround-7.1
+
+        has_loopback ${sunshineSurround51Sink} || \
+          "$pactl" load-module module-loopback source=${sunshineSurround51Sink}.monitor sink=${sunshineSink} latency_msec=20
+        has_loopback ${sunshineSurround71Sink} || \
+          "$pactl" load-module module-loopback source=${sunshineSurround71Sink}.monitor sink=${sunshineSink} latency_msec=20
+        "$pactl" set-default-sink ${sunshineSink} || true
+        "$pactl" set-default-source ${sunshineSink}.monitor || true
+      '';
+    };
+  };
+
   systemd.user.services.sunshine = {
+    wants = [ "sunshine-audio-sinks.service" ];
     serviceConfig = {
       PrivateDevices = false;
       KillSignal = "SIGKILL";
@@ -369,8 +464,19 @@ in
       StandardInput = "tty";
       StandardOutput = "journal";
       ExecStart = pkgs.writeShellScript "niri-run" ''
-        rm -f /run/user/$(id -u)/niri.*.sock
-        exec ${lib.getExe pkgs.niri} -c ${niriConfig}
+        rm -f /run/user/$(id -u)/niri.*.sock ${niriSocket}
+        ${lib.getExe pkgs.niri} -c ${niriConfig} &
+        pid=$!
+        trap 'kill "$pid" 2>/dev/null || true' TERM INT EXIT
+        for _ in $(seq 1 50); do
+          sock=$(ls /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -n1 || true)
+          if [ -n "$sock" ]; then
+            ln -sfn "$sock" ${niriSocket}
+            break
+          fi
+          sleep 0.1
+        done
+        wait "$pid"
       '';
       KillSignal = "SIGKILL";
       TimeoutStopSec = "5s";
