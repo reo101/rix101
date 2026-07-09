@@ -53,6 +53,8 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
         ...
       }:
       {
+        devShells.default = pkgs.mkShell { };
+
         # ...
       };
 
