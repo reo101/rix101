@@ -88,6 +88,19 @@ process_identities() {
 identities=("$@")
 process_identities identities
 
+needs_interactive_input() {
+    local identity line
+    for identity in "$@"; do
+        [[ -r "${identity}" ]] || continue
+        while IFS= read -r line; do
+            case "${line}" in
+                AGE-PLUGIN-YUBIKEY-* | "-> scrypt "*) return 0 ;;
+            esac
+        done < "${identity}"
+    done
+    return 1
+}
+
 cache_root() {
     if [[ -n "${NIX_ENRAGED_CACHE_DIR:-}" ]]; then
         printf '%s\n' "${NIX_ENRAGED_CACHE_DIR}"
@@ -112,44 +125,79 @@ new_name="${file_hash:0:32}-${basename//"/"/"%"}"
 umask 077
 cache_dir="$(cache_root)"
 out="${cache_dir%/}/${new_name}"
+# Keep this pathname: unlinking it while waiters exist can split `flock` domains.
 lock_file="${out}.lock"
+failure_file="${out}.failed"
 wait_timeout="${NIX_ENRAGED_LOCK_WAIT_TIMEOUT:-300}"
+failure_timeout="${NIX_ENRAGED_FAILURE_CACHE_TIMEOUT:-30}"
 [[ "${wait_timeout}" =~ ^[0-9]+$ ]] || die "NIX_ENRAGED_LOCK_WAIT_TIMEOUT must be seconds"
-tmp_out=""
-
-cleanup() {
-    if [[ -n "${tmp_out}" && -e "${tmp_out}" ]]; then
-        rm -f -- "${tmp_out}"
-    fi
-}
-trap cleanup EXIT
+[[ "${failure_timeout}" =~ ^[0-9]+$ ]] || die "NIX_ENRAGED_FAILURE_CACHE_TIMEOUT must be seconds"
 
 mkdir -p -- "${cache_dir}"
 chmod 700 -- "${cache_dir}" 2>/dev/null || true
 
 # Decrypt only if necessary. `flock` avoids stale-lock hangs: kernel locks die with the process.
-if [[ ! -e "${out}" ]]; then
+if [[ ! -s "${out}" ]]; then
+    if needs_interactive_input "${identities[@]}" && [[ ! -t 0 ]]; then
+        die "cached plaintext is missing, but an identity requires interactive input and stdin is not a terminal"
+    fi
+
     args=()
     for i in "${identities[@]}"; do
         args+=("-i" "$i")
     done
 
-    tmp_out="$(mktemp "${out}.tmp.XXXXXXXXXX")"
     set +e
     # shellcheck disable=SC2016 # expanded by the inner bash, not this script
     flock -E 75 -x -w "${wait_timeout}" "${lock_file}" \
         bash -euo pipefail -c '
             out=$1
-            tmp=$2
-            file=$3
-            shift 3
+            file=$2
+            failure_file=$3
+            failure_timeout=$4
+            shift 4
+            tmp=""
 
-            if [ ! -e "$out" ]; then
-                rage -d "$@" -o "$tmp" "$file"
-                chmod 600 -- "$tmp"
-                mv -f -- "$tmp" "$out"
+            cleanup() {
+                [ -z "$tmp" ] || rm -f -- "$tmp"
+            }
+            trap cleanup EXIT
+
+            if [ -s "$out" ]; then
+                rm -f -- "$failure_file"
+                exit 0
             fi
-        ' rage-decrypt-and-cache "${out}" "${tmp_out}" "${file}" "${args[@]}"
+
+            if [ -f "$failure_file" ]; then
+                now="$(date +%s)"
+                if read -r failed_at failed_rc < "$failure_file" &&
+                    [[ "$failed_at" =~ ^[0-9]+$ && "$failed_rc" =~ ^[1-9][0-9]*$ ]] &&
+                    (( now >= failed_at && now - failed_at < failure_timeout )); then
+                    printf "rage-decrypt-and-cache: previous decrypt failed; retrying in %ss (remove %s to retry now)\\n" \
+                        "$((failure_timeout - (now - failed_at)))" "$failure_file" >&2
+                    exit "$failed_rc"
+                fi
+                rm -f -- "$failure_file"
+            fi
+
+            rm -f -- "$out"
+            tmp="$(mktemp "${out}.tmp.XXXXXXXXXX")"
+            if rage -d "$@" -o "$tmp" "$file"; then
+                if [ -s "$tmp" ]; then
+                    chmod 600 -- "$tmp"
+                    mv -f -- "$tmp" "$out"
+                    rm -f -- "$failure_file"
+                    exit 0
+                fi
+                printf "rage-decrypt-and-cache: rage produced empty decrypted output\\n" >&2
+                rc=1
+            else
+                rc=$?
+            fi
+
+            printf "%s %s\\n" "$(date +%s)" "$rc" > "$failure_file"
+            exit "$rc"
+        ' rage-decrypt-and-cache "${out}" "${file}" "${failure_file}" "${failure_timeout}" "${args[@]}"
     rc=$?
     set -e
 

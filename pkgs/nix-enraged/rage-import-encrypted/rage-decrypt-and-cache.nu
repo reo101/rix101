@@ -49,6 +49,17 @@ def process-identities [identities: list<string>]: nothing -> list<string> {
     $identities
 }
 
+def needs-interactive-input [identities: list<path>]: nothing -> bool {
+    $identities | any { |identity|
+        if not ($identity | path exists) {
+            false
+        } else {
+            let contents = (open --raw $identity)
+            ($contents | str contains "AGE-PLUGIN-YUBIKEY-") or ($contents | str contains "-> scrypt ")
+        }
+    }
+}
+
 def usable-dir [dir: path]: nothing -> bool {
     if not ($dir | path exists) {
         return false
@@ -107,21 +118,34 @@ def lock-wait-timeout []: nothing -> int {
     $raw | into int
 }
 
+def failure-cache-timeout []: nothing -> int {
+    let raw = ($env.NIX_ENRAGED_FAILURE_CACHE_TIMEOUT? | default "30")
+    if not ($raw =~ '^\d+$') {
+        die "NIX_ENRAGED_FAILURE_CACHE_TIMEOUT must be seconds"
+    }
+    $raw | into int
+}
+
 def decrypt-file [
     input_file: path,
     identities: list<path>,
     output_path: path
 ] {
-    if ($output_path | path exists) {
+    if ((^test -s $output_path | complete).exit_code == 0) {
         return
     }
 
+    if (needs-interactive-input $identities) and ((^test -t 0 | complete).exit_code != 0) {
+        die "cached plaintext is missing, but an identity requires interactive input and stdin is not a terminal"
+    }
+
     let output_dir = ($output_path | path dirname)
+    # Keep this pathname: unlinking it while waiters exist can split `flock` domains.
     let lock_file = $"($output_path).lock"
+    let failure_file = $"($output_path).failed"
     mkdir $output_dir
     ^chmod 700 $output_dir | complete | ignore
 
-    let tmp_output = (^mktemp $"($output_path).tmp.XXXXXXXXXX" | str trim)
     let identity_args = (
         $identities
         | each { |identity| ["-i", $identity] }
@@ -129,25 +153,57 @@ def decrypt-file [
     )
     let critical = '
         out=$1
-        tmp=$2
-        file=$3
-        shift 3
+        file=$2
+        failure_file=$3
+        failure_timeout=$4
+        shift 4
+        tmp=""
 
-        if [ ! -e "$out" ]; then
-            rage -d "$@" -o "$tmp" "$file"
-            chmod 600 -- "$tmp"
-            mv -f -- "$tmp" "$out"
+        cleanup() {
+            [ -z "$tmp" ] || rm -f -- "$tmp"
+        }
+        trap cleanup EXIT
+
+        if [ -s "$out" ]; then
+            rm -f -- "$failure_file"
+            exit 0
         fi
+
+        if [ -f "$failure_file" ]; then
+            now="$(date +%s)"
+            if read -r failed_at failed_rc < "$failure_file" &&
+                [[ "$failed_at" =~ ^[0-9]+$ && "$failed_rc" =~ ^[1-9][0-9]*$ ]] &&
+                (( now >= failed_at && now - failed_at < failure_timeout )); then
+                printf "rage-decrypt-and-cache: previous decrypt failed; retrying in %ss (remove %s to retry now)\n" \
+                    "$((failure_timeout - (now - failed_at)))" "$failure_file" >&2
+                exit "$failed_rc"
+            fi
+            rm -f -- "$failure_file"
+        fi
+
+        rm -f -- "$out"
+        tmp="$(mktemp "${out}.tmp.XXXXXXXXXX")"
+        if rage -d "$@" -o "$tmp" "$file"; then
+            if [ -s "$tmp" ]; then
+                chmod 600 -- "$tmp"
+                mv -f -- "$tmp" "$out"
+                rm -f -- "$failure_file"
+                exit 0
+            fi
+            printf "rage-decrypt-and-cache: rage produced empty decrypted output\n" >&2
+            rc=1
+        else
+            rc=$?
+        fi
+
+        printf "%s %s\n" "$(date +%s)" "$rc" > "$failure_file"
+        exit "$rc"
     '
 
     let result = (
-        ^flock -E 75 -x -w (lock-wait-timeout) $lock_file bash -euo pipefail -c $critical rage-decrypt-and-cache $output_path $tmp_output $input_file ...$identity_args
+        ^flock -E 75 -x -w (lock-wait-timeout) $lock_file bash -euo pipefail -c $critical rage-decrypt-and-cache $output_path $input_file $failure_file (failure-cache-timeout) ...$identity_args
         | complete
     )
-
-    if ($tmp_output | path exists) {
-        ^rm -f $tmp_output | complete | ignore
-    }
 
     if $result.exit_code == 75 {
         die $"timed out waiting for decrypt cache lock: ($lock_file)"

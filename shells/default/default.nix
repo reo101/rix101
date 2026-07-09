@@ -10,6 +10,27 @@ let
     __input.monitored.__assign = true;
   };
 
+  # `nix` stays enraged. `agenix` uses ordinary Nix so encrypted imports
+  # take their defaults; `agenix-enraged` explicitly evaluates them.
+  agenix-package = config.agenix-rekey.package.overrideAttrs (old: {
+    text = lib.replaceStrings
+      [ ''PASS_THRU_ARGS+=("$1" "--preview")'' ]
+      [ ''PASS_THRU_ARGS+=("$1")'' ]
+      old.text;
+  });
+
+  agenixWith = name: nix: pkgs.writeShellApplication {
+    inherit name;
+    runtimeInputs = [ pkgs.coreutils pkgs.git ];
+    text = ''
+      export PATH=${lib.makeBinPath [ nix ]}:$PATH
+      exec ${lib.getExe agenix-package} "$@"
+    '';
+  };
+
+  agenix = agenixWith "agenix" pkgs.nix;
+  agenix-enraged = agenixWith "agenix-enraged" nix-enraged-monitored;
+
   deploy-rs-with-nix-enraged-monitored = pkgs.writeShellApplication {
     name = pkgs.deploy-rs.meta.mainProgram;
     runtimeInputs = [ nix-enraged-monitored ];
@@ -81,7 +102,8 @@ pkgs.mkShellNoCC {
     # inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.agenix
     # inputs.ragenix.packages.${pkgs.stdenv.hostPlatform.system}.ragenix
     rage
-    config.agenix-rekey.package
+    agenix
+    agenix-enraged
     age-plugin-yubikey
   ] ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
     (inputs.nix-darwin.packages.aarch64-darwin.darwin-rebuild.overrideAttrs (drv: {
