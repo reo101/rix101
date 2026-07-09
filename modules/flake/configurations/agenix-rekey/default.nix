@@ -21,6 +21,7 @@
       localStorageDir = lib.mkDefault
         {
           nixos = "${inputs.self}/secrets/rekeyed/nixos/${meta.hostname}";
+          darwin = "${inputs.self}/secrets/rekeyed/darwin/${meta.hostname}";
           homeManager = "${inputs.self}/secrets/rekeyed/home-manager/${meta.hostname}/${config.home.username}";
         }
         .${host-type} or (throw "agenix-module-for: unsupported host-type '${host-type}'");
