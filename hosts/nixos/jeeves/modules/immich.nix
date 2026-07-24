@@ -37,9 +37,9 @@
     enable = true;
     package = pkgs.immich;
 
-    host = "0.0.0.0";
+    host = "127.0.0.1";
     port = 3001;
-    openFirewall = true;
+    openFirewall = false;
 
     mediaLocation = "/data/immich";
 

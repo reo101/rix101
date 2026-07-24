@@ -22,7 +22,7 @@
       pytestCheckPhase = "true";
     };
     passwordFile = config.age.secrets."paperless.password".path;
-    address = "0.0.0.0";
+    address = "127.0.0.1";
     port = 28981;
     domain = "paperless.jeeves.reo101.xyz";
     dataDir = "/data/paperless";
@@ -37,7 +37,7 @@
         config.services.paperless.domain
       ];
       PAPERLESS_CORS_ALLOWED_HOSTS = lib.concatStringsSep "," [
-        "http://${config.services.paperless.domain}"
+        "https://${config.services.paperless.domain}"
       ];
 
       PAPERLESS_CONSUMER_IGNORE_PATTERN = [
@@ -56,8 +56,6 @@
         pdfa_image_compression = "lossless";
         invalidate_digital_signatures = true;
       };
-      # HACK: remove
-      PAPERLESS_AUTO_LOGIN_USERNAME = PAPERLESS_ADMIN_USER;
     };
   };
 

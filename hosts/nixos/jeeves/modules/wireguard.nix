@@ -44,7 +44,7 @@ in
 
   # Server
   age.secrets."wireguard.privateKey" = {
-    mode = "077";
+    mode = "0400";
     rekeyFile = lib.custom.repoSecret "home/jeeves/wireguard/key.age";
     generator = {
       script =

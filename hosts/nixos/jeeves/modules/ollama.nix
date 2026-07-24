@@ -10,11 +10,10 @@
     group = "ollama";
     home = "/data/.state/ollama";
     models = "/data/.state/ollama/models";
-    host = "0.0.0.0";
+    host = "127.0.0.1";
     port = 11434;
     environmentVariables = {
-      # NOTE: no need now (nginx), should be only `127.0.0.1`
-      OLLAMA_ORIGINS = "*";
+      OLLAMA_ORIGINS = "https://openwebui.jeeves.reo101.xyz";
     };
   };
 
@@ -29,7 +28,7 @@
 
   services.open-webui = {
     enable = true;
-    host = "0.0.0.0";
+    host = "127.0.0.1";
     port = 3000;
     environment = {
       ANONYMIZED_TELEMETRY = "False";
@@ -37,8 +36,7 @@
       SCARF_NO_ANALYTICS = "True";
       TRANSFORMERS_CACHE = "${config.services.open-webui.stateDir}/cache";
       OLLAMA_API_BASE_URL = "http://127.0.0.1:${builtins.toString config.services.ollama.port}";
-      # Disable authentication
-      WEBUI_AUTH = "False";
+      WEBUI_AUTH = "True";
     };
     # NOTE: no need now (nginx)
     # openFirewall = true;

@@ -202,6 +202,19 @@ let
   };
 in
 {
+  age.secrets."nixarr.transmission.credentials" = {
+    rekeyFile = lib.custom.repoSecret "home/jeeves/nixarr/transmission-credentials.json.age";
+    owner = "transmission";
+    group = "transmission";
+    mode = "0400";
+    generator.script =
+      { pkgs, ... }:
+      /* bash */ ''
+        password="$(${lib.getExe pkgs.pwgen} -s 48 1)"
+        printf '{"rpc-username":"reo101","rpc-password":"%s"}\n' "$password"
+      '';
+  };
+
   age.secrets."nixarr.prowlarr.rutracker-password" = {
     rekeyFile = lib.custom.repoSecret "home/jeeves/nixarr/rutracker-password.age";
     owner = "prowlarr";
@@ -238,12 +251,13 @@ in
 
     transmission = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
       flood.enable = true;
-      # TODO: `credentialsFile` for RPC password with agenix
+      credentialsFile = config.age.secrets."nixarr.transmission.credentials".path;
       extraSettings = {
-        rpc-bind-address = "0.0.0.0";
-        rpc-whitelist = "127.0.0.1,192.168.*.*,10.100.0.*,*.local";
+        rpc-authentication-required = true;
+        rpc-bind-address = "127.0.0.1";
+        rpc-whitelist = "127.0.0.1";
       };
     };
 
