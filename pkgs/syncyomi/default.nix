@@ -31,9 +31,10 @@ buildGoModule (finalAttrs: {
   env.pnpmDeps = fetchPnpmDeps {
     pname = "${finalAttrs.pname}-web";
     inherit (finalAttrs) version;
+    inherit pnpm;
     src = "${finalAttrs.src}/web";
-    fetcherVersion = 3;
-    hash = "sha256-o+zfqXkgHE9/3VPrJ0llb6ZRBe2R8J0ROM7xtvCVrv4=";
+    fetcherVersion = 4;
+    hash = "sha256-8grlBi//dO+mgU5HKYHwNtlCbNbYV4VrptbSgg+ntvQ=";
   };
   env.pnpmRoot = "web";
 

@@ -71,7 +71,9 @@
   };
 
   config = {
-    perSystem = { lib, pkgs, system, ... }@perSystemArgs: let
+    perSystem = { pkgs, system, ... }@perSystemArgs: let
+      inherit (config) lib;
+
       # NOTE: evaluate packages in isolation, which allows
       #       merging them back into the global `pkgs` later
       # NOTE: also faster than `import nixpkgs { inherit system; }`
@@ -88,6 +90,10 @@
             inherit (config) lib;
           })
         ];
+      };
+      defaultBuildAttrs = previousAttrs: {
+        __structuredAttrs = previousAttrs.__structuredAttrs or true;
+        strictDeps = previousAttrs.strictDeps or true;
       };
       legacyPackages =
         lib.pipe
@@ -137,6 +143,19 @@
                   }
                 else
                   pkgsPure.callPackage actualPackage {}))
+            (lib.mapAttrs (
+              _: package:
+              if
+                lib.isDerivation package
+                && package ? overrideAttrs
+                && !(package.__structuredAttrs or false)
+              then
+                lib.infuse package {
+                  __output = _: previousAttrs: defaultBuildAttrs previousAttrs;
+                }
+              else
+                package
+            ))
           ];
     in {
       packages = lib.pipe legacyPackages [
