@@ -10,14 +10,63 @@ let
     __input.monitored.__assign = true;
   };
 
-  deploy-rs-with-nix-enraged-monitored = pkgs.symlinkJoin {
-    name = "deploy-rs-with-nix-enraged";
-    paths = [ pkgs.deploy-rs ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram "$out/bin/${pkgs.deploy-rs.meta.mainProgram}" \
-        --prefix PATH : ${lib.makeBinPath [ nix-enraged-monitored ]} \
-        --add-flags "--skip-checks"
+  deploy-rs-with-nix-enraged-monitored = pkgs.writeShellApplication {
+    name = pkgs.deploy-rs.meta.mainProgram;
+    runtimeInputs = [ nix-enraged-monitored ];
+    text = ''
+      die() {
+        echo "deploy: $*" >&2
+        exit 2
+      }
+
+      args=("$@")
+      target=""
+      extra_build_args=()
+
+      for ((i = 0; i < ''${#args[@]}; i++)); do
+        arg="''${args[$i]}"
+        case "$arg" in
+          -h|--help|-V|--version)
+            exec ${lib.getExe pkgs.deploy-rs} "$@"
+            ;;
+          --targets|--targets=*|-f|--file|--file=*)
+            die "target-only checks require one flake target, for example '.#jeeves'"
+            ;;
+          --)
+            extra_build_args=("''${args[@]:i + 1}")
+            break
+            ;;
+          --log-dir|-r|--result-path|--ssh-user|--profile-user|--ssh-opts|--fast-connection|--auto-rollback|--hostname|--magic-rollback|--confirm-timeout|--activation-timeout|--temp-path|--rollback-succeeded|--sudo|--interactive-sudo)
+            ((i += 1))
+            ((i < ''${#args[@]})) || die "$arg requires a value"
+            ;;
+          --*=*|-*)
+            ;;
+          *)
+            [[ -z "$target" ]] || die "target-only checks support one target"
+            target="$arg"
+            ;;
+        esac
+      done
+
+      [[ -n "$target" ]] || die "specify one target, for example '.#jeeves'"
+      [[ "$target" == *#* ]] || die "target must select a node, for example '.#jeeves'"
+
+      repo="''${target%%#*}"
+      selector="''${target#*#}"
+      node="''${selector%%.*}"
+
+      [[ -n "$repo" ]] || repo="."
+      [[ "$node" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] \
+        || die "cannot derive a simple node name from '$target'"
+
+      check_prefix="$repo#deployChecks.${pkgs.system}.\"$node\""
+      ${lib.getExe' nix-enraged-monitored "nix"} build --no-link \
+        "$check_prefix.deploy-schema" \
+        "$check_prefix.deploy-activate" \
+        "''${extra_build_args[@]}"
+
+      exec ${lib.getExe pkgs.deploy-rs} --skip-checks "$@"
     '';
   };
 in

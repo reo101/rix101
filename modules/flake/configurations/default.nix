@@ -371,7 +371,20 @@
               self.deploy)
             inputs.deploy-rs.lib;
       };
+      deployChecksFor = {
+        deployChecks = lib.mapAttrs
+          (_system: deployLib:
+            lib.mapAttrs
+              (node: nodeConfig:
+                deployLib.deployChecks (self.deploy // {
+                  nodes = {
+                    ${node} = nodeConfig;
+                  };
+                }))
+              config.auto.configurations.result.deployNodes)
+          inputs.deploy-rs.lib;
+      };
       # TODO: lib.something for merging (asserting for no overwrites)
-    in configurationsOld // configurationsNew // deployNodes // deployChecks;
+    in configurationsOld // configurationsNew // deployNodes // deployChecks // deployChecksFor;
   };
 }
