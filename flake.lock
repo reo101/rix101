@@ -1252,17 +1252,17 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1784007870,
-        "narHash": "sha256-djcLt/JJphyNt4eDY9XTly+/WbCK5lqWq9lSgCmJkkQ=",
+        "lastModified": 1784538064,
+        "narHash": "sha256-yJMXyy5q4wuOd7Z09Xe5AIK7dMQu7EKSH9yT8KGBce8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "18b9261cb3294b6d2a06d03f96872827b8fe2698",
+        "rev": "ae9994806ca939447a8a6adc4f94d12cbdf06e01",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable",
         "repo": "nixpkgs",
+        "rev": "ae9994806ca939447a8a6adc4f94d12cbdf06e01",
         "type": "github"
       }
     },
@@ -1357,38 +1357,6 @@
       "original": {
         "owner": "nixos",
         "ref": "staging",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-staging-next": {
-      "locked": {
-        "lastModified": 1784053465,
-        "narHash": "sha256-u+fPCOAjQYRiamETYb9j2cmnSfwXCYuknmg+3LdDSe0=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "f93d88c66969ce97f097b979d3e079f0ca0f226a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "staging-next",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-trunk": {
-      "locked": {
-        "lastModified": 1784055685,
-        "narHash": "sha256-g27BESh2OI+++AHnkBLTDewn8CXutTxBaliD57+9kyE=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "d89398783f463af8189ef7e3a400762efea63eb6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "master",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -1683,8 +1651,6 @@
         "nixpkgs-for-nod": "nixpkgs-for-nod",
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
-        "nixpkgs-staging-next": "nixpkgs-staging-next",
-        "nixpkgs-trunk": "nixpkgs-trunk",
         "noctalia": "noctalia",
         "nur": "nur",
         "openwrt-imagebuilder": "openwrt-imagebuilder",

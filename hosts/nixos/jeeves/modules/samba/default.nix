@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 {
   imports = [
     ./maria.nix
@@ -14,9 +19,7 @@
 
   services.samba = {
     enable = true;
-    package = pkgs.sambaFull.override {
-      inherit (pkgs.nixpkgs.staging-next) ceph;
-    };
+    package = pkgs.sambaFull;
     openFirewall = true;
     settings = {
       global = {

@@ -47,9 +47,6 @@ final: prev:
     }
   );
 
-  # FIXME: <https://github.com/NixOS/nixpkgs/issues/442652>
-  ceph.__assign = inputs.nixpkgs-stable.legacyPackages.${prev.stdenv.hostPlatform.system}.ceph;
-
   river-classic.__output.xwaylandSupport.__assign = true;
 
   discord.__input = {

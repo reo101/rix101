@@ -27,12 +27,13 @@
 
       # Nixpkgs
       nixpkgs = {
-        url = "github:nixos/nixpkgs/nixos-unstable";
+        # TODO: return to nixos-unstable once nixpkgs#540857 reaches the channel.
+        url = "github:nixos/nixpkgs/ae9994806ca939447a8a6adc4f94d12cbdf06e01";
       };
 
-      nixpkgs-trunk = {
-        url = "github:nixos/nixpkgs/master";
-      };
+      # nixpkgs-trunk = {
+      #   url = "github:nixos/nixpkgs/master";
+      # };
 
       nixpkgs-stable = {
         url = "github:nixos/nixpkgs/nixos-24.05";
@@ -40,10 +41,6 @@
 
       nixpkgs-staging = {
         url = "github:nixos/nixpkgs/staging";
-      };
-
-      nixpkgs-staging-next = {
-        url = "github:nixos/nixpkgs/staging-next";
       };
 
       nixpkgs-for-nod = {
@@ -59,26 +56,26 @@
         url = "github:vic/flake-file";
       };
 
-       flake-compat = {
-         url = "github:edolstra/flake-compat";
-         flake = false;
-       };
- 
-       flake-utils = {
-         url = "github:numtide/flake-utils";
-         inputs.systems.follows = "systems";
-       };
- 
-       gitignore = {
-         url = "github:hercules-ci/gitignore.nix";
-         inputs.nixpkgs.follows = "nixpkgs";
-       };
- 
-       treefmt-nix = {
-         url = "github:numtide/treefmt-nix";
-         inputs.nixpkgs.follows = "nixpkgs";
-       };
- 
+      flake-compat = {
+        url = "github:edolstra/flake-compat";
+        flake = false;
+      };
+
+      flake-utils = {
+        url = "github:numtide/flake-utils";
+        inputs.systems.follows = "systems";
+      };
+
+      gitignore = {
+        url = "github:hercules-ci/gitignore.nix";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
+      treefmt-nix = {
+        url = "github:numtide/treefmt-nix";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+
       steamlesslink = {
         url = "github:reo101/SteamlessLink";
         inputs.nixpkgs.follows = "nixpkgs";
