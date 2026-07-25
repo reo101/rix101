@@ -19,5 +19,35 @@
         };
       };
     };
+
+    "automation storage alerts" = [
+      {
+        id = "jeeves_storage_alert";
+        alias = "Jeeves storage alert";
+        mode = "queued";
+        trigger = [
+          {
+            platform = "webhook";
+            webhook_id = "b490d49b-e9d2-4a90-bbb1-4e9909507904";
+            allowed_methods = [ "POST" ];
+            local_only = true;
+          }
+        ];
+        action = [
+          {
+            service = "notify.pushover";
+            data = {
+              title = "{{ trigger.json.title }}";
+              message = "{{ trigger.json.message }}";
+              target = "android";
+              data = {
+                sound = "siren";
+                priority = 1;
+              };
+            };
+          }
+        ];
+      }
+    ];
   };
 }

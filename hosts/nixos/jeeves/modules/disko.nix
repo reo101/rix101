@@ -1,4 +1,121 @@
-{ inputs, lib, pkgs, utils, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  utils,
+  ...
+}:
+let
+  storageWebhookId = "b490d49b-e9d2-4a90-bbb1-4e9909507904";
+
+  storageNotify = pkgs.writeShellApplication {
+    name = "jeeves-storage-notify";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.systemd
+      pkgs.util-linux
+    ];
+    text = ''
+      title="''${1:?notification title is required}"
+      message="''${2:?notification message is required}"
+
+      printf '%s: %s\n' "$title" "$message" \
+        | systemd-cat --identifier=jeeves-storage-monitor --priority=warning
+      printf '%s: %s\n' "$title" "$message" | wall --nobanner 2>/dev/null || true
+
+      payload=$(jq --compact-output --null-input \
+        --arg title "$title" \
+        --arg message "$message" \
+        '{ title: $title, message: $message }')
+      if ! curl --fail --silent --show-error \
+        --connect-timeout 3 \
+        --max-time 10 \
+        --header 'Content-Type: application/json' \
+        --data "$payload" \
+        'http://10.0.0.10:8123/api/webhook/${storageWebhookId}'; then
+        echo 'Home Assistant storage notification failed' \
+          | systemd-cat --identifier=jeeves-storage-monitor --priority=err
+      fi
+    '';
+  };
+
+  smartNotify = pkgs.writeShellApplication {
+    name = "jeeves-smart-notify";
+    text = ''
+      message="''${SMARTD_FULLMESSAGE:-''${SMARTD_MESSAGE:-Unknown SMART error}}"
+      ${lib.getExe storageNotify} \
+        "SMART alert for ''${SMARTD_DEVICESTRING:-unknown disk}" \
+        "$message"
+    '';
+  };
+
+  mdHealthCheck = pkgs.writeShellApplication {
+    name = "jeeves-md-health-check";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.mdadm
+    ];
+    text = ''
+      state_file=/var/lib/jeeves-storage-monitor/md-tank-degraded
+
+      if details=$(mdadm --detail --test /dev/md/tank 2>&1); then
+        if [[ -e "$state_file" ]]; then
+          ${lib.getExe storageNotify} \
+            'Jeeves RAID recovered' \
+            '/dev/md/tank reports all expected members active again.'
+          rm -f "$state_file"
+        fi
+      else
+        status=$?
+        details=$(mdadm --detail /dev/md/tank 2>&1 || printf '%s' "$details")
+        if [[ ! -e "$state_file" ]]; then
+          ${lib.getExe storageNotify} \
+            'Jeeves RAID degraded' \
+            "$details"
+          touch "$state_file"
+        fi
+        printf '%s\n' "$details" >&2
+        exit "$status"
+      fi
+    '';
+  };
+
+  diskSpaceCheck = pkgs.writeShellApplication {
+    name = "jeeves-disk-space-check";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      check_mount() {
+        local label="$1"
+        local mount_point="$2"
+        local state_file="/var/lib/jeeves-storage-monitor/space-$label"
+        local usage
+
+        usage=$(df --output=pcent "$mount_point" | tail -n 1 | tr -cd '0-9')
+        if (( usage >= 85 )); then
+          if [[ ! -e "$state_file" ]]; then
+            ${lib.getExe storageNotify} \
+              "Jeeves disk space at $usage%" \
+              "$mount_point has crossed the 85% usage threshold."
+            touch "$state_file"
+          fi
+          return 1
+        elif (( usage <= 80 )) && [[ -e "$state_file" ]]; then
+          ${lib.getExe storageNotify} \
+            'Jeeves disk space recovered' \
+            "$mount_point is back down to $usage% usage."
+          rm -f "$state_file"
+        fi
+        return 0
+      }
+
+      failed=0
+      check_mount root / || failed=1
+      check_mount tank /data || failed=1
+      exit "$failed"
+    '';
+  };
+in
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -23,6 +140,87 @@
 
   # HACK: `mdadm: No mail address or alert command - not monitoring.`
   boot.swraid.mdadmConf = "MAILADDR root";
+
+  nix.gc = {
+    automatic = true;
+    dates = "Sun 05:00";
+    randomizedDelaySec = "1h";
+    options = "--delete-older-than 30d";
+  };
+
+  services.btrfs.autoScrub = {
+    enable = true;
+    # `/home`, `/nix`, and `/data` are subvolumes of the same filesystem.
+    fileSystems = [
+      "/"
+      "/data"
+    ];
+    interval = "monthly";
+  };
+
+  services.smartd = {
+    enable = true;
+    autodetect = false;
+    defaults.monitored = "-a -o on -S on -n standby,q -W 4,45,50 -m <nomailer> -M exec ${lib.getExe smartNotify}";
+    devices = [
+      {
+        device = "/dev/disk/by-id/ata-WDC_WD8003FFBX-68B9AN0_VYJB5TUM";
+        # Monitor the detached member while tolerating its physical removal, but
+        # do not schedule more self-tests after its extended test stopped progressing.
+        options = "-d removable";
+      }
+      {
+        device = "/dev/disk/by-id/ata-WDC_WD8003FFBX-68B9AN0_VYHZTWSM";
+        options = "-s (S/../.././02|L/../02/./03)";
+      }
+    ];
+    notifications = {
+      mail.enable = false;
+      wall.enable = false;
+      x11.enable = false;
+    };
+  };
+
+  systemd.services = {
+    jeeves-md-health-check = {
+      description = "Check Jeeves mdraid health";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe mdHealthCheck;
+        StateDirectory = "jeeves-storage-monitor";
+      };
+    };
+    jeeves-disk-space-check = {
+      description = "Check Jeeves filesystem usage";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe diskSpaceCheck;
+        StateDirectory = "jeeves-storage-monitor";
+      };
+    };
+  };
+
+  systemd.timers = {
+    jeeves-md-health-check = {
+      description = "Periodically check Jeeves mdraid health";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "10m";
+        OnUnitActiveSec = "1h";
+        RandomizedDelaySec = "5m";
+        Persistent = true;
+      };
+    };
+    jeeves-disk-space-check = {
+      description = "Periodically check Jeeves filesystem usage";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "daily";
+        RandomizedDelaySec = "1h";
+        Persistent = true;
+      };
+    };
+  };
 
   # HACK: for troubleshooting
   boot.initrd.systemd.emergencyAccess = true;
@@ -59,11 +257,10 @@
 
   boot.initrd.systemd.services.copy-luks-keys =
     let
-      cryptsetupServices =
-        lib.map (name: "systemd-cryptsetup@${utils.escapeSystemdPath name}.service") [
-          "root"
-          "tank"
-        ];
+      cryptsetupServices = lib.map (name: "systemd-cryptsetup@${utils.escapeSystemdPath name}.service") [
+        "root"
+        "tank"
+      ];
     in
     {
       description = "Copy LUKS keys into initrd tmpfs";
