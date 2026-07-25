@@ -3,6 +3,30 @@ on:
   pull_request:
   push:
 jobs:
+  active-hosts:
+    name: Evaluate ${{ matrix.host }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+        - rungen
+        - jeeves
+        - arthur
+    steps:
+    - uses: actions/checkout@v4
+    - uses: DeterminateSystems/nix-installer-action@v4
+    - uses: cachix/cachix-action@v15
+      with:
+        name: nix-community
+    - uses: cachix/cachix-action@v15
+      with:
+        name: rix101
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: >-
+        nix eval --raw
+        ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath"
+
   check:
     runs-on: ubuntu-latest
     steps:
