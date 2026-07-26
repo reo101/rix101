@@ -1,4 +1,10 @@
-{ inputs, pkgs, config, ... }:
+{
+  inputs,
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -41,8 +47,8 @@
         ];
       };
       theme = {
-        mode = "dark";
-        source = "wallpaper";
+        mode = lib.mkForce "dark";
+        source = lib.mkForce "wallpaper";
         builtin = "Tokyo-Night";
         wallpaper_scheme = "m3-fruit-salad";
       };
