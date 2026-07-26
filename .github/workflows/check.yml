@@ -27,6 +27,16 @@ jobs:
         nix eval --raw
         ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath"
 
+  generated-flake:
+    name: Check generated flake.nix
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: DeterminateSystems/nix-installer-action@v4
+    - run: |
+        nix run .#write-flake
+        git diff --exit-code -- flake.nix
+
   check:
     runs-on: ubuntu-latest
     steps:
