@@ -93,7 +93,7 @@ in
       systemd.network = {
         enable = true;
         networks."10-lan" = {
-          matchConfig.Driver = "virtio_net";
+          matchConfig.MACAddress = vmMAC;
           addresses = [
             { Address = vmCidr; }
           ];
