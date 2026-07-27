@@ -7,6 +7,10 @@
 }:
 
 let
+  shaderDir = builtins.path {
+    path = ./shaders;
+    name = "ghostty-shaders";
+  };
   uiuaCodepointMap =
     (lib.concatStringsSep "," (import ./uiua386glyphs.nix))
     + "=Uiua386";
@@ -38,7 +42,7 @@ in
             "sharpen.glsl"
           ]
           [
-            (lib.map (lib.path.append ./shaders))
+            (lib.map (shader: "${shaderDir}/${shader}"))
             (lib.map builtins.toString)
           ];
     };
