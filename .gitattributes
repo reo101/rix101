@@ -1,1 +1,2 @@
 flake.nix linguist-generated
+*.age binary
