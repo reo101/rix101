@@ -13,6 +13,7 @@ in
     ../homeModules/ghostty
     ../homeModules/easyeffects.nix
     inputs.self.modules.home-manager.ida-pro
+    inputs.self.modules.home-manager.yubikey-touch-detector
   ];
 
   home = {
