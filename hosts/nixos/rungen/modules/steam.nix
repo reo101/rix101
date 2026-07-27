@@ -1,12 +1,22 @@
 {
   inputs,
+  lib,
   pkgs,
   ...
 }:
 {
   imports = [
     inputs.self.nixosModules.steam
+    inputs.steamlesslink.nixosModules.steamless-link-controller
   ];
+
+  services.steamless-link-controller = {
+    enable = true;
+    host = "jeeves.lan";
+  };
+
+  # Start forwarding only when explicitly requested.
+  systemd.services.steamless-link-controller.wantedBy = lib.mkForce [ ];
 
   environment.systemPackages = [
     pkgs.mangohud

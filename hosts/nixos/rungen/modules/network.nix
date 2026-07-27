@@ -7,7 +7,6 @@ let
   wireguard-interface = "wg0";
   myPeer = wgServer.peers.${meta.hostname};
   myIp = lib.net.cidr.host myPeer.hostIndex wgServer.cidr;
-  homeCidr = "192.168.1.0/24";
   listenPort = 51820;
 in
 {
@@ -99,7 +98,6 @@ in
           AllowedIPs = [
             # TODO: two netdevs with all/only private traffic
             # wgServer.cidr
-            # homeCidr
             "0.0.0.0/0"
             "::/0"
           ];
@@ -116,9 +114,6 @@ in
       routes = [
         {
           Destination = wgServer.cidr;
-        }
-        {
-          Destination = homeCidr;
         }
       ];
       linkConfig.ActivationPolicy = "down";

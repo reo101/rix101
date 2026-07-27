@@ -13,7 +13,7 @@ let
   wireguard-network-cidr = wgServer.cidr;
   wireguard-network-host-cidr = lib.net.cidr.hostCidr 1 wireguard-network-cidr;
   wireguard-network-gateway = lib.net.cidr.host 1 wireguard-network-cidr;
-  restrictedPeers = lib.filterAttrs (_: peer: peer ? allowedTCPPorts) wgServer.peers;
+  restrictedPeers = lib.filterAttrs (_: peer: (peer.allowedTCPPorts or null) != null) wgServer.peers;
   peerIP = peer: lib.net.cidr.host peer.hostIndex wireguard-network-cidr;
   peerFirewallRules =
     peer:
@@ -82,7 +82,7 @@ in
       51820
     ];
 
-    # A peer with `allowedTCPPorts` is denied everything else before NixOS's
+    # A peer with non-null `allowedTCPPorts` is denied everything else before NixOS's
     # general firewall rules (which otherwise apply to every WireGuard peer).
     extraCommands = lib.concatMapAttrsStringSep "\n" (_: peer: peerFirewallRules peer) restrictedPeers;
     extraStopCommands = lib.concatMapAttrsStringSep "\n" (

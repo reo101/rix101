@@ -2,7 +2,7 @@
 {
   imports = [
     inputs.self.nixosModules.steam
-    inputs.steamlesslink.nixosModules.steamless-uhid
+    inputs.steamlesslink.nixosModules.steamless-link-host
   ];
 
   environment.systemPackages = [
@@ -12,13 +12,26 @@
     pkgs.protontricks
   ];
 
-  services.steamless-uhid = {
+  services.steamless-link-host = {
     enable = true;
     user = "jeeves";
     listenHost = "0.0.0.0";
     listenPort = 3244;
-    openFirewall = true;
     iroh.enable = true;
+  };
+
+  # Raw controller traffic is unauthenticated: admit it only from home.
+  networking.firewall = let
+    homeCidr = "192.168.1.0/24";
+    port = builtins.toString config.services.steamless-link-host.listenPort;
+  in {
+    interfaces.wg0.allowedTCPPorts = [ 3244 ];
+    extraCommands = /* bash */ ''
+      ${lib.getExe pkgs.iptables} -A INPUT -s ${homeCidr} -p tcp --dport ${port} -j ACCEPT
+    '';
+    extraStopCommands = /* bash */ ''
+      ${lib.getExe pkgs.iptables} -D INPUT -s ${homeCidr} -p tcp --dport ${port} -j ACCEPT 2>/dev/null || true
+    '';
   };
 
   # Steam

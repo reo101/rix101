@@ -61,6 +61,11 @@ in
                           default = null;
                           description = "Static host index in the CIDR (e.g. 5 for .5). null = auto-assign.";
                         };
+                        allowedTCPPorts = lib.mkOption {
+                          type = types.nullOr (types.listOf types.port);
+                          default = null;
+                          description = "TCP ports this peer may access on the WireGuard server. null allows all ports.";
+                        };
                       };
                     }
                   )
