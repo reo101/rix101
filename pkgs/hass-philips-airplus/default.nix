@@ -10,6 +10,9 @@ buildHomeAssistantComponent rec {
   domain = "philips_airplus";
   version = "0.3.0";
 
+  # WARN: `buildHomeAssistantComponent`'s manifest hook reads `domain` from the environment
+  __structuredAttrs = false;
+
   src = fetchFromGitHub {
     inherit owner;
     repo = "philips-airplus-homeassistant";

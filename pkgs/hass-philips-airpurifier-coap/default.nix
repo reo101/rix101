@@ -12,6 +12,9 @@ buildHomeAssistantComponent rec {
   domain = "philips_airpurifier_coap";
   version = "0.34.3";
 
+  # WARN: `buildHomeAssistantComponent`'s manifest hook reads `domain` from the environment
+  __structuredAttrs = false;
+
   src = fetchFromGitHub {
     inherit owner;
     repo = "philips-airpurifier-coap";
