@@ -9,12 +9,11 @@
       FindAndroid = {
         speech.text = "Send notification";
         action = {
-          service = "notify.pushover";
+          action = "notify.send_message";
+          target.entity_id = "notify.cheetah";
           data = {
+            title = "Find Android";
             message = "Phonefinderalert";
-            target = "android";
-            data.sound = "echo";
-            data.priority = 1;
           };
         };
       };
@@ -35,15 +34,11 @@
         ];
         action = [
           {
-            service = "notify.pushover";
+            action = "notify.send_message";
+            target.entity_id = "notify.cheetah";
             data = {
               title = "{{ trigger.json.title }}";
               message = "{{ trigger.json.message }}";
-              target = "android";
-              data = {
-                sound = "siren";
-                priority = 1;
-              };
             };
           }
         ];

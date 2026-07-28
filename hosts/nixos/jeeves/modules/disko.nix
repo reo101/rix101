@@ -20,10 +20,6 @@ let
       title="''${1:?notification title is required}"
       message="''${2:?notification message is required}"
 
-      printf '%s: %s\n' "$title" "$message" \
-        | systemd-cat --identifier=jeeves-storage-monitor --priority=warning
-      printf '%s: %s\n' "$title" "$message" | wall --nobanner 2>/dev/null || true
-
       payload=$(jq --compact-output --null-input \
         --arg title "$title" \
         --arg message "$message" \
@@ -34,9 +30,15 @@ let
         --header 'Content-Type: application/json' \
         --data "$payload" \
         'http://10.0.0.10:8123/api/webhook/${storageWebhookId}'; then
-        echo 'Home Assistant storage notification failed' \
+        printf 'Home Assistant storage notification failed: %s: %s\n' \
+          "$title" "$message" \
           | systemd-cat --identifier=jeeves-storage-monitor --priority=err
+        exit 1
       fi
+
+      printf '%s: %s\n' "$title" "$message" \
+        | systemd-cat --identifier=jeeves-storage-monitor --priority=warning
+      printf '%s: %s\n' "$title" "$message" | wall --nobanner 2>/dev/null || true
     '';
   };
 
@@ -57,23 +59,28 @@ let
       pkgs.mdadm
     ];
     text = ''
-      state_file=/var/lib/jeeves-storage-monitor/md-tank-degraded
+      # The legacy state did not distinguish a delivered webhook from a failed
+      # attempt. Drop it and persist only confirmed delivery from now on.
+      rm -f /var/lib/jeeves-storage-monitor/md-tank-degraded
+      state_file=/var/lib/jeeves-storage-monitor/md-tank-degraded-notified
 
       if details=$(mdadm --detail --test /dev/md/tank 2>&1); then
         if [[ -e "$state_file" ]]; then
-          ${lib.getExe storageNotify} \
+          if ${lib.getExe storageNotify} \
             'Jeeves RAID recovered' \
-            '/dev/md/tank reports all expected members active again.'
-          rm -f "$state_file"
+            '/dev/md/tank reports all expected members active again.'; then
+            rm -f "$state_file"
+          fi
         fi
       else
         status=$?
         details=$(mdadm --detail /dev/md/tank 2>&1 || printf '%s' "$details")
         if [[ ! -e "$state_file" ]]; then
-          ${lib.getExe storageNotify} \
+          if ${lib.getExe storageNotify} \
             'Jeeves RAID degraded' \
-            "$details"
-          touch "$state_file"
+            "$details"; then
+            touch "$state_file"
+          fi
         fi
         printf '%s\n' "$details" >&2
         exit "$status"
@@ -88,23 +95,28 @@ let
       check_mount() {
         local label="$1"
         local mount_point="$2"
-        local state_file="/var/lib/jeeves-storage-monitor/space-$label"
+        local legacy_state_file="/var/lib/jeeves-storage-monitor/space-$label"
+        local state_file="$legacy_state_file-notified"
         local usage
 
+        # The legacy state may represent a failed webhook attempt.
+        rm -f "$legacy_state_file"
         usage=$(df --output=pcent "$mount_point" | tail -n 1 | tr -cd '0-9')
         if (( usage >= 85 )); then
           if [[ ! -e "$state_file" ]]; then
-            ${lib.getExe storageNotify} \
+            if ${lib.getExe storageNotify} \
               "Jeeves disk space at $usage%" \
-              "$mount_point has crossed the 85% usage threshold."
-            touch "$state_file"
+              "$mount_point has crossed the 85% usage threshold."; then
+              touch "$state_file"
+            fi
           fi
-          return 1
+          return 0
         elif (( usage <= 80 )) && [[ -e "$state_file" ]]; then
-          ${lib.getExe storageNotify} \
+          if ${lib.getExe storageNotify} \
             'Jeeves disk space recovered' \
-            "$mount_point is back down to $usage% usage."
-          rm -f "$state_file"
+            "$mount_point is back down to $usage% usage."; then
+            rm -f "$state_file"
+          fi
         fi
         return 0
       }
@@ -187,6 +199,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = lib.getExe mdHealthCheck;
+        # A degraded array is reported through `storageNotify`, not deploy-rs
+        SuccessExitStatus = [ 1 ];
         StateDirectory = "jeeves-storage-monitor";
       };
     };
@@ -205,8 +219,7 @@ in
       description = "Periodically check Jeeves mdraid health";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = "10m";
-        OnUnitActiveSec = "1h";
+        OnCalendar = "hourly";
         RandomizedDelaySec = "5m";
         Persistent = true;
       };
