@@ -23,6 +23,8 @@ in
       # TODO: setup from stylix.opacity
       background-opacity = 0.65;
       background-opacity-cells = true;
+      # 100 MiB per terminal surface
+      scrollback-limit = 100 * 1024 * 1024;
 
       font-family = [
         "Maple Mono NF CN"
