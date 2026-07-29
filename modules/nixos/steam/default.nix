@@ -41,7 +41,11 @@ in
       package = lib.mkDefault (
         cfg.steamPackage.override (prev: {
           extraEnv = (prev.extraEnv or { }) // {
-            LD_PRELOAD = "${cfg.package}/lib/libextest.so";
+            # Steam's 64-bit UI and 32-bit input process both use XTEST.
+            LD_PRELOAD = lib.concatStringsSep ":" [
+              "${cfg.package.i686}/lib/libextest.so"
+              "${cfg.package}/lib/libextest.so"
+            ];
 
             # Steam Remote Play's PipeWire capturer uses `GBM`. On NixOS the `GBM`
             # backend lives under `/run/opengl-driver`, while `pressure-vessel`
