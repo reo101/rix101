@@ -19,7 +19,7 @@
 
   services.samba = {
     enable = true;
-    package = pkgs.sambaFull;
+    package = pkgs.samba;
     openFirewall = true;
     settings = {
       global = {
@@ -40,10 +40,7 @@
         # Symlinks;
         "allow insecure wide links" = "yes";
 
-        # Printers;
-        "load printers" = "yes";
-        "printing" = "cups";
-        "printcap name" = "cups";
+
       };
 
       # Shares
