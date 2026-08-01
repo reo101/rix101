@@ -9,7 +9,7 @@
     user = "ollama";
     group = "ollama";
     home = "/data/.state/ollama";
-    models = "/data/.state/ollama/models";
+    modelsDir = "/data/.state/ollama/models";
     host = "127.0.0.1";
     port = 11434;
     environmentVariables = {
