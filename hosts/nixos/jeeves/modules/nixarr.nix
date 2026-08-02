@@ -200,12 +200,26 @@ let
       echo "imported=$imported_downloads removed_queue_items=$removed_queue_items stale_downloads=$stale_downloads skipped=$skipped_downloads"
     '';
   };
+
+  waitForTransmission = pkgs.writeShellApplication {
+    name = "wait-for-transmission";
+    runtimeInputs = [ pkgs.coreutils pkgs.curl ];
+    text = ''
+      for ((attempt = 1; attempt <= 60; attempt++)); do
+        if curl --silent --output /dev/null --max-time 1 http://127.0.0.1:${builtins.toString config.services.transmission.settings.rpc-port}/transmission/rpc; then
+          exit 0
+        fi
+        sleep 1
+      done
+      exit 1
+    '';
+  };
 in
 {
   age.secrets."nixarr.transmission.credentials" = {
     rekeyFile = lib.custom.repoSecret "home/jeeves/nixarr/transmission-credentials.json.age";
     owner = "transmission";
-    group = "transmission";
+    group = "media";
     mode = "0400";
     generator.script =
       { pkgs, ... }:
@@ -213,6 +227,13 @@ in
         password="$(${lib.getExe pkgs.pwgen} -s 48 1)"
         printf '{"rpc-username":"reo101","rpc-password":"%s"}\n' "$password"
       '';
+  };
+
+  age.secrets."nixarr.transmission.password" = {
+    rekeyFile = lib.custom.repoSecret "home/jeeves/nixarr/transmission-password.age";
+    owner = "root";
+    group = "media";
+    mode = "0440";
   };
 
   age.secrets."nixarr.prowlarr.rutracker-password" = {
@@ -232,7 +253,7 @@ in
     enable32Bit = true;
     extraPackages = [
       pkgs.libva-vdpau-driver
-      pkgs.libva1
+      pkgs.libva
       pkgs.vulkan-loader
       pkgs.vulkan-validation-layers
       pkgs.vulkan-extension-layer
@@ -265,7 +286,11 @@ in
       enable = true;
       settings-sync.transmission = {
         enable = true;
-        config.fields.tvCategory = "sonarr";
+        config.fields = {
+          username = "reo101";
+          password.secret = config.age.secrets."nixarr.transmission.password".path;
+          tvCategory = "sonarr";
+        };
       };
     };
 
@@ -273,7 +298,11 @@ in
       enable = true;
       settings-sync.transmission = {
         enable = true;
-        config.fields.movieCategory = "radarr";
+        config.fields = {
+          username = "reo101";
+          password.secret = config.age.secrets."nixarr.transmission.password".path;
+          movieCategory = "radarr";
+        };
       };
     };
 
@@ -448,6 +477,17 @@ in
       # Prowlarr validates indexers against their upstream sites during sync.
       # Tracker outages should be logged but must not roll back a system switch.
       prowlarr-sync-config.serviceConfig.SuccessExitStatus = [ 1 ];
+
+      sonarr-sync-config = {
+        after = [ "transmission.service" ];
+        requires = [ "transmission.service" ];
+        serviceConfig.ExecStartPre = lib.mkBefore (lib.getExe waitForTransmission);
+      };
+      radarr-sync-config = {
+        after = [ "transmission.service" ];
+        requires = [ "transmission.service" ];
+        serviceConfig.ExecStartPre = lib.mkBefore (lib.getExe waitForTransmission);
+      };
 
       lidarr-queue-maintainer = {
         description = "Import or clear stale Lidarr/Soulseek queue items";
