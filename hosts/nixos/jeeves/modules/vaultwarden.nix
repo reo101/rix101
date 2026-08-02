@@ -10,6 +10,7 @@ let
 in
 {
   age.secrets."vaultwarden.password" = {
+    intermediary = true;
     rekeyFile = lib.custom.repoSecret "home/jeeves/vaultwarden/password.age";
   };
 
