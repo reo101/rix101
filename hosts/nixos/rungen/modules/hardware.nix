@@ -12,10 +12,8 @@
   hardware.graphics.enable = true;
   hardware.keyboard.qmk.enable = true;
 
-  services.fingerprint-led.enable = true;
-
   hardware.fw-fanctrl = {
-    enable = true;
+    enable = false;
     config = {
       defaultStrategy = "banica";
       strategies = {
@@ -94,4 +92,11 @@
       };
     };
   };
+
+  services.framework-control = {
+    enable = true;
+    package = pkgs.framework-control;
+  };
+
+  services.fingerprint-led.enable = true;
 }
