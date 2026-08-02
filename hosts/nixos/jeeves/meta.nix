@@ -12,9 +12,12 @@
 
   nixBuildServer = {
     hostName = "jeeves.reo101.xyz";
-    systems = [
-      "x86_64-linux"
+    emulatedSystems = [
       "aarch64-linux"
+      "mips64-linux"
+      "riscv64-linux"
+      "wasm64-wasi"
+      "x86_64-windows"
     ];
     maxJobs = 16;
     speedFactor = 4;

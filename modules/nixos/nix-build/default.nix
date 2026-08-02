@@ -3,6 +3,7 @@
   lib,
   meta,
   pkgs,
+  config,
   ...
 }:
 
@@ -60,6 +61,9 @@ in
     })
 
     (lib.mkIf (server != null) {
+      boot.binfmt.emulatedSystems = server.emulatedSystems;
+      nix.settings.extra-platforms = config.boot.binfmt.emulatedSystems;
+
       users.users.${server.sshUser} = {
         isNormalUser = true;
         shell = pkgs.bashInteractive;

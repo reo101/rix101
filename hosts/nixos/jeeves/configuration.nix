@@ -54,7 +54,6 @@
       configurationLimit = 10;
     };
     kernelPackages = pkgs.linuxPackages_latest;
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
     initrd = {
       availableKernelModules = [
         "nvme"

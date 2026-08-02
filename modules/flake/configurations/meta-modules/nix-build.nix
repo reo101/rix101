@@ -23,9 +23,16 @@ in
             type = types.str;
             default = "nixremote";
           };
+          emulatedSystems = lib.mkOption {
+            type = types.listOf types.str;
+            default = [ ];
+            description = "Additional systems this builder can emulate.";
+          };
           systems = lib.mkOption {
             type = types.listOf types.str;
-            default = [ config.system ];
+            default = lib.unique (
+              [ config.system ] ++ config.nixBuildServer.emulatedSystems
+            );
           };
           maxJobs = lib.mkOption {
             type = types.ints.positive;
