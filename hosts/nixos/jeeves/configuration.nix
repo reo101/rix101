@@ -46,6 +46,7 @@
   # services.kanidm = { };
 
   networking.hostName = "jeeves";
+  time.timeZone = "Europe/Sofia";
 
   boot = {
     loader.systemd-boot = {

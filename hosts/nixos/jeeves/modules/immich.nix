@@ -1,8 +1,6 @@
 { inputs, lib, pkgs, config, ... }:
 {
   # Immich CLI
-  services.localtimed.enable = true;
-  services.geoclue2.enable = true;
   services.avahi.enable = true;
   environment.systemPackages = with pkgs; [
     immich-go
