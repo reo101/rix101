@@ -182,6 +182,14 @@ in
             (leaf "saturation" 0.6)
           ])
         ])
+        (plain "layer-rule" [
+          (leaf "match" {
+            namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$";
+          })
+          (plain "background-effect" [
+            (leaf "xray" false)
+          ])
+        ])
       ]
     );
     settings = {

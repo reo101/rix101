@@ -1,0 +1,22 @@
+id = "reo101/taskwarrior"
+name = "Taskwarrior"
+version = "0.2.1"
+plugin_api = 9
+icon = "list-check"
+author = "reo101"
+description = "Read-only Taskwarrior v3 search and task details"
+tags = ["productivity", "taskwarrior"]
+dependencies = ["task", "xdg-open"]
+license = "MIT"
+
+[[widget]]
+id = "taskwarrior"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 420
+height = 520
+placement = "attached"
+open_near_click = true

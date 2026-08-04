@@ -1421,6 +1421,22 @@
         "type": "github"
       }
     },
+    "noctalia-plugins-official": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786284990,
+        "narHash": "sha256-F2G3hZST67/CkX0MPz7uz29JRlWZe75pxRcqoNgtWiI=",
+        "owner": "noctalia-dev",
+        "repo": "official-plugins",
+        "rev": "456d9a7f78e0a8b370d8a09e6c3d8f0933c9f508",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "official-plugins",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -1654,6 +1670,7 @@
         "nixpkgs-stable": "nixpkgs-stable",
         "nixpkgs-staging": "nixpkgs-staging",
         "noctalia": "noctalia",
+        "noctalia-plugins-official": "noctalia-plugins-official",
         "nur": "nur",
         "openwrt-imagebuilder": "openwrt-imagebuilder",
         "otzade": "otzade",

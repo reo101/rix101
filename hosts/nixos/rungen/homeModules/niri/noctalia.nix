@@ -6,6 +6,44 @@
   ...
 }:
 
+let
+  fennelGlobals = lib.concatStringsSep "," [
+    "barWidget"
+    "ipairs"
+    "math"
+    "noctalia"
+    "panel"
+    "string"
+    "table"
+    "tonumber"
+    "tostring"
+    "type"
+    "ui"
+  ];
+  fennelPlugin =
+    name: src: entries:
+    pkgs.runCommandLocal "noctalia-${name}"
+      {
+        nativeBuildInputs = [
+          pkgs.custom.fennel
+          pkgs.luau
+        ];
+        inherit src;
+      }
+      ''
+        mkdir "$out"
+        cp "$src/plugin.toml" "$out/"
+        for entry in ${lib.escapeShellArgs entries}; do
+          fennel --correlate --globals-only ${lib.escapeShellArg fennelGlobals} \
+            --compile "$src/$entry.fnl" > "$out/$entry.luau"
+          luau-compile "$out/$entry.luau" >/dev/null
+        done
+      '';
+  taskwarriorPlugin = fennelPlugin "taskwarrior" ./plugins/taskwarrior [
+    "widget"
+    "panel"
+  ];
+in
 {
   imports = [
     inputs.noctalia.homeModules.default
@@ -36,14 +74,39 @@
 
         start = [
           "control-center"
-          # TODO: `iwd` support; leave the network widget off the bar for now.
-          "bluetooth"
+          "group:status"
+          "cpu"
+          "group:tools"
         ];
         center = [ "workspaces" ];
         end = [
+          "media"
           "tray"
           "battery"
           "clock"
+        ];
+        capsule_group = [
+          {
+            id = "status";
+            members = [
+              "network"
+              "bluetooth"
+              "notifications"
+              "privacy"
+            ];
+            padding = 6.0;
+            widget_spacing = 6;
+          }
+          {
+            id = "tools";
+            members = [
+              "timer"
+              "notes"
+              "taskwarrior"
+            ];
+            padding = 6.0;
+            widget_spacing = 6;
+          }
         ];
       };
       theme = {
@@ -79,8 +142,10 @@
           open_near_click_control_center = true;
           borders = true;
           shadow = true;
-          launcher_placement = "centered";
-          clipboard_placement = "centered";
+          launcher_placement = "floating";
+          launcher_position = "center";
+          clipboard_placement = "floating";
+          clipboard_position = "center";
           control_center_placement = "attached";
           wallpaper_placement = "attached";
           session_placement = "attached";
@@ -92,11 +157,58 @@
       battery = {
         warning_threshold = 30;
       };
+      control_center.shortcuts = [
+        { type = "wifi"; }
+        { type = "bluetooth"; }
+        { type = "caffeine"; }
+        { type = "notification"; }
+        { type = "power_profile"; }
+        { type = "screen_recorder"; }
+      ];
       dock = {
         enabled = false;
       };
       plugins = {
-        enabled = [ "noctalia/screen_recorder" ];
+        auto_update = false;
+        # NOTE: expose only adopted plugins; add another link when enabling one.
+        source = [
+          {
+            name = "official";
+            kind = "path";
+            location = "${pkgs.linkFarm "noctalia-official-plugins" [
+              {
+                name = "screen_recorder";
+                path = "${inputs.noctalia-plugins-official}/screen_recorder";
+              }
+              {
+                name = "timer";
+                path = "${inputs.noctalia-plugins-official}/timer";
+              }
+              {
+                name = "notes";
+                path = "${inputs.noctalia-plugins-official}/notes";
+              }
+            ]}";
+            enabled = true;
+          }
+          {
+            name = "rix101";
+            kind = "path";
+            location = "${pkgs.linkFarm "noctalia-rix101-plugins" [
+              {
+                name = "taskwarrior";
+                path = taskwarriorPlugin;
+              }
+            ]}";
+            enabled = true;
+          }
+        ];
+        enabled = [
+          "noctalia/screen_recorder"
+          "noctalia/timer"
+          "noctalia/notes"
+          "reo101/taskwarrior"
+        ];
       };
       lockscreen_widgets = {
         enabled = false;
@@ -145,6 +257,7 @@
         enable_daemon = true;
         position = "top_right";
       };
+      system.monitor.enabled = true;
       audio = {
         enable_overdrive = false;
         enable_sounds = false;
@@ -176,8 +289,21 @@
           }}";
           custom_image_colorize = true;
         };
+        cpu = {
+          type = "sysmon";
+          stat = "cpu_usage";
+          visualization = "gauge";
+          show_glyph = false;
+          show_value = false;
+        };
+        timer.type = "noctalia/timer:bar";
+        notes.type = "noctalia/notes:notes";
+        taskwarrior.type = "reo101/taskwarrior:taskwarrior";
+        media.hide_when_no_media = true;
+        network.show_label = false;
+        privacy.hide_inactive = true;
         workspaces = {
-          display = "none";
+          show_labels = false;
           hide_when_empty = false;
         };
       };

@@ -165,6 +165,11 @@
         inputs.noctalia-qs.inputs.systems.follows = "systems";
       };
 
+      noctalia-plugins-official = {
+        url = "github:noctalia-dev/official-plugins";
+        flake = false;
+      };
+
       hardware = {
         url = "github:nixos/nixos-hardware";
         inputs.nixpkgs.follows = "nixpkgs";

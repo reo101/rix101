@@ -237,6 +237,10 @@
         noctalia-qs.inputs.systems.follows = "systems";
       };
     };
+    noctalia-plugins-official = {
+      url = "github:noctalia-dev/official-plugins";
+      flake = false;
+    };
     nur = {
       url = "github:nix-community/NUR";
       inputs = {
