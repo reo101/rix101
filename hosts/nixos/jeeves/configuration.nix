@@ -41,6 +41,7 @@
     ./modules/microvm.nix
     ./modules/home-assistant
     ./modules/slskd.nix
+    ./modules/certs
   ];
 
   # services.kanidm = { };
