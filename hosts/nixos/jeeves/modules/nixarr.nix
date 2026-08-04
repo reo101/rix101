@@ -306,6 +306,62 @@ in
       };
     };
 
+    # Profiles and custom formats are pinned to TRaSH-Guides trash_ids; recyclarr
+    # resolves each quality_profile's formats & scores automatically.
+    # One recyclarr instance == one *arr server, so both the general and the anime
+    # profile live on a single server instance. recyclarr rejects two instances
+    # that share a base_url (SplitInstancesFilter), and `quality_definition` type
+    # is per-instance, so the anime profile here inherits series/movie sizes.
+    recyclarr = {
+      enable = true;
+      configuration = {
+        radarr = {
+          radarr = {
+            base_url = "http://127.0.0.1:${toString config.nixarr.radarr.port}";
+            api_key = "!env_var RADARR_API_KEY";
+            quality_definition.type = "movie";
+            quality_profiles = [
+              {
+                trash_id = "d1d67249d3890e49bc12e275d989a7e9"; # HD Bluray + WEB
+                reset_unmatched_scores.enabled = true;
+              }
+              {
+                trash_id = "722b624f9af1e492284c4bc842153a38"; # [Anime] Remux-1080p
+                reset_unmatched_scores.enabled = true;
+              }
+            ];
+            custom_format_groups.add = [
+              { trash_id = "f8bf8eab4617f12dfdbd16303d8da245"; } # [Optional] Golden Rule HD
+              { trash_id = "a3ac6af01d78e4f21fcb75f601ac96df"; } # [Unwanted] Unwanted Formats
+            ];
+          };
+        };
+        sonarr = {
+          sonarr = {
+            base_url = "http://127.0.0.1:${toString config.nixarr.sonarr.port}";
+            api_key = "!env_var SONARR_API_KEY";
+            quality_definition.type = "series";
+            quality_profiles = [
+              {
+                trash_id = "fe9470e577c300a5ad9a3274f6d1cdf2"; # Remux + WEB 1080p
+                reset_unmatched_scores.enabled = true;
+              }
+              {
+                trash_id = "20e0fc959f1f1704bed501f23bdae76f"; # [Anime] Remux-1080p
+                reset_unmatched_scores.enabled = true;
+              }
+            ];
+            custom_format_groups.add = [
+              { trash_id = "158188097a58d7687dee647e04af0da3"; } # [Optional] Golden Rule HD
+              { trash_id = "74aff4168620ed49dcc67e92b2c2a5b4"; } # [Optional] Language Profiles
+              { trash_id = "85fae4a2294965b75710ef2989c850eb"; } # [Streaming Services] HD/UHD boost
+              { trash_id = "59c3af66780d08332fdc64e68297098f"; } # [Unwanted] Unwanted Formats
+            ];
+          };
+        };
+      };
+    };
+
     prowlarr = {
       enable = true;
       settings-sync = {
