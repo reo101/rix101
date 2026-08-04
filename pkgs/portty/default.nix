@@ -7,12 +7,12 @@
 
 let
   pname = "portty";
-  version = "0.2.1";
+  version = "0.3.3";
   src = fetchFromGitHub {
     owner = "WERDXZ";
     repo = "portty";
     rev = "v${version}";
-    hash = "sha256-Vr2OChMC6Cp2q1+NEDEjmGeiODfn9d27E+mPDhG9CUU=";
+    hash = "sha256-7j/uL3Bc2XHZXv/nPi7apZQ5Ql2RL4GgggEOWKXRS0c=";
   };
   craneLib = inputs.crane.mkLib pkgs;
 
@@ -21,9 +21,8 @@ let
     strictDeps = true;
     cargoExtraArgs = "--package portty --package porttyd";
 
-    # Upstream currently requires nightly-only linux pidfd/fifo APIs
-    # Scope bootstrap to the daemon crate instead of enabling it workspace-wide
-    RUSTC_BOOTSTRAP = "porttyd";
+    # HACK: bootstrap until upstream supports stable Rust
+    preBuild = "export RUSTC_BOOTSTRAP=1";
   };
 
   cargoArtifacts = craneLib.buildDepsOnly commonArgs;

@@ -518,10 +518,6 @@ in
               porttyHelperPackage
             ];
 
-            home.sessionPath = lib.optionals usePorttyBackend [
-              "${porttyHelperPackage}/bin"
-            ];
-
             xdg.configFile = lib.mkIf usePorttyBackend {
               "portty/config.toml".source = porttyConfigFile;
             };

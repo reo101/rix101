@@ -249,7 +249,7 @@
 (defn apply-pending-to-session! [session-id]
   (let [entries (normalize-selection-entries (read-file-lines @pending-submission-file))]
     (if (seq entries)
-      (let [exit (run-command (into ["portty" "--session" session-id "edit"] entries)
+      (let [exit (run-command (into ["portty" "--session" session-id "add" "path"] entries)
                               :inherit? true)]
         (when (zero? exit)
           (clear-pending-submission!))
@@ -406,12 +406,12 @@
 (defn handle-sel [items]
   (if-let [session-id (resolve-session)]
     (if (seq items)
-      (exec-command! (into ["portty" "--session" session-id "edit"]
+      (exec-command! (into ["portty" "--session" session-id "add" "path"]
                            (normalize-selection-entries items)))
       (let [stdin (->> (line-seq (java.io.BufferedReader. *in*))
                        normalize-selection-entries
                        (str/join "\n"))]
-        (run-command ["portty" "--session" session-id "edit" "--stdin"]
+        (run-command ["portty" "--session" session-id "add" "path" "--stdin"]
                      :stdin (str stdin "\n"))))
     (fail! "portty-sel: no active portty session")))
 
