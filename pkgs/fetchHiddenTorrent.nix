@@ -8,8 +8,8 @@
 }:
 
 program: url:
-entry@{ file, outputHash }:
-runCommand "${program}-${file}"
+{ file, outputHash }:
+runCommand "${program}-${builtins.baseNameOf (builtins.dirOf url)}-file-${file}"
   {
     inherit outputHash;
     nativeBuildInputs = [
@@ -18,9 +18,15 @@ runCommand "${program}-${file}"
   }
   ''
     shopt -s extglob;
+    torrent="$NIX_BUILD_TOP/${program}.torrent"
+    '${lib.getExe curl}' \
+      --fail \
+      --location \
+      --output "$torrent" \
+      ${lib.escapeShellArg url}
     '${lib.getExe aria2}' \
       --seed-time '0' \
       --select-file ${lib.escapeShellArg file} \
       --index-out ${lib.escapeShellArg file}="''${PWD//+([^\/])/..}$out" \
-      --torrent-file <(${lib.getExe curl} ${lib.escapeShellArg url});
+      --torrent-file "$torrent";
   ''
