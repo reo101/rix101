@@ -42,6 +42,7 @@
     ./modules/home-assistant
     ./modules/slskd.nix
     ./modules/certs
+    ./modules/nix-serve.nix
   ];
 
   # services.kanidm = { };
