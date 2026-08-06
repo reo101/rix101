@@ -16,7 +16,7 @@
       "aarch64-linux"
       "mips64-linux"
       "riscv64-linux"
-      "wasm64-wasi"
+      "wasm64-wasip1"
       "x86_64-windows"
     ];
     maxJobs = 16;

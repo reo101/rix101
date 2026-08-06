@@ -27,8 +27,7 @@
 
       # Nixpkgs
       nixpkgs = {
-        # TODO: return to nixos-unstable once nixpkgs#540857 reaches the channel.
-        url = "github:nixos/nixpkgs/ae9994806ca939447a8a6adc4f94d12cbdf06e01";
+        url = "github:nixos/nixpkgs/nixos-unstable";
       };
 
       # nixpkgs-trunk = {
