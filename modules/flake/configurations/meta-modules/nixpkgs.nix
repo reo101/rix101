@@ -1,23 +1,14 @@
-{ inputs, lib, config, ... }:
+{ lib, ... }:
 
-let
-  inherit (lib) types;
-in
 {
   options = {
     nixpkgs = lib.mkOption {
-      type = lib.pipe inputs [
-        lib.attrNames
-        (lib.concatMap (
-          input: lib.optional (lib.hasPrefix "nixpkgs-" input) (lib.removePrefix "nixpkgs-" input)
-        ))
-        types.enum
-        types.nullOr
-      ];
+      type = lib.types.nullOr lib.types.str;
       description = ''
-        The `nixpkgs` flake input from which a `pkgs` instance should be build for the host.
-        - `null` means `inputs.nixpkgs`
-        - `"abc"` means `inputs.nixpkgs-abc`
+        The nixpkgs package set used to build the host.
+        - `null` selects `inputs.nixpkgs`
+        - A raw instance name (key of `pkgs.nixpkgs`, i.e. any `nixpkgs-*` flake input) selects that instance
+        - Anything else is treated as a nixpkgs-multiverse selector (e.g. a commit hash)
       '';
       default = null;
     };

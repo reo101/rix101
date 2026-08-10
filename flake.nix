@@ -169,6 +169,7 @@
       url = "github:SteamClientHomebrew/Millennium?dir=packages/nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    multiverse.url = "github:fzakaria/nixpkgs-multiverse";
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
       inputs = {
@@ -180,7 +181,7 @@
       url = "github:sodiboo/niri-flake";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        nixpkgs-stable.follows = "nixpkgs-stable";
+        nixpkgs-stable.follows = "nixpkgs";
       };
     };
     nix-colors.url = "github:misterio77/nix-colors";
@@ -227,9 +228,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-for-nod.url = "github:NixOS/nixpkgs?rev=88d3861acdd3d2f0e361767018218e51810df8a1";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
-    nixpkgs-staging.url = "github:nixos/nixpkgs/staging";
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs = {

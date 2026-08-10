@@ -892,6 +892,21 @@
         "type": "github"
       }
     },
+    "multiverse": {
+      "locked": {
+        "lastModified": 1786823175,
+        "narHash": "sha256-h0vBBOcZqy11IP4Nkm/9y+9Q3UxeuHSKEA/6dk9UK0E=",
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "rev": "4745826df4b3d554ea546d8a428767b790dd19da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "type": "github"
+      }
+    },
     "neovim-nightly-overlay": {
       "inputs": {
         "flake-parts": [
@@ -940,7 +955,7 @@
           "nixpkgs"
         ],
         "nixpkgs-stable": [
-          "nixpkgs-stable"
+          "nixpkgs"
         ],
         "xwayland-satellite-stable": "xwayland-satellite-stable",
         "xwayland-satellite-unstable": "xwayland-satellite-unstable"
@@ -1300,22 +1315,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-for-nod": {
-      "locked": {
-        "lastModified": 1769018530,
-        "narHash": "sha256-MJ27Cy2NtBEV5tsK+YraYr2g851f3Fl1LpNHDzDX15c=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "88d3861acdd3d2f0e361767018218e51810df8a1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "88d3861acdd3d2f0e361767018218e51810df8a1",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1697935651,
@@ -1328,38 +1327,6 @@
       "original": {
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
-    "nixpkgs-stable": {
-      "locked": {
-        "lastModified": 1735563628,
-        "narHash": "sha256-OnSAY7XDSx7CtDoqNh8jwVwh4xNL/2HaJxGjryLWzX8=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "b134951a4c9f3c995fd7be05f3243f8ecd65d798",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-24.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-staging": {
-      "locked": {
-        "lastModified": 1786019942,
-        "narHash": "sha256-y9ReLozWdykbET8TDlhJHWj4Kotxo6A9LTEj+RpAY4E=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "3d5e14cd90b67fcdc4664a22c97acf727c186dc7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "staging",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -1653,6 +1620,7 @@
         "mac-app-util": "mac-app-util",
         "microvm": "microvm",
         "millennium": "millennium",
+        "multiverse": "multiverse",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "niri": "niri",
         "nix-colors": "nix-colors",
@@ -1666,9 +1634,6 @@
         "nixos-apple-silicon": "nixos-apple-silicon",
         "nixos-avf": "nixos-avf",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-for-nod": "nixpkgs-for-nod",
-        "nixpkgs-stable": "nixpkgs-stable",
-        "nixpkgs-staging": "nixpkgs-staging",
         "noctalia": "noctalia",
         "noctalia-plugins-official": "noctalia-plugins-official",
         "nur": "nur",

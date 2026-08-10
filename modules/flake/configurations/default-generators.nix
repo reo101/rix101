@@ -22,11 +22,15 @@ let
   # Global `pkgs` with flake's overlays and packages
   # See <../pkgs/default.nix>
   pkgsFor =
-    system: nixpkgs:
+    system: selector:
     let
       inherit (config.perSystem system) pkgs;
     in
-    if builtins.isNull nixpkgs then pkgs else pkgs.nixpkgs.${nixpkgs};
+    # `null` -> main nixpkgs; raw instance name (any `nixpkgs-*` input) -> `pkgs.nixpkgs.<name>`;
+    # otherwise -> nixpkgs-multiverse selector
+    if builtins.isNull selector then pkgs
+    else if pkgs.nixpkgs ? ${selector} then pkgs.nixpkgs.${selector}
+    else pkgs.multiverse.at selector;
 
   genUsers =
     configurationFiles:

@@ -74,29 +74,19 @@
         # TODO: per machine?
         allowUnfree = true;
       };
-      mkNixpkgsInstance =
-        input:
-        import input {
-          inherit system;
-          overlays =
-            overlays
-            ++ lib.optional (!(builtins.pathExists "${input}/lib/services/lib.nix")) (
-              _: _: {
-                # HACK: current Home Manager imports `pkgs.path + /lib/services/lib.nix`
-                path = inputs.nixpkgs;
-              }
-            );
-          config = nixpkgsConfig;
-        };
-      # NOTE: `nixpkgs-stable` -> `pkgs.nixpkgs.stable.*`
-      nixpkgsInstances = lib.pipe inputs [
-        (lib.concatMapAttrs (
-          name: input:
-          lib.optionalAttrs (lib.hasPrefix "nixpkgs-" name) {
-            ${lib.removePrefix "nixpkgs-" name} = mkNixpkgsInstance input;
-          }
-        ))
-      ];
+      multiverse = inputs.multiverse.lib.mkMultiverse {
+        inherit system;
+        config = nixpkgsConfig;
+        overlays = overlays ++ [
+          (
+            _: prev:
+            lib.optionalAttrs (!(builtins.pathExists "${prev.path}/lib/services/lib.nix")) {
+              # HACK: current Home Manager imports `pkgs.path + /lib/services/lib.nix`
+              path = inputs.nixpkgs;
+            }
+          )
+        ];
+      };
       overlays = lib.concatLists [
         # NOTE: overlays from flake inputs
         [
@@ -112,14 +102,34 @@
         (lib.attrValues self.overlays)
 
         [
-          (_: _: {
-            nixpkgs = nixpkgsInstances;
-          })
+          (
+            _: _: {
+              inherit multiverse;
+              # NOTE: expose any `nixpkgs-*` flake input as a raw instance at `pkgs.nixpkgs.<name>`
+              # (recursive, so e.g. `pkgs.nixpkgs.stable.nixpkgs.unstable.hello` works).
+              # Kept alongside `multiverse` for revisions it does not index (`staging`, `master`/trunk).
+              nixpkgs = lib.pipe inputs [
+                (lib.concatMapAttrs (
+                  name: input:
+                  lib.optionalAttrs (lib.hasPrefix "nixpkgs-" name) {
+                    ${lib.removePrefix "nixpkgs-" name} = import input {
+                      inherit system;
+                      config = nixpkgsConfig;
+                      inherit overlays;
+                    };
+                  }
+                ))
+              ];
+            }
+          )
         ]
       ];
     in
     {
-      _module.args.pkgs = mkNixpkgsInstance inputs.nixpkgs;
+      _module.args.pkgs = import inputs.nixpkgs {
+        inherit system overlays;
+        config = nixpkgsConfig;
+      };
 
       # NOTE: Export this custom `pkgs` instance
       inherit pkgs;

@@ -34,16 +34,8 @@
       #   url = "github:nixos/nixpkgs/master";
       # };
 
-      nixpkgs-stable = {
-        url = "github:nixos/nixpkgs/nixos-24.05";
-      };
-
-      nixpkgs-staging = {
-        url = "github:nixos/nixpkgs/staging";
-      };
-
-      nixpkgs-for-nod = {
-        url = "github:NixOS/nixpkgs?rev=88d3861acdd3d2f0e361767018218e51810df8a1";
+      multiverse = {
+        url = "github:fzakaria/nixpkgs-multiverse";
       };
 
       flake-parts = {
@@ -140,7 +132,7 @@
       niri = {
         url = "github:sodiboo/niri-flake";
         inputs.nixpkgs.follows = "nixpkgs";
-        inputs.nixpkgs-stable.follows = "nixpkgs-stable";
+        inputs.nixpkgs-stable.follows = "nixpkgs";
       };
 
       ukiyo = {
