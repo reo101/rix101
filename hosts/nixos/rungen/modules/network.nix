@@ -1,4 +1,11 @@
-{ inputs, lib, pkgs, config, meta, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  meta,
+  ...
+}:
 
 let
   jeeves-meta = inputs.self.nixosConfigurations.jeeves.meta;
@@ -10,6 +17,8 @@ let
   listenPort = 51820;
 in
 {
+  imports = [ inputs.self.nixosModules.netpath ];
+
   environment.systemPackages = [
     pkgs.iw
   ];
@@ -34,6 +43,16 @@ in
   };
   networking.useNetworkd = true;
 
+  services.netpath = {
+    enable = true;
+    profiles.home = {
+      network = "192.168.1.0/24";
+      gatewayHost = 1;
+      virtualHost = 50;
+      gatewayMac = "cc:28:aa:b3:1e:62";
+    };
+  };
+
   age.secrets."wireguard.privateKey" = {
     rekeyFile = lib.custom.repoSecret "home/rungen/wireguard/key.age";
     generator.script =
@@ -56,7 +75,6 @@ in
     group = "systemd-network";
     mode = "0400";
   };
-
 
   networking.firewall.allowedUDPPorts = [
     config.systemd.network.netdevs."50-${wireguard-interface}".wireguardConfig.ListenPort

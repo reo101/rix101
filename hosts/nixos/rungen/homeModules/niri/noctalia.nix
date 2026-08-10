@@ -43,6 +43,10 @@ let
     "widget"
     "panel"
   ];
+  netpathPlugin = fennelPlugin "netpath" ./plugins/netpath [
+    "widget"
+    "panel"
+  ];
 in
 {
   imports = [
@@ -90,6 +94,7 @@ in
             id = "status";
             members = [
               "network"
+              "netpath"
               "bluetooth"
               "notifications"
               "privacy"
@@ -199,6 +204,10 @@ in
                 name = "taskwarrior";
                 path = taskwarriorPlugin;
               }
+              {
+                name = "netpath";
+                path = netpathPlugin;
+              }
             ]}";
             enabled = true;
           }
@@ -208,6 +217,7 @@ in
           "noctalia/timer"
           "noctalia/notes"
           "reo101/taskwarrior"
+          "reo101/netpath"
         ];
       };
       lockscreen_widgets = {
@@ -299,6 +309,7 @@ in
         timer.type = "noctalia/timer:bar";
         notes.type = "noctalia/notes:notes";
         taskwarrior.type = "reo101/taskwarrior:taskwarrior";
+        netpath.type = "reo101/netpath:netpath";
         media.hide_when_no_media = true;
         network.show_label = false;
         privacy.hide_inactive = true;

@@ -1,0 +1,22 @@
+id = "reo101/netpath"
+name = "Netpath"
+version = "0.1.0"
+plugin_api = 9
+icon = "route"
+author = "reo101"
+description = "Make-before-break network path control"
+tags = ["network", "wifi", "ethernet"]
+dependencies = ["netpath", "sudo"]
+license = "MIT"
+
+[[widget]]
+id = "netpath"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 360
+height = 390
+placement = "attached"
+open_near_click = true
