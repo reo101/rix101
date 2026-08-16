@@ -5,6 +5,7 @@
   makeWrapper,
   nixVersions,
   rage,
+  util-linux,
   zig_0_16,
   cacheMode ? "volatile",
   nixImplementation ? "cppnix",
@@ -48,6 +49,7 @@ let
     src = source;
 
     nativeBuildInputs = [ zig_0_16 ];
+    nativeCheckInputs = [ util-linux ];
 
     buildPhase = ''
       runHook preBuild
@@ -102,6 +104,22 @@ let
         run_nix eval --raw --file ./check.nix
       }
 
+      run_nix_cache() ( # $1 = explicit cache dir; rest = nix args
+        local cache="$1"
+        shift
+        cd check
+        env -u NIX_ENRAGED_CACHE_DIR -u NIX_LOG_FD \
+          HOME="$TMPDIR/home" \
+          XDG_CACHE_HOME="$TMPDIR/cache-home" \
+          XDG_RUNTIME_DIR="$TMPDIR/runtime" \
+          NIX_ENRAGED_CACHE_DIR="$cache" \
+          ${lib.getExe nix} \
+          --store "local?root=$TMPDIR/nix-root" \
+          --extra-experimental-features nix-command \
+          --option plugin-files "$PWD/../zig-out/lib/${so}" \
+          "$@"
+      )
+
       test "$(evaluate)" = 42
       ${lib.optionalString (cacheMode == "stable") /* bash */ ''
         test -d "$TMPDIR/cache-home/nix-enraged"
@@ -116,6 +134,64 @@ let
         ! grep -aFq NIX_ENRAGED_CACHE_DIR "zig-out/lib/${so}"
         ! grep -aFq CachePlaintextFailed "zig-out/lib/${so}"
         ! grep -aFq /run/user/ "zig-out/lib/${so}"
+      ''}
+      ${lib.optionalString (cacheMode != "off") /* bash */ ''
+        # -- failure debounce ------------------------------------------------
+        # A fresh `.failed` marker must short-circuit even a *correct*
+        # identity, and must be cleared once decryption succeeds.
+        ${lib.getExe' rage "rage-keygen"} -o check/wrong-identity >/dev/null
+        printf '{ answer = 42; }\n' | ${lib.getExe rage} -r "$public_key" -o check/debounce.nix.age
+        cat > check/debounce.nix <<'NIX'
+        builtins.toString (builtins.extraBuiltins.rageImportEncrypted [ ./identity ] ./debounce.nix.age).answer
+        NIX
+        cat > check/debounce-wrong.nix <<'NIX'
+        builtins.toString (builtins.extraBuiltins.rageImportEncrypted [ ./wrong-identity ] ./debounce.nix.age).answer
+        NIX
+        hash="$(sha512sum check/debounce.nix.age | cut -c1-32)"
+        ${lib.optionalString (cacheMode == "volatile") /* bash */ ''
+          marker="$TMPDIR/runtime/nix-enraged/''${hash}.nix.failed"
+        ''}
+        ${lib.optionalString (cacheMode != "volatile") /* bash */ ''
+          marker="$TMPDIR/cache-home/nix-enraged/''${hash}.nix.failed"
+        ''}
+        # wrong identity -> decrypt fails -> marker is written
+        ! run_nix eval --raw --file ./debounce-wrong.nix
+        test -s "$marker"
+        # fresh marker short-circuits the correct identity too
+        ! run_nix eval --raw --file ./debounce.nix
+        # clearing the marker lets the correct identity through
+        rm -f "$marker"
+        test "$(run_nix eval --raw --file ./debounce.nix)" = 42
+
+        # -- lock wait timeout -----------------------------------------------
+        # Holding the entry lock must make eval fail fast (rc != 0, well
+        # before the 30s holder gives up), not block until the lock frees.
+        mkdir -m700 "$TMPDIR/lockcache"
+        lockfile="$TMPDIR/lockcache/''${hash}.nix.lock"
+        (
+          ${lib.getExe' util-linux "flock"} -x 9
+          touch "$TMPDIR/lockcache/held"
+          sleep 30
+        ) 9>"$lockfile" &
+        holder=$!
+        for _ in $(seq 1 100); do
+          [ -e "$TMPDIR/lockcache/held" ] && break
+          sleep 0.1
+        done
+        test -e "$TMPDIR/lockcache/held"
+        start=$(date +%s)
+        set +e
+        NIX_ENRAGED_LOCK_WAIT_TIMEOUT=1 \
+          run_nix_cache "$TMPDIR/lockcache" eval --raw --file ./debounce.nix \
+          >/dev/null 2>&1
+        rc=$?
+        set -e
+        elapsed=$(( $(date +%s) - start ))
+        kill "$holder" 2>/dev/null || true
+        wait "$holder" 2>/dev/null || true
+        # must have failed, and failed fast (not waited out the 30s holder)
+        [ "$rc" != 0 ]
+        [ "$elapsed" -lt 10 ]
       ''}
       ${lib.optionalString (cacheMode != "off") /* bash */ ''
         printf 'AGE-PLUGIN-YUBIKEY-TEST\n' > check/identity

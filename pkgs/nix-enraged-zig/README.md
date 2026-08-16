@@ -34,14 +34,30 @@ Nix release.
 - `stable`: cache plaintext under `$XDG_CACHE_HOME/nix-enraged`, falling back to
   `$HOME/.cache/nix-enraged`. It remains there until explicitly removed.
 - `volatile` (default): cache under `$XDG_RUNTIME_DIR/nix-enraged`, falling back
-  to `/run/user/$UID/nix-enraged` (or `/run/nix-enraged` for root). It fails if
-  no runtime directory is usable; `/tmp` is never an implicit fallback.
+  to `/run/user/$UID/nix-enraged` (or `/run/nix-enraged` for root). When no
+  usable runtime directory exists (e.g. macOS, containers without
+  `XDG_RUNTIME_DIR`), it degrades to the `stable` cache root so decryption keeps
+  working; `/tmp` is never an implicit fallback.
 - `off`: stream Rage output through a pipe and keep no plaintext cache or
   temporary plaintext file. Cache-path code is compile-time unreachable and is
   removed from release builds.
 
 `NIX_ENRAGED_CACHE_DIR` remains an explicit root override for `stable` and
 `volatile` builds. It is absent from `off` builds.
+
+## Tuning
+
+Two more environment variables tune the cache (parsed as whole seconds):
+
+- `NIX_ENRAGED_LOCK_WAIT_TIMEOUT` (default `300`): how long to wait for a cache
+  entry's lock before failing. `0` fails immediately if the lock is held, like
+  `flock -w 0`. Protects concurrent `nix` invocations from blocking forever on
+  a wedged holder (e.g. a stuck YubiKey prompt).
+- `NIX_ENRAGED_FAILURE_CACHE_TIMEOUT` (default `30`): debounces repeated decrypt
+  failures for the same entry. When a decrypt fails, `<hash>.failed` records the
+  failure; concurrent waiters within the window fail fast instead of each
+  re-running Rage and re-triggering a YubiKey/passphrase prompt. `0` disables
+  the debounce.
 
 ## Lix
 

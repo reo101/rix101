@@ -17,7 +17,9 @@ const cache_doc = switch (build_options.cache_mode) {
     \\reboot-cleared storage under `$XDG_RUNTIME_DIR/nix-enraged` or
     \\`/run/user/$UID/nix-enraged` (`/run/nix-enraged` for root), never `/tmp`.
     \\`NIX_ENRAGED_CACHE_DIR` explicitly overrides that root. Cache hits do not
-    \\access identity files.
+    \\access identity files. When no runtime directory is usable (e.g. macOS,
+    \\containers without `XDG_RUNTIME_DIR`), it degrades to the stable cache
+    \\root instead of failing.
     ,
     .off =>
     \\**Cache mode:** `off`. Plaintext is streamed through a pipe and is never
@@ -44,6 +46,10 @@ const rage_import_doc =
     \\true, the list is ignored and the primary identity is required.
     \\Interactive identities require a TTY on a cache miss. Plaintext is limited
     \\to 16 MiB.
+    \\
+    \\`NIX_ENRAGED_LOCK_WAIT_TIMEOUT` bounds how long to wait for a cache
+    \\entry's lock (seconds, default 300); `NIX_ENRAGED_FAILURE_CACHE_TIMEOUT`
+    \\debounces repeated decrypt failures for the same entry (seconds, default 30).
     \\
     \\The decrypted expression uses `/` as its base path; use absolute or
     \\store-backed paths for imports.
@@ -199,7 +205,10 @@ fn volatileCacheRoot(io: std.Io) ![:0]u8 {
     defer allocator.free(base);
     if (isUsableDirectory(io, base)) return cachePath(base);
     if (uid == 0 and isUsableDirectory(io, "/run")) return cachePath("/run");
-    return error.VolatileCacheDirectoryUnavailable;
+    // No usable runtime dir (macOS, headless/containers without
+    // XDG_RUNTIME_DIR): degrade to the stable cache root so decryption
+    // keeps working rather than hard-failing. Never falls back to /tmp.
+    return stableCacheRoot();
 }
 
 fn cacheRoot(io: std.Io) ![:0]u8 {
@@ -219,6 +228,83 @@ fn fileSize(io: std.Io, path: [:0]const u8) !u64 {
 
 fn nonEmpty(io: std.Io, path: [:0]const u8) bool {
     return (fileSize(io, path) catch return false) > 0;
+}
+
+/// Parses a `NIX_ENRAGED_*` timeout env var as whole seconds.
+/// Missing/empty falls back to `default`; anything non-numeric is rejected
+/// (mirrors the shell wrapper's `die`).
+fn parseTimeout(name: [*:0]const u8, default: u64) !u64 {
+    const value = env(name) orelse return default;
+    return std.fmt.parseInt(u64, value, 10) catch error.InvalidTimeout;
+}
+
+/// Acquires the cache entry's exclusive lock, bounding the wait with a
+/// monotonic deadline (CLOCK_MONOTONIC — immune to wall-clock jumps, matching
+/// `flock -w`). `timeout_seconds == 0` fails immediately, like `flock -w 0`.
+fn acquireLock(io: std.Io, lock: std.Io.File, timeout_seconds: u64) !void {
+    const Clock = std.Io.Clock;
+
+    if (timeout_seconds == 0) {
+        if (!try lock.tryLock(io, .exclusive)) return error.LockWaitTimedOut;
+        return;
+    }
+
+    const deadline = Clock.Timestamp.fromNow(io, .{
+        .raw = .{ .nanoseconds = @as(i96, @intCast(timeout_seconds)) * std.time.ns_per_s },
+        .clock = .awake,
+    });
+    while (true) {
+        if (try lock.tryLock(io, .exclusive)) return;
+        if (Clock.Timestamp.now(io, .awake).compare(.gte, deadline))
+            return error.LockWaitTimedOut;
+        Clock.Duration.sleep(
+            .{ .raw = .{ .nanoseconds = 25 * std.time.ns_per_ms }, .clock = .awake },
+            io,
+        ) catch return error.LockWaitTimedOut;
+    }
+}
+
+/// Reads the `<out>.failed` marker, returning the recorded failure `rc` iff it
+/// is still within the debounce window. Any malformed/stale marker is treated
+/// as absent so the entry gets retried. Mirrors the shell's
+/// `failed_at failed_rc` + `now - failed_at < failure_timeout` logic.
+fn cachedFailure(io: std.Io, failure_path: [:0]const u8, failure_timeout: u64) !?u32 {
+    var file = openReadOnly(io, failure_path, false) catch |err| switch (err) {
+        error.FileNotFound => return null,
+        else => return err,
+    };
+    defer file.close(io);
+
+    var buf: [64]u8 = undefined;
+    const n = file.readPositionalAll(io, &buf, 0) catch return null;
+    const contents = std.mem.trim(u8, buf[0..n], " \t\r\n");
+    var it = std.mem.splitScalar(u8, contents, ' ');
+    const failed_at = std.fmt.parseInt(u64, it.next() orelse return null, 10) catch return null;
+    const failed_rc = std.fmt.parseInt(u32, it.next() orelse return null, 10) catch return null;
+    if (failed_rc == 0) return null;
+
+    const now: u64 = epochSeconds(io);
+    if (now >= failed_at and now - failed_at < failure_timeout) return failed_rc;
+    return null;
+}
+
+/// Wall-clock epoch seconds via the Io real clock (shell `date +%s` equivalent).
+fn epochSeconds(io: std.Io) u64 {
+    const ns = std.Io.Clock.Timestamp.now(io, .real).raw.nanoseconds;
+    return @intCast(@divTrunc(ns, std.time.ns_per_s));
+}
+
+/// Writes the `<out>.failed` marker: `<epoch> <rc>`. Best-effort, like the
+/// shell's `printf ... > "$failure_file"` under the lock.
+fn recordFailure(io: std.Io, failure_path: [:0]const u8, failed_rc: u32) void {
+    const cwd = std.Io.Dir.cwd();
+    const data = std.fmt.allocPrint(allocator, "{d} {d}\n", .{ epochSeconds(io), failed_rc }) catch return;
+    defer allocator.free(data);
+    cwd.writeFile(io, .{
+        .sub_path = failure_path,
+        .data = data,
+        .flags = .{ .truncate = true, .permissions = .fromMode(0o600) },
+    }) catch {};
 }
 
 fn needsInteractiveInput(io: std.Io, path: [:0]const u8) bool {
@@ -409,15 +495,29 @@ fn decryptAndCache(
     if (!nonEmpty(io, output)) {
         const lock_path = try std.fmt.allocPrintSentinel(allocator, "{s}.lock", .{output}, 0);
         defer allocator.free(lock_path);
+        const failure_path = try std.fmt.allocPrintSentinel(allocator, "{s}.failed", .{output}, 0);
+        defer allocator.free(failure_path);
+
+        const lock_timeout = try parseTimeout("NIX_ENRAGED_LOCK_WAIT_TIMEOUT", 300);
+        const failure_timeout = try parseTimeout("NIX_ENRAGED_FAILURE_CACHE_TIMEOUT", 30);
+
         var lock = cwd.createFile(io, lock_path, .{
             .read = true,
             .truncate = false,
-            .lock = .exclusive,
             .permissions = .fromMode(0o600),
         }) catch return error.OpenCacheLockFailed;
         defer lock.close(io);
+        try acquireLock(io, lock, lock_timeout);
 
         if (!nonEmpty(io, output)) {
+            // A still-fresh `.failed` marker means a recent decrypt failed;
+            // fail fast instead of re-running rage (and re-triggering a
+            // YubiKey/passphrase prompt) N times for N concurrent waiters.
+            if (try cachedFailure(io, failure_path, failure_timeout)) |_| {
+                return error.RageFailed;
+            }
+            cwd.deleteFile(io, failure_path) catch {};
+
             try rejectInteractiveIdentities(io, identities, primary);
 
             const temporary = try std.fmt.allocPrintSentinel(allocator, "{s}.tmp.XXXXXX", .{output}, 0);
@@ -432,10 +532,19 @@ fn decryptAndCache(
             var keep_temporary = true;
             defer if (keep_temporary) cwd.deleteFile(io, temporary) catch {};
 
-            try runRage(encrypted_file, temporary, identities, primary);
+            runRage(encrypted_file, temporary, identities, primary) catch |err| {
+                recordFailure(io, failure_path, 1);
+                return err;
+            };
             const plaintext_size = try fileSize(io, temporary);
-            if (plaintext_size == 0) return error.EmptyPlaintext;
-            if (plaintext_size > max_file_size_bytes) return error.PlaintextTooLarge;
+            if (plaintext_size == 0) {
+                recordFailure(io, failure_path, 1);
+                return error.EmptyPlaintext;
+            }
+            if (plaintext_size > max_file_size_bytes) {
+                recordFailure(io, failure_path, 1);
+                return error.PlaintextTooLarge;
+            }
             cwd.setFilePermissions(
                 io,
                 temporary,
@@ -445,6 +554,11 @@ fn decryptAndCache(
             cwd.rename(temporary, cwd, output, io) catch
                 return error.CachePlaintextFailed;
             keep_temporary = false;
+            // Success: clear the failure marker so the next waiter retries.
+            cwd.deleteFile(io, failure_path) catch {};
+        } else {
+            // Cached plaintext is authoritative; drop any stale marker.
+            cwd.deleteFile(io, failure_path) catch {};
         }
     }
 
