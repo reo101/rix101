@@ -36,6 +36,7 @@
     ./modules/ups.nix
     ./modules/monero.nix
     ./modules/syncyomi.nix
+    ./modules/torquepro-web.nix
     ./modules/vaultwarden.nix
     # ./modules/opencloud.nix
     ./modules/microvm.nix
