@@ -3,7 +3,6 @@
 let
   inherit (inputs.niri.lib.kdl)
     leaf
-    serialize
     ;
 
   baseNiriConfig =
@@ -48,7 +47,11 @@ let
   batteryNiriConfig = builtins.map batteryizeNiriNode baseNiriConfig;
   batteryNiriConfigFile =
     inputs.niri.lib.internal.validated-config-for pkgs config.programs.niri.package
-      (serialize.nodes batteryNiriConfig);
+      (builtins.readFile (
+        pkgs.callPackage inputs.niri.lib.kdl.generator {
+          document = batteryNiriConfig;
+        }
+      ));
 
   niriPowerSourceSync = pkgs.writeShellApplication {
     name = "niri-power-source-sync";
@@ -165,33 +168,7 @@ in
 
   programs.niri = {
     enable = true;
-    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
-    # Append raw KDL for options not yet in niri-flake's settings schema
-    # NOTE: watch for <https://github.com/sodiboo/niri-flake/issues/1493>
-    config = lib.mkOptionDefault (
-      with inputs.niri.lib.kdl;
-      [
-        (plain "window-rule" [
-          (leaf "match" {
-            app-id = "^com.mitchellh.ghostty$";
-          })
-          (plain "background-effect" [
-            (leaf "blur" true)
-            (leaf "xray" false)
-            (leaf "noise" 0.05)
-            (leaf "saturation" 0.6)
-          ])
-        ])
-        (plain "layer-rule" [
-          (leaf "match" {
-            namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$";
-          })
-          (plain "background-effect" [
-            (leaf "xray" false)
-          ])
-        ])
-      ]
-    );
+    package = (inputs.niri.lib.internal.make-package-set pkgs).niri-unstable;
     settings = {
       environment = {
         # CLUTTER_BACKEND = "wayland";
@@ -226,7 +203,12 @@ in
           ];
       clipboard.disable-primary = true;
       hotkey-overlay.skip-at-startup = true;
-      gestures.hot-corners.enable = false;
+      gestures.hot-corners = {
+        top-left = false;
+        top-right = false;
+        bottom-left = false;
+        bottom-right = false;
+      };
       binds =
         let
           playerctl = lib.getExe pkgs.playerctl;
@@ -449,6 +431,16 @@ in
           ];
           place-within-backdrop = true;
         }
+        {
+          matches = [
+            {
+              namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$";
+            }
+          ];
+          background-effect = {
+            xray = false;
+          };
+        }
       ];
       layout = {
         border = {
@@ -587,9 +579,18 @@ in
               draw-border-with-background = false;
             }
 
-            # NOTE: Ghostty with blur is handled via raw KDL in
-            #       programs.niri.config below (requires niri >= 4a7e443,
-            #       not yet in niri-flake's settings schema)
+            # Ghostty blurs its own background (transparent terminals)
+            {
+              matches = [
+                { app-id = "^com.mitchellh.ghostty$"; }
+              ];
+              background-effect = {
+                blur = true;
+                xray = false;
+                noise = 0.05;
+                saturation = 0.6;
+              };
+            }
 
             # Floating windows have a shadow
             {
@@ -712,9 +713,6 @@ in
         focus-follows-mouse = {
           enable = true;
           max-scroll-amount = "0%";
-        };
-        warp-mouse-to-focus = {
-          enable = false;
         };
         keyboard = {
           repeat-delay = 200;

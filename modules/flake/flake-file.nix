@@ -130,7 +130,7 @@
       };
 
       niri = {
-        url = "github:sodiboo/niri-flake";
+        url = "github:epireyn/niri-flake/very-refactor";
         inputs.nixpkgs.follows = "nixpkgs";
         inputs.nixpkgs-stable.follows = "nixpkgs";
       };

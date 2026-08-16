@@ -407,7 +407,6 @@
         focus-follows-mouse = {
           enable = true;
         };
-        warp-mouse-to-focus = false;
         keyboard = {
           repeat-delay = 200;
           repeat-rate = 50;
@@ -433,7 +432,7 @@
           tap = false;
         };
       };
-      animations.shaders.window-resize = /* glsl */ ''
+      animations.window-resize.custom-shader = /* glsl */ ''
         vec4 resize_color(vec3 coords_curr_geo, vec3 size_curr_geo) {
           vec3 coords_next_geo = niri_curr_geo_to_next_geo * coords_curr_geo;
 
