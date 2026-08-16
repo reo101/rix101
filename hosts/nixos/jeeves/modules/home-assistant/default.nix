@@ -104,10 +104,13 @@ in
         };
       };
 
+      networking.firewall.allowedTCPPorts = [
+        config.services.home-assistant.config.http.server_port
+      ];
+
       # Home Assistant configuration
       services.home-assistant = {
         enable = true;
-        openFirewall = true;
         customComponents = [
           # Tuya-enabled appliances (LED lamps, power tool batteries)
           pkgs.home-assistant-custom-components.tuya_local
