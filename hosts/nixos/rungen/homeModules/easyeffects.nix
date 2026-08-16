@@ -3,7 +3,7 @@
 {
   services.easyeffects = {
     enable = true;
-    preset = "mic-filter";
+    preset.input = "mic-filter";
     extraPresets = {
       mic-filter = {
         input = {
@@ -11,22 +11,28 @@
           ];
           "plugins_order" = [
             "stereo_tools#0"
-            "rnnoise#0"
+            "deepfilternet#0"
             "echo_canceller#0"
             "equalizer#0"
           ];
           "echo_canceller#0" = {
             bypass = false;
           };
-          "rnnoise#0" = {
+          "deepfilternet#0" = {
             bypass = false;
-            enable-vad = true;
-            input-gain = 3.0;
-            model-name = "";
+            input-gain = 0.0;
             output-gain = 0.0;
-            release = 5.0;
-            vad-thres = 1.0;
-            wet = 0.0;
+            # docs: 70-80dB is the balanced sweet spot; default 100 maxes out
+            # attenuation but starts eating speech intelligibility.
+            attenuation-limit = 75.0;
+            # docs: -15..-30 dB, but the schema clamps at -15 (schema min).
+            min-processing-threshold = -15.0;
+            max-erb-processing-threshold = 30.0;
+            max-df-processing-threshold = 20.0;
+            # 0 = smallest buffer, best real-time performance.
+            min-processing-buffer = 0;
+            # schema caps at 0.05; higher = harsher post-filter, 0.02 is stock.
+            post-filter-beta = 0.02;
           };
           "stereo_tools#0" = {
             balance-in = 0.0;
@@ -53,25 +59,25 @@
             let
               eq-cfg = {
                 band0 = {
-                  frequency = 30.0;
+                  frequency = 80.0;
                   gain = 0.0;
                   mode = "RLC (BT)";
                   mute = false;
-                  q = 0.7162904212787583;
-                  slope = "x1";
+                  q = 0.707;
+                  slope = "x2";
                   solo = false;
-                  type = "Hi-shelf";
+                  type = "Hi-pass";
                   width = 4.0;
                 };
                 band1 = {
-                  frequency = 166.0;
-                  gain = 4.0;
+                  frequency = 120.0;
+                  gain = 0.0;
                   mode = "RLC (BT)";
                   mute = false;
-                  q = 0.72;
+                  q = 8.0;
                   slope = "x1";
                   solo = false;
-                  type = "Bell";
+                  type = "Notch";
                   width = 4.0;
                 };
                 band2 = {
