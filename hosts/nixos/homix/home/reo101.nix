@@ -78,8 +78,7 @@
     pkgs.custom.vim-fmi-cli
 
     ## Zig
-    # zigpkgs."0.10.1"
-    zigpkgs.master
+    inputs.zig-flake.packages.${pkgs.stdenv.hostPlatform.system}.nightly
     # inputs.zls.packages.x86_64-linux.default
   ];
 

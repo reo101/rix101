@@ -28,7 +28,7 @@
     binfmt = {
       emulatedSystems = [
         "aarch64-linux"
-        "wasm32-wasi"
+        "wasm32-wasip1"
         "x86_64-windows"
       ];
     };
@@ -129,10 +129,7 @@
     sessionPackages = with pkgs; [
       river-classic
     ];
-    gdm = {
-      enable = true;
-      wayland = true;
-    };
+    gdm.enable = true;
   };
 
   # Enable desktop portal
