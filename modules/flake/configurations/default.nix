@@ -79,6 +79,10 @@
       flake = false;
     };
 
+    liminix = {
+      url = "github:telent/liminix";
+      flake = false;
+    };
   };
 
   imports = [

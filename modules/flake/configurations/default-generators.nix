@@ -298,6 +298,23 @@ let
         };
     in
     inputs.openwrt-imagebuilder.lib.build openwrtConfig;
+
+  mkLiminix =
+    {
+      meta,
+      configuration,
+    }:
+    let
+      liminix = inputs.liminix.outPath;
+      outputs = (import "${liminix}/default.nix" {
+        # Liminix configs are plain modules (evaluated with its own evalModules)
+        liminix-config = configuration;
+        device = import "${liminix}/devices/${meta.device}";
+        nixpkgs = inputs.nixpkgs;
+        system = meta.system;
+      }).outputs;
+    in
+    outputs;
 in
 {
   auto.configurations.configurationTypes = lib.mkDefault {
@@ -501,8 +518,7 @@ in
           meta.enable
           (hasNixFiles [ "configuration.nix" ] configurationFiles)
         ]
-      );
-      metaModule =
+      );      metaModule =
         { lib, metaModules, ... }:
         {
           imports = [
@@ -542,6 +558,39 @@ in
       mkHost = (
         { meta, configurationFiles, ... }:
         mkOpenwrt {
+          inherit meta;
+          configuration = configurationFiles."configuration.nix".content;
+        }
+      );
+    };
+
+    liminix = {
+      predicate = (
+        { meta, configurationFiles, ... }:
+        and [
+          meta.enable
+          (hasNixFiles [ "configuration.nix" ] configurationFiles)
+        ]
+      );
+      metaModule =
+        { lib, metaModules, ... }:
+        {
+          imports = [
+            metaModules.enable
+            metaModules.system
+            metaModules.roles
+            metaModules.nixpkgs
+          ];
+
+          options.device = lib.mkOption {
+            type = lib.types.str;
+            description = "Liminix device, i.e. a dir name under upstream `devices/`";
+            example = "openwrt-one";
+          };
+        };
+      mkHost = (
+        { meta, configurationFiles, ... }:
+        mkLiminix {
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
         }

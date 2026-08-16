@@ -145,6 +145,10 @@
       url = "github:Jovian-Experiments/Jovian-NixOS";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    liminix = {
+      url = "github:telent/liminix";
+      flake = false;
+    };
     mac-app-util = {
       url = "github:hraban/mac-app-util";
       inputs = {
