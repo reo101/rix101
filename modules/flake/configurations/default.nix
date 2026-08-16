@@ -73,6 +73,12 @@
       inputs.flake-parts.follows = "flake-parts";
       inputs.systems.follows = "systems";
     };
+
+    terranix = {
+      url = "github:terranix/terranix";
+      flake = false;
+    };
+
   };
 
   imports = [

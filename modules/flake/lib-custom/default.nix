@@ -334,6 +334,146 @@
         renderBatch = lines: lib.concatStringsSep "\n" lines;
       });
 
+      # OpenWrt imagebuilder glue shared by every `hosts/openwrt` host.
+      # Takes `pkgs` (hosts get it at their per-system level); everything else
+      # comes from the global `lib` (via `uci` above).
+      openwrt =
+        pkgs:
+        let
+          inherit (uci)
+            set
+            setRaw
+            delete
+            addList
+            commit
+            renderBatch
+            ;
+
+          sshAuthorizedKeys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL5ibKzd+V2eR1vmvBAfSWcZmPB8zUYFMAN3FS6xY9ma"
+          ];
+        in
+        {
+          inherit sshAuthorizedKeys;
+
+          defaultPackages = [
+            "luci" # https://github.com/astro/nix-openwrt-imagebuilder/issues/53
+            "luci-ssl"
+          ];
+
+          # Baseline system/ntp/dropbear/uhttpd lines shared by all hosts
+          baselineLines =
+            {
+              hostname ? "OpenWrt",
+              timezone ? "Europe/Sofia",
+              redirect_https ? "0",
+            }:
+            [
+              # System
+              (set "system.@system[0].hostname" hostname)
+              (set "system.@system[0].timezone" "EET-2EEST,M3.5.0/3,M10.5.0/4")
+              (set "system.@system[0].zonename" timezone)
+              (set "system.@system[0].log_proto" "udp")
+              (set "system.@system[0].conloglevel" "8")
+              (set "system.@system[0].cronloglevel" "5")
+              (delete "system.ntp.server")
+            ]
+            # NTP pool
+            ++ lib.genList (n: addList "system.ntp.server" "${builtins.toString n}.openwrt.pool.ntp.org") 4
+            ++ [
+              (set "uhttpd.main.redirect_https" redirect_https)
+            ];
+
+          # dropbear hardening: applied on top of whatever secret config exists
+          dropbearBaseline = {
+            PasswordAuth = "off";
+            RootPasswordAuth = "off";
+          };
+
+          dropbearLines = dropbearConfig:
+            lib.mapAttrsToList
+              (key: value: set "dropbear.@dropbear[0].${key}" value)
+              dropbearConfig;
+
+          # Given a set of hostname-keyed UCI sections, emit `set <pkg>.<prefix><name> <type>`
+          # plus one `set` per attribute. Attribute values are strings.
+          buildNamedSectionLines =
+            {
+              package,
+              sectionType,
+              entries,
+              prefix ? "",
+            }:
+            lib.concatMap
+              (name: let
+                sectionName = "${prefix}${name}";
+              in
+              [
+                (setRaw "${package}.${sectionName}" sectionType)
+              ]
+              ++ lib.mapAttrsToList
+                (key: value: set "${package}.${sectionName}.${key}" (toString value))
+                (entries.${name} or { }))
+              (builtins.attrNames entries);
+
+          # Primary radio + default_<radio> iface pairs
+          wirelessPrimaryLines = wirelessNetworks:
+            lib.concatMap
+              (radio: let
+                cfg = wirelessNetworks.${radio};
+              in
+              (lib.mapAttrsToList
+                (key: value: set "wireless.${radio}.${key}" value)
+                (cfg.radio or { }))
+              ++ (lib.mapAttrsToList
+                (key: value: set "wireless.default_${radio}.${key}" value)
+                (cfg.iface or { })))
+              (builtins.attrNames wirelessNetworks);
+
+          # Extra named wifi-iface sections: `__type` selects the section type
+          wirelessExtraIfaceLines = wirelessExtraIfaces:
+            lib.concatMap
+              (ifaceName: let
+                ifaceConfig = wirelessExtraIfaces.${ifaceName};
+                sectionType = ifaceConfig.__type or "wifi-iface";
+                attrs = lib.removeAttrs ifaceConfig [ "__type" ];
+              in
+              [
+                (setRaw "wireless.${ifaceName}" sectionType)
+              ]
+              ++ lib.mapAttrsToList
+                (key: value: set "wireless.${ifaceName}.${key}" value)
+                attrs)
+              (builtins.attrNames wirelessExtraIfaces);
+
+          # Commit the managed packages
+          commitLines = packages: lib.map (commit) packages;
+
+          # Image `files`: dropbear authorized_keys + first-boot uci-defaults script
+          mkImageFiles =
+            {
+              uciBatchLines,
+              extraImageCommands ? "",
+            }:
+            pkgs.runCommand "image-files" { } ''
+              mkdir -p $out/etc/dropbear
+              echo "${lib.concatStringsSep "\n" sshAuthorizedKeys}" > $out/etc/dropbear/authorized_keys
+
+              mkdir -p $out/etc/uci-defaults
+              cat > $out/etc/uci-defaults/99-custom <<'SCRIPT'
+              #!/usr/bin/env ash
+              set -eu
+
+              uci -q batch <<'UCI'
+              ${renderBatch uciBatchLines}
+              UCI
+
+              ${extraImageCommands}
+              SCRIPT
+              chmod +x $out/etc/uci-defaults/99-custom
+            '';
+        };
+
       timestampIso =
         let
           # HACK: want to use `lib` directly

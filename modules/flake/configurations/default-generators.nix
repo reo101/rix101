@@ -510,6 +510,7 @@ in
             metaModules.system
             metaModules.roles
             metaModules.nixpkgs
+            metaModules.openwrt
           ];
 
           options =

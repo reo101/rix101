@@ -1,22 +1,22 @@
-{ pkgs, ... }:
+# ZBT WR-8305RT — OpenWrt 22.03.7 (ramips/mt7620) — minimal test AP.
+{ lib, pkgs }:
 
+let
+  inherit (lib.custom) uci;
+
+  openwrt = lib.custom.openwrt pkgs;
+in
 {
-  # add package to include in the image, ie. packages that you don't
-  # want to install manually later
+  # bump image so updates don't collide with previous installs
   packages = [ "tcpdump" ];
 
   disabledServices = [ "dnsmasq" ];
 
-  # include files in the images.
-  # to set UCI configuration, create a uci-defauts scripts as per
-  # official OpenWRT ImageBuilder recommendation.
-  files = pkgs.runCommand "image-files" {} ''
-    mkdir -p $out/etc/uci-defaults
-    cat > $out/etc/uci-defaults/99-custom <<EOF
-    uci -q batch << EOI
-    set system.@system[0].hostname='testap'
-    commit
-    EOI
-    EOF
-  '';
+  files = openwrt.mkImageFiles {
+    uciBatchLines = [
+      "# Test AP"
+      (uci.set "system.@system[0].hostname" "testap")
+      ""
+    ] ++ openwrt.commitLines [ "system" ];
+  };
 }

@@ -1,0 +1,21 @@
+--- a/internal/provider/provider.go
++++ b/internal/provider/provider.go
+@@ -128,10 +128,14 @@
+ 		return
+ 	}
+ 
+-	err = c.UpdatePackages(ctx)
+-	if err != nil {
+-		resp.Diagnostics.AddError("packages update in error", err.Error())
+-		return
++	// NOTE (rix101 fork): upstream refreshes the LuCI package list on every
++	// configure (RPC ipkg.update -> `opkg update`). OpenWrt 25.12 is
++	// apk-based: no opkg binary and luci-mod-rpc ships no ipkg/apk RPC bind,
++	// so this always fails and blocks plan/apply. We only manage
++	// openwrt_configfile (fs RPC), which needs no package state, so the
++	// refresh is demoted to a warning. Re-enable when openwrt_opkg is used.
++	if err := c.UpdatePackages(ctx); err != nil {
++		resp.Diagnostics.AddWarning("packages update skipped", err.Error())
+ 	}
+ 
+ 	resp.DataSourceData = c

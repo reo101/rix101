@@ -308,6 +308,10 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    terranix = {
+      url = "github:terranix/terranix";
+      flake = false;
+    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
