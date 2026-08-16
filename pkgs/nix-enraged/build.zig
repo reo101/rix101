@@ -85,7 +85,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const plugin = b.addLibrary(.{
-        .name = "nix-enraged-zig",
+        .name = "nix-enraged",
         .linkage = .dynamic,
         .root_module = root,
     });

@@ -679,7 +679,7 @@ export fn nix_plugin_entry() callconv(.c) void {
         0,
         "__extraBuiltins",
         null,
-        "Extra builtins supplied by nix-enraged-zig (" ++ @tagName(build_options.backend) ++
+        "Extra builtins supplied by nix-enraged (" ++ @tagName(build_options.backend) ++
             ", cache=" ++ @tagName(build_options.cache_mode) ++ ").",
         null,
     ) orelse c.abort();
