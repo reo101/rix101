@@ -21,8 +21,5 @@
 
   services.upower = {
     enable = true;
-    # HACK: broken battery gauge reports 0%; don't auto-hibernate until the installation of the new battery
-    allowRiskyCriticalPowerAction = true;
-    criticalPowerAction = "Ignore";
   };
 }
