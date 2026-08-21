@@ -441,6 +441,14 @@ in
             xray = false;
           };
         }
+        {
+          matches = [
+            {
+              namespace = "^noctalia-notification$";
+            }
+          ];
+          block-out-from = "screencast";
+        }
       ];
       layout = {
         border = {
