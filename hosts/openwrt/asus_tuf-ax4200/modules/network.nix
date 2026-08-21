@@ -1,47 +1,88 @@
-# L2/L3 topology for the ASUS TUF-AX4200
-#
-# Everything LAN/WAN/wwan/wan6 + the ULA prefix. Bridge member ports
-# are hardware facts; addresses/DNS come from secrets.
-{ lib, secrets }:
+# Public L2/L3 topology. Site addresses and resolvers come from the encrypted
+# runtime configuration consumed by nixops4-openwrt.
+{ lib, ... }:
 
 let
   inherit (lib.custom.uci) set setRaw delete addList;
   lanPorts = [ "lan1" "lan2" "lan3" "lan4" ];
+
+  sections = [
+    {
+      id = "lan_bridge";
+      config = "network";
+      type = "device";
+      match = { name = "br-lan"; };
+      authoritative = false;
+      options = { };
+      lists.ports = lanPorts;
+    }
+    # Bridge attachment lives here; addresses come from the runtime secret
+    # fragment with the same id.
+    {
+      id = "lan";
+      config = "network";
+      type = "interface";
+      name = "lan";
+      authoritative = true;
+      options.device = "br-lan";
+      lists = { };
+    }
+    {
+      id = "wwan";
+      config = "network";
+      type = "interface";
+      name = "wwan";
+      authoritative = true;
+      options = {
+        proto = "dhcp";
+        metric = "20";
+        auto = "1";
+      };
+      lists = { };
+    }
+    {
+      id = "wan6";
+      config = "network";
+      type = "interface";
+      name = "wan6";
+      authoritative = true;
+      options = {
+        proto = "dhcpv6";
+        device = "@wan";
+        reqaddress = "try";
+        reqprefix = "auto";
+      };
+      lists = { };
+    }
+    {
+      id = "globals";
+      config = "network";
+      type = "globals";
+      name = "globals";
+      authoritative = false;
+      options.ula_prefix = "fdfd:6384:e4b9::/48";
+      lists = { };
+    }
+  ];
+
+  opLines = [
+    "# Public network bootstrap"
+    (delete "network.@device[0].ports")
+  ]
+  ++ map (port: addList "network.@device[0].ports" port) lanPorts
+  ++ [
+    (setRaw "network.wwan" "interface")
+    (set "network.wwan.proto" "dhcp")
+    (set "network.wwan.metric" "20")
+    (set "network.wwan.auto" "1")
+    (setRaw "network.wan6" "interface")
+    (set "network.wan6.proto" "dhcpv6")
+    (set "network.wan6.device" "@wan")
+    (set "network.wan6.reqaddress" "try")
+    (set "network.wan6.reqprefix" "auto")
+    (set "network.globals.ula_prefix" "fdfd:6384:e4b9::/48")
+  ];
 in
-[
-  "# Network"
-  (delete "network.@device[0].ports")
-]
-++ (lib.map (port: addList "network.@device[0].ports" port) lanPorts)
-# LAN settings (device/addresses from secrets)
-++ (lib.mapAttrsToList
-  (key: value: set "network.lan.${key}" value)
-  secrets.lanSettings)
-# Reset IPv6 class list before custom values
-++ [
-  (delete "network.lan.ip6class")
-]
-++ (lib.map (ip6class: addList "network.lan.ip6class" ip6class) secrets.lanIp6Classes)
-# WAN settings except DNS (handled as a list below)
-++ (lib.mapAttrsToList
-  (key: value: set "network.wan.${key}" value)
-  (lib.removeAttrs secrets.wanSettings [ "dns" ]))
-# WAN DNS resolvers
-++ [
-  (delete "network.wan.dns")
-]
-++ (lib.map (dns: addList "network.wan.dns" dns) secrets.wanSettings.dns)
-# Fallback WWAN (cellular/sta) and WAN6 (DHCPv6-PD)
-++ [
-  (setRaw "network.wwan" "interface")
-  (set "network.wwan.proto" "dhcp")
-  (set "network.wwan.metric" "20")
-  (set "network.wwan.auto" "1")
-  (setRaw "network.wan6" "interface")
-  (set "network.wan6.proto" "dhcpv6")
-  (set "network.wan6.device" "@wan")
-  (set "network.wan6.reqaddress" "try")
-  (set "network.wan6.reqprefix" "auto")
-  # published ULA prefix (site-local, not secret)
-  (set "network.globals.ula_prefix" "fdfd:6384:e4b9::/48")
-]
+{
+  inherit opLines sections;
+}

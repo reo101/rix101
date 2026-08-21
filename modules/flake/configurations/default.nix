@@ -89,6 +89,7 @@
     ../lib
     ../lib-custom
     ./default-generators.nix
+    ./openwrt-nixops4.nix
   ];
 
   options = let

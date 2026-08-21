@@ -1,10 +1,10 @@
-# DHCP (dnsmasq + odhcpd), static leases and local DNS records.
-{ lib, openwrt, secrets }:
+# Public DHCP/dnsmasq baseline. Static leases, local domains, and private
+# dnsmasq exceptions live in the encrypted runtime router document.
+{ lib, ... }:
 
 let
-  inherit (lib.custom.uci) set setRaw delete addList;
+  inherit (lib.custom.uci) set delete addList;
 
-  # core dnsmasq options, same baseline on every host
   dnsmasqSettings = {
     domainneeded = "1";
     localise_queries = "1";
@@ -21,57 +21,85 @@ let
     ednspacket_max = "1232";
     confdir = "/tmp/dnsmasq.d";
     localuse = "1";
-    listen_address = "127.0.0.1";
   };
+  lanSettings = {
+    interface = "lan";
+    start = "100";
+    limit = "150";
+    leasetime = "12h";
+    dhcpv4 = "server";
+    dhcpv6 = "server";
+    ra = "server";
+  };
+  wanSettings = {
+    interface = "wan";
+    ignore = "1";
+  };
+  odhcpdSettings = {
+    maindhcp = "0";
+    leasefile = "/tmp/odhcpd.leases";
+    leasetrigger = "/usr/sbin/odhcpd-update";
+    loglevel = "4";
+    piodir = "/tmp/odhcpd-piodir";
+    hostsdir = "/tmp/hosts";
+  };
+
+  sections = [
+    {
+      id = "dnsmasq";
+      config = "dhcp";
+      type = "dnsmasq";
+      match = { };
+      authoritative = false;
+      options = dnsmasqSettings;
+      lists = { };
+    }
+    {
+      id = "lan";
+      config = "dhcp";
+      type = "dhcp";
+      name = "lan";
+      authoritative = true;
+      options = lanSettings;
+      lists = {
+        ra_flags = [ "managed-config" "other-config" ];
+        dhcp_option = [ "6,192.168.1.1" ];
+      };
+    }
+    {
+      id = "wan";
+      config = "dhcp";
+      type = "dhcp";
+      name = "wan";
+      authoritative = true;
+      options = wanSettings;
+      lists = { };
+    }
+    {
+      id = "odhcpd";
+      config = "dhcp";
+      type = "odhcpd";
+      name = "odhcpd";
+      authoritative = true;
+      options = odhcpdSettings;
+      lists = { };
+    }
+  ];
+
+  opLines =
+    [ "# Public DHCP bootstrap" ]
+    ++ lib.mapAttrsToList (key: value: set "dhcp.@dnsmasq[0].${key}" value) dnsmasqSettings
+    ++ lib.mapAttrsToList (key: value: set "dhcp.lan.${key}" value) lanSettings
+    ++ [
+      (delete "dhcp.lan.ra_flags")
+      (addList "dhcp.lan.ra_flags" "managed-config")
+      (addList "dhcp.lan.ra_flags" "other-config")
+      (delete "dhcp.lan.dhcp_option")
+      (addList "dhcp.lan.dhcp_option" "6,192.168.1.1")
+    ]
+    ++ lib.mapAttrsToList (key: value: set "dhcp.wan.${key}" value) wanSettings
+    ++ lib.mapAttrsToList (key: value: set "dhcp.odhcpd.${key}" value) odhcpdSettings;
 in
-[ "# DHCP and local DNS" ]
-++ (lib.mapAttrsToList
-  (key: value: set "dhcp.@dnsmasq[0].${key}" value)
-  dnsmasqSettings)
-# rebind domain exceptions
-++ [ (delete "dhcp.@dnsmasq[0].rebind_domain") ]
-++ (lib.map (domain: addList "dhcp.@dnsmasq[0].rebind_domain" domain) secrets.dnsmasqRebindDomains)
-# dnsmasq address redirects (domain -> IP)
-++ [ (delete "dhcp.@dnsmasq[0].address") ]
-++ (lib.map
-  ({ domain, ip }: addList "dhcp.@dnsmasq[0].address" "/${domain}/${ip}")
-  secrets.dnsmasqAddressRedirects)
-# LAN/WAN DHCP and odhcpd baseline
-++ [
-  (set "dhcp.lan.interface" "lan")
-  (set "dhcp.lan.start" "100")
-  (set "dhcp.lan.limit" "150")
-  (set "dhcp.lan.leasetime" "12h")
-  (set "dhcp.lan.dhcpv4" "server")
-  (set "dhcp.lan.dhcpv6" "server")
-  (set "dhcp.lan.ra" "server")
-  (delete "dhcp.lan.ra_flags")
-  (addList "dhcp.lan.ra_flags" "managed-config")
-  (addList "dhcp.lan.ra_flags" "other-config")
-  (delete "dhcp.lan.dhcp_option")
-  (addList "dhcp.lan.dhcp_option" "6,192.168.1.1")
-  (set "dhcp.wan.interface" "wan")
-  (set "dhcp.wan.ignore" "1")
-  (set "dhcp.odhcpd.maindhcp" "0")
-  (set "dhcp.odhcpd.leasefile" "/tmp/odhcpd.leases")
-  (set "dhcp.odhcpd.leasetrigger" "/usr/sbin/odhcpd-update")
-  (set "dhcp.odhcpd.loglevel" "4")
-  (set "dhcp.odhcpd.piodir" "/tmp/odhcpd-piodir")
-  (set "dhcp.odhcpd.hostsdir" "/tmp/hosts")
-  ""
-]
-# static leases
-++ openwrt.buildNamedSectionLines {
-  package = "dhcp";
-  sectionType = "host";
-  prefix = "host_";
-  entries = secrets.staticLeases;
+{
+  inherit opLines sections;
 }
-# static local DNS records (hostname -> IP)
-++ (lib.concatMap
-  (domainName: [
-    (setRaw "dhcp.domain_${domainName}" "domain")
-    (set "dhcp.domain_${domainName}.name" domainName)
-    (set "dhcp.domain_${domainName}.ip" secrets.staticDomains.${domainName})
-  ])
-  (builtins.attrNames secrets.staticDomains))

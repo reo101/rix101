@@ -1,7 +1,9 @@
-# Wireless: radios + interfaces, derived entirely from secrets
-# (radio hardware params and SSIDs/keys live there).
-{ lib, openwrt, secrets }:
+# Wireless configuration is secret-bearing and is supplied exclusively by the
+# encrypted runtime router document. Firmware keeps the stock sections so the
+# router remains reachable for the first NixOps4 reconciliation.
+{ ... }:
 
-openwrt.wirelessPrimaryLines secrets.wirelessNetworks
-++ openwrt.wirelessExtraIfaceLines secrets.wirelessExtraIfaces
-++ [ "" ]
+{
+  opLines = [ ];
+  sections = [ ];
+}

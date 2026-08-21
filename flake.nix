@@ -220,6 +220,38 @@
         treefmt-nix.follows = "treefmt-nix";
       };
     };
+    nixops4 = {
+      url = "github:nixops4/nixops4";
+      inputs = {
+        flake-parts.follows = "flake-parts";
+        nix.inputs = {
+          flake-compat.follows = "flake-compat";
+          flake-parts.follows = "flake-parts";
+        };
+        nix-bindings-rust.inputs.nix.inputs = {
+          flake-compat.follows = "flake-compat";
+          flake-parts.follows = "flake-parts";
+          nixpkgs-23-11.follows = "nixops4/nix/nixpkgs-23-11";
+          nixpkgs-regression.follows = "nixops4/nix/nixpkgs-regression";
+        };
+        nix-cargo-integration.inputs = {
+          crane.follows = "crane";
+          dream2nix.follows = "dream2nix";
+          parts.follows = "flake-parts";
+        };
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
+    nixops4-openwrt = {
+      url = "github:reo101/nixops4-openwrt";
+      inputs = {
+        flake-file.follows = "flake-file";
+        flake-parts.follows = "flake-parts";
+        nixops4.follows = "nixops4";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+      };
+    };
     nixos-apple-silicon = {
       url = "github:tpwrules/nixos-apple-silicon";
       inputs = {

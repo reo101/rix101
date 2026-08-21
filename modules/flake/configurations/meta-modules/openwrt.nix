@@ -1,8 +1,5 @@
-# OpenWrt tofu-managed host metadata, deploy-rs style.
-#
-# Each `hosts/openwrt/*/meta.nix` sets `openwrt = { ... }` to declare that the
-# router/AP is managed by the `openwrt-tofu` app (see `apps/openwrt-tofu` and
-# `apps/openwrt-tofu`). Fields mirror `renderSystemUci` from its `hosts.nix`.
+# Live OpenWrt management metadata. Named UCI sections exposed by host modules
+# are reconciled through NixOps4; the older tofu fields remain during migration.
 {
   lib,
   config,
@@ -18,70 +15,77 @@ in
 {
   options.openwrt = mkOption {
     description = ''
-      OpenTofu/LuCI-RPC management settings for this OpenWrt host.
-      `null` (default) means the host is only built as an image, not
-      managed via tofu.
+      Live management settings for this OpenWrt host. `null` means the host is
+      only built as an image.
     '';
     type = types.nullOr (types.submodule (
       { ... }:
       {
         options = {
-          remote = mkOption {
-            description = "LuCI JSON-RPC base URL the provider talks to";
+          host = mkOption {
+            description = "SSH hostname or address for NixOps4";
             type = types.str;
           };
-          user = mkOption {
-            description = "LuCI admin account";
-            type = types.str;
-            default = "root";
+          port = mkOption {
+            description = "SSH port for NixOps4";
+            type = types.port;
+            default = 22;
+          };
+          dryRun = mkOption {
+            description = "Report NixOps4 changes without writing them";
+            type = types.bool;
+            default = true;
+          };
+          secretFile = mkOption {
+            description = "Runtime-encrypted generic router configuration, relative to the repository";
+            type = types.nullOr types.str;
+            default = null;
+          };
+          rollbackTimeout = mkOption {
+            description = "Seconds before an unconfirmed live apply rolls back";
+            type = types.ints.positive;
+            default = 60;
+          };
+          pruneOrphans = mkOption {
+            description = "Delete sections previously stamped by NixOps4 whose declaration was removed";
+            type = types.bool;
+            default = false;
+          };
+          reloadServices = mkOption {
+            description = "Services restarted after a confirmed apply";
+            type = types.listOf types.str;
+            default = [ ];
+          };
+          # Legacy tofu fields — kept for APs not yet migrated to NixOps4
+          remote = mkOption {
+            type = types.nullOr types.str;
+            default = null;
           };
           secret = mkOption {
-            description = ''
-              Secret file (relative to `secrets/master/`) holding the LuCI
-              admin password, age-encrypted.
-            '';
-            type = types.str;
+            type = types.nullOr types.str;
+            default = null;
+          };
+          configFiles = mkOption {
+            type = types.attrsOf types.str;
+            default = { };
           };
           system = mkOption {
-            description = "Declared /etc/config/system content";
-            type = types.submodule {
-              options = {
-                hostname = mkOption {
-                  type = types.str;
+            type = types.nullOr (
+              types.submodule {
+                options = {
+                  hostname = mkOption { type = types.str; };
+                  timezone = mkOption { type = types.str; };
+                  zonename = mkOption { type = types.str; };
+                  ntp = mkOption { type = types.nullOr (types.listOf types.str); default = null; };
+                  logProto = mkOption { type = types.str; default = "udp"; };
+                  conloglevel = mkOption { type = types.str; default = "8"; };
+                  cronloglevel = mkOption { type = types.str; default = "5"; };
+                  ttylogin = mkOption { type = types.str; default = "0"; };
+                  logSize = mkOption { type = types.str; default = "64"; };
                 };
-                timezone = mkOption {
-                  type = types.str;
-                };
-                zonename = mkOption {
-                  type = types.str;
-                };
-                ntp = mkOption {
-                  description = "NTP servers; `null` omits the block (APs)";
-                  type = types.nullOr (types.listOf types.str);
-                  default = null;
-                };
-                logProto = mkOption {
-                  type = types.str;
-                  default = "udp";
-                };
-                conloglevel = mkOption {
-                  type = types.str;
-                  default = "8";
-                };
-                cronloglevel = mkOption {
-                  type = types.str;
-                  default = "5";
-                };
-                ttylogin = mkOption {
-                  type = types.str;
-                  default = "0";
-                };
-                logSize = mkOption {
-                  type = types.str;
-                  default = "64";
-                };
-              };
-            };
+              }
+            );
+            default = null;
           };
         };
       }
