@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
@@ -150,8 +151,18 @@ in
     "ext4"
   ];
 
-  # HACK: `mdadm: No mail address or alert command - not monitoring.`
-  boot.swraid.mdadmConf = "MAILADDR root";
+  boot.swraid.mdadmConf = lib.concatStringsSep "\n" [
+    # WARN: Quarantine failed VYJB5TUM until its replacement is installed.
+    ''
+      AUTO -all
+      DEVICE ${config.disko.devices.disk.hdd2.device}-part1
+      ARRAY /dev/md/tank UUID=bbbda7df:a6c7e689:44de1795:f988e062 devices=${config.disko.devices.disk.hdd2.device}-part1
+    ''
+    # HACK: `mdadm: No mail address or alert command - not monitoring.`
+    ''
+      MAILADDR root
+    ''
+  ];
 
   nix.gc = {
     automatic = true;
@@ -174,13 +185,8 @@ in
     enable = true;
     autodetect = false;
     defaults.monitored = "-a -o on -S on -n standby,q -W 4,45,50 -m <nomailer> -M exec ${lib.getExe smartNotify}";
+    # WARN: VYJB5TUM is deliberately excluded after repeated UNC read failures.
     devices = [
-      {
-        device = "/dev/disk/by-id/ata-WDC_WD8003FFBX-68B9AN0_VYJB5TUM";
-        # Monitor the detached member while tolerating its physical removal, but
-        # do not schedule more self-tests after its extended test stopped progressing.
-        options = "-d removable";
-      }
       {
         device = "/dev/disk/by-id/ata-WDC_WD8003FFBX-68B9AN0_VYHZTWSM";
         options = "-s (S/../.././02|L/../02/./03)";
@@ -267,6 +273,37 @@ in
       unitConfig.DefaultDependencies = "no";
     }
   ];
+
+  # mdadm incremental assembly will not start a degraded RAID1. The whitelist
+  # above keeps the failed member out; this starts the remaining member without
+  # weakening that policy or using --force.
+  boot.initrd.systemd.services.assemble-tank = {
+    description = "Assemble degraded tank RAID from the whitelisted member";
+    wantedBy = [ "systemd-cryptsetup@tank.service" ];
+    wants = [ "systemd-udev-trigger.service" ];
+    after = [ "systemd-udev-trigger.service" ];
+    before = [ "systemd-cryptsetup@tank.service" ];
+    conflicts = [
+      "initrd-switch-root.target"
+      "shutdown.target"
+    ];
+    unitConfig.DefaultDependencies = "no";
+    serviceConfig = {
+      Type = "oneshot";
+      StandardOutput = "journal+console";
+      StandardError = "journal+console";
+    };
+    path = [
+      pkgs.mdadm
+      pkgs.systemd
+    ];
+    script = ''
+      udevadm wait --timeout=30 ${config.disko.devices.disk.hdd2.device}-part1
+      if [[ ! -b /dev/md/tank ]]; then
+        mdadm --assemble --scan --run --verbose --config=/etc/mdadm.conf
+      fi
+    '';
+  };
 
   boot.initrd.systemd.services.copy-luks-keys =
     let
@@ -369,23 +406,6 @@ in
                   };
                 };
                 priority = 3;
-              };
-            };
-          };
-        };
-        hdd1 = {
-          type = "disk";
-          device = "/dev/disk/by-id/ata-WDC_WD8003FFBX-68B9AN0_VYJB5TUM";
-          content = {
-            type = "gpt";
-            partitions = {
-              mdadm = {
-                label = "hdd1";
-                size = "100%";
-                content = {
-                  type = "mdraid";
-                  name = "tank";
-                };
               };
             };
           };
