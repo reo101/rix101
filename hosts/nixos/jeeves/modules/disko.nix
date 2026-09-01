@@ -128,6 +128,59 @@ let
       exit "$failed"
     '';
   };
+
+  btrfsStallCapture = pkgs.writeShellApplication {
+    name = "jeeves-btrfs-stall-capture";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.mdadm
+      pkgs.procps
+      pkgs.systemd
+      pkgs.util-linux
+    ];
+    text = ''
+      fsid=$(findmnt --noheadings --output UUID --target /nix)
+      stats="/sys/fs/btrfs/$fsid/commit_stats"
+      [[ -r "$stats" ]] || {
+        echo "Missing Btrfs commit stats: $stats" >&2
+        exit 1
+      }
+
+      armed=1
+      while sleep 5; do
+        current_ms=$(awk '$1 == "cur_commit_ms" { print $2 }' "$stats")
+        [[ "$current_ms" =~ ^[0-9]+$ ]] || continue
+
+        if (( current_ms >= 60000 && armed == 1 )); then
+          printf '<3>jeeves-btrfs-stall: cur_commit_ms=%s\n' "$current_ms" > /dev/kmsg
+          printf w > /proc/sysrq-trigger
+          printf t > /proc/sysrq-trigger
+          {
+            printf 'Btrfs transaction stalled for %s ms at %s\n' \
+              "$current_ms" "$(date --iso-8601=seconds)"
+            cat "$stats"
+            cat /proc/pressure/io
+            cat /proc/mdstat
+            mdadm --detail /dev/md/tank
+            ps -eLo pid,tid,ppid,tgid,state,wchan:36,comm,args
+            for path in \
+              /dev/md/tank \
+              ${config.disko.devices.disk.hdd2.device}-part1; do
+              device=$(basename "$(readlink -f "$path")")
+              printf '%s inflight: ' "$device"
+              cat "/sys/class/block/$device/inflight"
+            done
+          } | systemd-cat --identifier=jeeves-btrfs-stall --priority=err
+          armed=0
+        elif (( current_ms == 0 && armed == 0 )); then
+          cat "$stats" \
+            | systemd-cat --identifier=jeeves-btrfs-stall --priority=warning
+          armed=1
+        fi
+      done
+    '';
+  };
 in
 {
   imports = [
@@ -200,6 +253,18 @@ in
   };
 
   systemd.services = {
+    jeeves-btrfs-stall-capture = {
+      description = "Capture Jeeves Btrfs transaction stalls";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "local-fs.target" ];
+      serviceConfig = {
+        ExecStart = lib.getExe btrfsStallCapture;
+        Restart = "always";
+        RestartSec = "5s";
+      };
+    };
+    btrfs-scrub-data.serviceConfig.ExecStartPre =
+      "${lib.getExe pkgs.btrfs-progs} scrub limit --all --limit 10M /data";
     jeeves-md-health-check = {
       description = "Check Jeeves mdraid health";
       serviceConfig = {
