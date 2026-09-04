@@ -2,6 +2,17 @@
 
 let
   username = "reo101";
+  rustdeskX11 = pkgs.symlinkJoin {
+    name = "rustdesk-x11";
+    paths = [ pkgs.rustdesk ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    # HACK: keyboard capture is unreliable in the default Wayland mode
+    postBuild = ''
+      wrapProgram $out/bin/rustdesk \
+        --set GDK_BACKEND x11 \
+        --set GTK_USE_PORTAL 0
+    '';
+  };
 in
 {
   imports = [
@@ -59,6 +70,15 @@ in
     pkgs.legcord
     pkgs.mumble
     pkgs.element-desktop
+    pkgs.himalaya
+    (pkgs.pass.withExtensions (
+      extensions: [
+        extensions.pass-otp
+      ]
+    ))
+
+    # Remote debugging
+    rustdeskX11
 
     # Learning
     (pkgs.anki.withAddons (
@@ -71,6 +91,16 @@ in
         yomichan-forvo-server
       ]
     ))
+
+    # VW
+    pkgs.bitwarden-cli
+    pkgs.bitwarden-desktop
+    # pkgs.keyguard
+
+    # Work
+    (pkgs.azure-cli.withExtensions [
+      pkgs.azure-cli.extensions.azure-devops
+    ])
   ];
 
   rix101 = {
@@ -102,7 +132,7 @@ in
     enable = true;
     # NOTE: Using X11 Emacs (not PGTK) for smooth ultra-scroll on high-refresh displays
     # PGTK has event batching issues with niri that cause 300ms+ scroll freezes
-    package = pkgs.emacs30;
+    package = pkgs.emacs31;
     extraPackages = epkgs: [
       epkgs.treesit-grammars.with-all-grammars
     ];
