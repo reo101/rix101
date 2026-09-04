@@ -1243,6 +1243,38 @@
         "type": "github"
       }
     },
+    "nix-enraged": {
+      "inputs": {
+        "flake-file": [
+          "flake-file"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nix-monitored": [
+          "nix-monitored"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788559528,
+        "narHash": "sha256-0bo54CbsO3WuEhvuGC5VWhn8gk62VXGWtTF2OKPhT1w=",
+        "owner": "reo101",
+        "repo": "nix-enraged",
+        "rev": "d484b6607e9c3845cb3de4a3197ae7a92d64cd49",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reo101",
+        "repo": "nix-enraged",
+        "type": "github"
+      }
+    },
     "nix-formatter-pack": {
       "inputs": {
         "nixpkgs": [
@@ -1974,6 +2006,7 @@
         "niri": "niri",
         "nix-colors": "nix-colors",
         "nix-darwin": "nix-darwin",
+        "nix-enraged": "nix-enraged",
         "nix-lib-net": "nix-lib-net",
         "nix-monitored": "nix-monitored",
         "nix-on-droid": "nix-on-droid",

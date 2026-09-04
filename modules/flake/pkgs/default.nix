@@ -38,6 +38,15 @@
       inputs.flake-parts.follows = "flake-parts";
       inputs.rust-overlay.follows = "rust-overlay";
     };
+
+    nix-enraged = {
+      url = "github:reo101/nix-enraged";
+      inputs.nix-monitored.follows = "nix-monitored";
+      inputs.flake-file.follows = "flake-file";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+    };
   };
 
   imports = [

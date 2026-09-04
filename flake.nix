@@ -193,6 +193,16 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-enraged = {
+      url = "github:reo101/nix-enraged";
+      inputs = {
+        flake-file.follows = "flake-file";
+        flake-parts.follows = "flake-parts";
+        nix-monitored.follows = "nix-monitored";
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+      };
+    };
     nix-lib-net.url = "github:reo101/nix-lib-net";
     nix-monitored = {
       url = "github:ners/nix-monitored";
