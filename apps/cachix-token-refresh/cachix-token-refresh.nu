@@ -9,7 +9,7 @@ def die [message: string, code: int = 1] {
 }
 
 def first-location [headers: string] {
-  let matches = ($headers | lines | where { |line| ($line | str downcase | str starts-with "location:") })
+  let matches = ($headers | lines | where { |line| ($line | str lowercase | str starts-with "location:") })
   if (($matches | length) == 0) {
     ""
   } else {
