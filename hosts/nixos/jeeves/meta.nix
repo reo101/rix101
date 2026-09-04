@@ -60,6 +60,12 @@
       dtd = {
         publicKey = "EC2gIHyM4KSYKYxQWh6azQPHp/IZ0xMpYEZhXSFwFmM=";
         hostIndex = 11;
+        allowedTCPPorts = [ 8096 ];
+      };
+      nomadalgia = {
+        publicKey = "ZJ7gdrWAyB+LcOILHTZXfQ+VvUl1+ei2E5HoWxG3Vzs=";
+        hostIndex = 12;
+        allowedTCPPorts = [ 8096 ];
       };
     };
   };

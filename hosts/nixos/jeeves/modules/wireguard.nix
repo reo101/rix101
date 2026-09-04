@@ -44,6 +44,8 @@ in
 
   # Server
   age.secrets."wireguard.privateKey" = {
+    owner = "systemd-network";
+    group = "systemd-network";
     mode = "0400";
     rekeyFile = lib.custom.repoSecret "home/jeeves/wireguard/key.age";
     generator = {
