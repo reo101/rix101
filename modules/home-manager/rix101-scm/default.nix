@@ -300,7 +300,9 @@ in
             "is_stray" = /* jj_template */ ''
               !immutable &&
               !hidden &&
+              !self.contained_in("::trunk()") &&
               !self.contained_in("trunk()::") &&
+              self.contained_in("::(visible_heads() & (mine() ~ ::trunk())::)") &&
               !(remote_bookmarks.len() > 0 && !has_matching_local_remote)
             '';
 
@@ -359,9 +361,11 @@ in
               coalesce(
                 if(!self, label("elided", "▪")),
                 label(
-                  coalesce(
+                  separate(
+                    " ",
                     if(hidden, "hidden"),
                     if(is_stray, "stray"),
+                    if(!mine, "not_mine"),
                   ),
                   coalesce(
                     if(current_working_copy, "●"),
@@ -383,6 +387,8 @@ in
               fg = "bright red";
               bold = true;
             };
+            not_mine.dim = true;
+            "stray not_mine".bold = false;
             hidden = {
               dim = true;
             };
