@@ -377,6 +377,19 @@ in
         enableZshIntegration = false;
       };
 
+    # WARN: `disable-ccid` routes GnuPG's smartcard access through PC/SC
+    # (pcscd) instead of GnuPG's own internal CCID (libusb) driver. Do NOT
+    # remove this: that internal driver and `age-plugin-yubikey` (a pcsc
+    # client) both try to claim the YubiKey's single CCID interface, the loser
+    # gets "Can't claim interface: LIBUSB_ERROR_BUSY" / "No such device", and
+    # the only cure is replugging. A single PC/SC owner serializes both.
+    home.file.".gnupg/scdaemon.conf" =
+      mkIf cfg.gpg.enable {
+        text = ''
+          disable-ccid
+        '';
+      };
+
     # Shell
     home.sessionVariables = mkMerge [
       {
