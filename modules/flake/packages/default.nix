@@ -1,4 +1,10 @@
-{ inputs, self, lib, config, ... }:
+{
+  inputs,
+  self,
+  lib,
+  config,
+  ...
+}:
 
 {
   key = "rix101.modules.flake.packages";
@@ -16,152 +22,166 @@
     ../things
   ];
 
-  options = let
-    inherit (lib)
-      types
-      ;
-    inherit (config.lib.custom)
-      createThings
-      ;
+  options =
+    let
+      inherit (lib)
+        types
+        ;
+      inherit (config.lib.custom)
+        createThings
+        ;
 
-    createPackages = baseDir:
-      createThings {
-        inherit baseDir;
-        thingType = "package";
-        raw = false;
-        extras.systems = {
-          default = lib.const true;
+      createPackages =
+        baseDir:
+        createThings {
+          inherit baseDir;
+          thingType = "package";
+          raw = false;
+          extras.systems = {
+            default = lib.const true;
+          };
         };
+    in
+    {
+      auto.packages = lib.mkOption {
+        description = ''
+          Automagically generate packages from walking directories with Nix files
+        '';
+        type = types.submodule (submodule: {
+          options = {
+            enable = lib.mkEnableOption "Automatic packages extraction";
+            dir = lib.mkOption {
+              description = ''
+                Base directory of the contained packages
+              '';
+              type = types.path;
+              default = "${self}/pkgs";
+              defaultText = "\${self}/pkgs";
+            };
+            result = lib.mkOption {
+              description = ''
+                The resulting automatic packages
+              '';
+              type = types.attrsOf (
+                types.submodule {
+                  options = {
+                    package = lib.mkOption { type = types.unspecified; };
+                    systems = lib.mkOption { type = types.functionTo types.bool; };
+                  };
+                }
+              );
+              readOnly = true;
+              internal = true;
+              default = lib.optionalAttrs config.auto.packages.enable (createPackages config.auto.packages.dir);
+            };
+          };
+        });
+        default = { };
       };
-  in {
-    auto.packages = lib.mkOption {
-      description = ''
-        Automagically generate packages from walking directories with Nix files
-      '';
-      type = types.submodule (submodule: {
-        options = {
-          enable = lib.mkEnableOption "Automatic packages extraction";
-          dir = lib.mkOption {
-            description = ''
-              Base directory of the contained packages
-            '';
-            type = types.path;
-            default = "${self}/pkgs";
-            defaultText = ''''${self}/pkgs'';
-          };
-          result = lib.mkOption {
-            description = ''
-              The resulting automatic packages
-            '';
-            type = types.attrsOf (types.submodule { options = {
-              package = lib.mkOption { type = types.unspecified; };
-              systems = lib.mkOption { type = types.functionTo types.bool; };
-            };});
-            readOnly = true;
-            internal = true;
-            default =
-              lib.optionalAttrs
-                config.auto.packages.enable
-                (createPackages config.auto.packages.dir);
-          };
-        };
-      });
-      default = {};
     };
-  };
 
   config = {
-    perSystem = { pkgs, system, ... }@perSystemArgs: let
-      inherit (config) lib;
+    perSystem =
+      { pkgs, system, ... }@perSystemArgs:
+      let
+        inherit (config) lib;
 
-      # NOTE: evaluate packages in isolation, which allows
-      #       merging them back into the global `pkgs` later
-      # NOTE: also faster than `import nixpkgs { inherit system; }`
-      # pkgsPure = inputs.nixpkgs.legacyPackages.${system};
-      pkgsPure = import inputs.nixpkgs {
-        inherit system;
-        config = {
-          # NOTE: for some packages with non-free licenses
-          allowUnfree = true;
-        };
-        overlays = [
-          # NOTE: for overlayed `maintainers`, `net`, `infuse`, etc.
-          (final: prev: {
-            inherit (config) lib;
-          })
-        ];
-      };
-      defaultBuildAttrs = previousAttrs: {
-        __structuredAttrs = previousAttrs.__structuredAttrs or true;
-        strictDeps = previousAttrs.strictDeps or true;
-      };
-      legacyPackages =
-        lib.pipe
-          config.auto.packages.result
-          [
-            (lib.filterAttrs
-              (name: { package, systems }:
-                systems {
-                  inherit (pkgsPure)
-                    lib
-                    stdenv
-                    ;
-                }))
-            (lib.mapAttrs
-              (name: { package, systems }:
-                let
-                  # Handle curried packages: { inputs }: { ... }: ...
-                  packageArgs = builtins.functionArgs package;
-                  isCurriedInputs = packageArgs == { inputs = false; };
-                  actualPackage =
-                    if isCurriedInputs
-                    then package { inherit inputs; }
-                    else package;
-                  # TODO: put in `autoThings` `handle`?
-                  # TODO: keep source `dream2nix` module for overriding?
-                  isDream2Nix = lib.pipe actualPackage
-                    [
-                      builtins.functionArgs
-                      builtins.attrNames
-                      (builtins.elem "dream2nix")
-                    ];
-                in
-                if isDream2Nix then
-                  inputs.dream2nix.lib.evalModules {
-                    packageSets.nixpkgs = pkgsPure;
-                    modules = [
-                      actualPackage
-                      {
-                        paths.projectRoot = "${self.outPath}";
-                        paths.projectRootFile = "flake.nix";
-                        paths.package = "${self.outPath}";
-                      }
-                    ];
-                    specialArgs = {
-                      inherit inputs;
-                    };
-                  }
-                else
-                  pkgsPure.callPackage actualPackage {}))
-            (lib.mapAttrs (
-              _: package:
-              if
-                lib.isDerivation package
-                && package ? overrideAttrs
-                && !(package.__structuredAttrs or false)
-              then
-                lib.infuse package {
-                  __output = _: previousAttrs: defaultBuildAttrs previousAttrs;
-                }
-              else
-                package
-            ))
+        # NOTE: evaluate packages in isolation, which allows
+        #       merging them back into the global `pkgs` later
+        # NOTE: also faster than `import nixpkgs { inherit system; }`
+        # pkgsPure = inputs.nixpkgs.legacyPackages.${system};
+        pkgsPure = import inputs.nixpkgs {
+          inherit system;
+          config = {
+            # NOTE: for some packages with non-free licenses
+            allowUnfree = true;
+          };
+          overlays = [
+            # NOTE: for overlayed `maintainers`, `net`, `infuse`, etc.
+            (final: prev: {
+              inherit (config) lib;
+            })
           ];
-    in {
-      packages = lib.pipe legacyPackages [
-        (lib.filterAttrs (lib.const lib.isDerivation))
-      ];
-      inherit legacyPackages;
-    };
+        };
+        defaultBuildAttrs = previousAttrs: {
+          __structuredAttrs = previousAttrs.__structuredAttrs or true;
+          strictDeps = previousAttrs.strictDeps or true;
+        };
+        legacyPackagesFromPkgs = lib.pipe config.auto.packages.result [
+          (lib.filterAttrs (
+            name:
+            { package, systems }:
+            systems {
+              inherit (pkgsPure)
+                lib
+                stdenv
+                ;
+            }
+          ))
+          (lib.mapAttrs (
+            name:
+            { package, systems }:
+            let
+              # Handle curried packages: { inputs }: { ... }: ...
+              packageArgs = builtins.functionArgs package;
+              isCurriedInputs = packageArgs == { inputs = false; };
+              actualPackage = if isCurriedInputs then package { inherit inputs; } else package;
+              # TODO: put in `autoThings` `handle`?
+              # TODO: keep source `dream2nix` module for overriding?
+              isDream2Nix = lib.pipe actualPackage [
+                builtins.functionArgs
+                builtins.attrNames
+                (builtins.elem "dream2nix")
+              ];
+              packageModule = lib.infuse actualPackage {
+                __output =
+                  module:
+                  module
+                  // {
+                    mkDerivation = module.mkDerivation // defaultBuildAttrs module.mkDerivation;
+                  };
+              };
+            in
+            if isDream2Nix then
+              inputs.dream2nix.lib.evalModules {
+                packageSets.nixpkgs = pkgsPure;
+                modules = [
+                  packageModule
+                  {
+                    paths.projectRoot = "${self.outPath}";
+                    paths.projectRootFile = "flake.nix";
+                    paths.package = "${self.outPath}";
+                  }
+                ];
+                specialArgs = {
+                  inherit inputs;
+                };
+              }
+            else
+              pkgsPure.callPackage actualPackage { }
+          ))
+          (lib.mapAttrs (
+            _: package:
+            if lib.isDerivation package && package ? overrideAttrs && !(package.__structuredAttrs or false) then
+              lib.infuse package {
+                __output = _: previousAttrs: defaultBuildAttrs previousAttrs;
+              }
+            else
+              package
+          ))
+        ];
+      in
+      let
+        # NOTE: `nix-enraged` lives in its own repo, wired in as a flake input
+        legacyPackages = legacyPackagesFromPkgs // {
+          nix-enraged = inputs.nix-enraged.packages.${system}.default;
+        };
+      in
+      {
+        packages = lib.pipe legacyPackages [
+          (lib.filterAttrs (lib.const lib.isDerivation))
+        ];
+        inherit legacyPackages;
+      };
   };
 }

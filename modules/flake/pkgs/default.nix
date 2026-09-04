@@ -111,26 +111,24 @@
         (lib.attrValues self.overlays)
 
         [
-          (
-            _: _: {
-              inherit multiverse;
-              # NOTE: expose any `nixpkgs-*` flake input as a raw instance at `pkgs.nixpkgs.<name>`
-              # (recursive, so e.g. `pkgs.nixpkgs.stable.nixpkgs.unstable.hello` works).
-              # Kept alongside `multiverse` for revisions it does not index (`staging`, `master`/trunk).
-              nixpkgs = lib.pipe inputs [
-                (lib.concatMapAttrs (
-                  name: input:
-                  lib.optionalAttrs (lib.hasPrefix "nixpkgs-" name) {
-                    ${lib.removePrefix "nixpkgs-" name} = import input {
-                      inherit system;
-                      config = nixpkgsConfig;
-                      inherit overlays;
-                    };
-                  }
-                ))
-              ];
-            }
-          )
+          (_: _: {
+            inherit multiverse;
+            # NOTE: expose any `nixpkgs-*` flake input as a raw instance at `pkgs.nixpkgs.<name>`
+            # (recursive, so e.g. `pkgs.nixpkgs.stable.nixpkgs.unstable.hello` works).
+            # Kept alongside `multiverse` for revisions it does not index (`staging`, `master`/trunk).
+            nixpkgs = lib.pipe inputs [
+              (lib.concatMapAttrs (
+                name: input:
+                lib.optionalAttrs (lib.hasPrefix "nixpkgs-" name) {
+                  ${lib.removePrefix "nixpkgs-" name} = import input {
+                    inherit system;
+                    config = nixpkgsConfig;
+                    inherit overlays;
+                  };
+                }
+              ))
+            ];
+          })
         ]
       ];
     in
