@@ -1560,6 +1560,29 @@
         "type": "github"
       }
     },
+    "nixos-wsl": {
+      "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784642409,
+        "narHash": "sha256-hcbDqFuySAJawljt5r0sKBCJKYnbtGD0T/ZIozH1Dq0=",
+        "owner": "nix-community",
+        "repo": "NixOS-WSL",
+        "rev": "eaeb18da90024448a60eb1ec7132eafa4003404e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "NixOS-WSL",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1786862985,
@@ -1961,6 +1984,7 @@
         "nixops4-openwrt": "nixops4-openwrt",
         "nixos-apple-silicon": "nixos-apple-silicon",
         "nixos-avf": "nixos-avf",
+        "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs",
         "noctalia": "noctalia",
         "noctalia-plugins-official": "noctalia-plugins-official",
