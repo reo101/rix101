@@ -8,19 +8,19 @@ let
 
   # NOTE: GPU and display configuration
   #
-  # card0 / renderD129 = iGPU (AMD Raphael integrated)
-  # card1 / renderD128 = dGPU (AMD RX 7900 XTX) with DP-1, DP-2, DP-3, HDMI-A-1
+  # Stable PCI paths for the iGPU (AMD Raphael integrated) and dGPU (AMD RX
+  # 7900 XTX). cardN/renderDN numbering is assigned at boot and not stable.
   #
   # We use EDID firmware injection on an unused port of the dGPU to create
   # a virtual display that the real GPU can render to with full acceleration.
   gpuCards = {
     igpu = {
-      card = "card0";
-      render = "renderD129";
+      card = "/dev/dri/by-path/pci-0000:1a:00.0-card";
+      render = "/dev/dri/by-path/pci-0000:1a:00.0-render";
     };
     dgpu = {
-      card = "card1";
-      render = "renderD128";
+      card = "/dev/dri/by-path/pci-0000:03:00.0-card";
+      render = "/dev/dri/by-path/pci-0000:03:00.0-render";
     };
   };
 
@@ -101,16 +101,64 @@ let
   # Static paths for niri state
   # NOTE: niri doesn't support custom socket paths - it uses niri.{wayland-N}.{PID}.sock
   # We create a symlink to the dynamic socket after niri starts
-  sunshineNiriDir = "/var/lib/sunshine-niri";
+  sunshineNiriDir = "/run/sunshine-niri";
   niriSocket = "${sunshineNiriDir}/niri.sock";
+  sunshinePackage = lib.infuse pkgs.sunshine {
+    __output.patches.__append = [
+      (pkgs.fetchpatch {
+        name = "sunshine-fix-5257";
+        url = "https://github.com/LizardByte/Sunshine/commit/86a253859e2eac62f41a2821804efa90ae8215c.patch";
+        hash = "sha256-MqkJeywutYu/+YzYlrRNwmNPYh/g8ucxqhepOZp5Dms=";
+      })
+      (pkgs.fetchpatch {
+        name = "sunshine-fix-5346";
+        url = "https://github.com/LizardByte/Sunshine/commit/7ecd0286644590c4214688c8dc1d4bd28f28eafd.patch";
+        hash = "sha256-yFjGNkRdb3EW44bUX8ORCnMLjVQNluKgsvjvUsSavfE=";
+      })
+      # Backport connector-name selection for KMS capture to this package snapshot.
+      ../patches/sunshine-kms-connector-names.patch
+    ];
+  };
+
+  # Sunshine only serves PNG app images. Generate distinct, immutable icons so
+  # Moonlight does not turn the session controls into five identical tiles.
+  sunshineSteamIcon = "${sunshinePackage}/assets/steam.png";
+  sunshineDesktopIcon = "${sunshinePackage}/assets/desktop.png";
+  sunshineIcons = pkgs.runCommand "sunshine-app-icons" {
+    nativeBuildInputs = [ pkgs.imagemagick pkgs.dejavu_fonts ];
+  } ''
+    set -euo pipefail
+    mkdir -p "$out"
+
+    make_icon() {
+      input="$1"
+      output="$2"
+      label="$3"
+      color="$4"
+      ${lib.getExe pkgs.imagemagick} "$input" \
+        -resize '512x512^' -gravity center -extent 512x512 \
+        -fill "$color" -draw 'rectangle 0,398 512,512' \
+        -gravity south -fill white \
+        -font ${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans-Bold.ttf \
+        -pointsize 34 -annotate +0+30 "$label" "$out/$output"
+    }
+
+    make_icon ${sunshineSteamIcon} steam-close.png "CLOSE ON EXIT" '#a51d2d'
+    make_icon ${sunshineSteamIcon} steam-persistent.png "KEEP RUNNING" '#26a269'
+    make_icon ${sunshineSteamIcon} steam-direct.png "DIRECT" '#1c71d8'
+    make_icon ${sunshineSteamIcon} steam-stop.png "STOP STEAM" '#c01c28'
+    make_icon ${sunshineDesktopIcon} desktop.png "DESKTOP" '#5e5c64'
+  '';
   sunshineSink = "sink-sunshine-stereo";
   sunshineSurround51Sink = "sink-sunshine-surround51";
   sunshineSurround71Sink = "sink-sunshine-surround71";
 
   steamBigPicture = pkgs.writeShellScript "steam-big-picture" ''
-    width="''${1:-1920}"
-    height="''${2:-1080}"
-    refresh="''${3:-144}"
+    mode_file="/run/user/$(id -u)/sunshine-client-mode"
+    width=1920
+    height=1080
+    refresh=144
+    [ -r "$mode_file" ] && . "$mode_file"
 
     export PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native"
     export PULSE_SINK=${lib.escapeShellArg sunshineSink}
@@ -133,13 +181,28 @@ let
           ${lib.getExe config.programs.steam.package} -tenfoot
   '';
 
+  steamBigPictureDirect = pkgs.writeShellScript "steam-big-picture-direct" ''
+    export PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native"
+    export PULSE_SINK=${lib.escapeShellArg sunshineSink}
+    export SDL_AUDIODRIVER=pulse
+    export WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d'
+
+    exec ${lib.getExe' pkgs.util-linux "setpriv"} --ambient-caps -all --inh-caps -all \
+      ${lib.getExe' pkgs.coreutils "env"} \
+        PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native" \
+        PULSE_SINK=${lib.escapeShellArg sunshineSink} \
+        SDL_AUDIODRIVER=pulse \
+        WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d' \
+        ${lib.getExe config.programs.steam.package} -tenfoot
+  '';
+
   # Niri config for persistent session with named workspaces
   niriConfig = pkgs.writeText "niri-sunshine.kdl" /* kdl */ ''
     debug {
       // Force rendering on the dGPU
-      render-drm-device "/dev/dri/${gpuCards.dgpu.render}"
+      render-drm-device "${gpuCards.dgpu.render}"
       // Ignore the iGPU
-      ignore-drm-device "/dev/dri/${gpuCards.igpu.render}"
+      ignore-drm-device "${gpuCards.igpu.render}"
     }
 
     // Keep niri off the real monitor; HDMI stays for tty1 on VT1
@@ -151,6 +214,16 @@ let
     }
     output "DP-2" {
       off
+    }
+    output "${virtualDisplayPort}" {
+      mode "${builtins.toString virtualDisplay.width}x${builtins.toString virtualDisplay.height}"
+      scale 1
+      focus-at-startup
+    }
+
+    // Let Niri manage Xwayland geometry for direct Steam and games.
+    xwayland-satellite {
+      path "${lib.getExe pkgs.xwayland-satellite}"
     }
 
     hotkey-overlay {
@@ -165,11 +238,16 @@ let
       open-on-output "${virtualDisplayPort}"
     }
 
-    // Window rule: gamescope (Steam Big Picture) always goes to "steam" workspace
+    // Window rules: Steam Big Picture always goes to "steam" workspace
     window-rule {
       match app-id="gamescope"
       open-on-workspace "steam"
-      open-maximized true
+      open-fullscreen true
+    }
+    window-rule {
+      match app-id="steam"
+      open-on-workspace "steam"
+      open-fullscreen true
     }
 
     // Keybinds (Alt as modifier)
@@ -190,66 +268,189 @@ let
   '';
 
   niriFocus = pkgs.writeShellScript "niri-focus" ''
-    for i in $(seq 1 40); do
-      SOCKET=$(ls -t /run/user/$(id -u)/niri.*.sock 2>/dev/null | head -1)
-      if [ -n "$SOCKET" ]; then
-        ln -sfn "$SOCKET" ${niriSocket}
-        ${niriMsg} action focus-workspace "$1" && exit 0
+    set -u
+    for _ in $(seq 1 40); do
+      if ${niriMsg} action focus-workspace "$1"; then
+        exit 0
       fi
       sleep 0.25
     done
     exit 1
-  '';
+  ''; 
 
   niriFocusApp = pkgs.writeShellScript "niri-focus-app" ''
+    set -u
     app_id="$1"
-    for i in $(seq 1 40); do
+    for _ in $(seq 1 40); do
       id=$(${niriMsg} -j windows | ${lib.getExe pkgs.jq} -r --arg app_id "$app_id" 'map(select(.app_id == $app_id)) | last | .id // empty')
-      if [ -n "$id" ]; then
-        ${niriMsg} action focus-window --id "$id" && exit 0
+      if [ -n "$id" ] && ${niriMsg} action focus-window --id "$id"; then
+        exit 0
       fi
       sleep 0.25
     done
     exit 1
-  '';
+  ''; 
 
   sunshineMode = pkgs.writeShellScript "sunshine-mode" ''
+    set -eu
     width="''${SUNSHINE_CLIENT_WIDTH:-1920}"
     height="''${SUNSHINE_CLIENT_HEIGHT:-1080}"
     refresh="''${SUNSHINE_CLIENT_FPS:-144}"
 
     case "$width:$height:$refresh" in
-      *[!0-9:]* | :* | *: | *::*) width=1920; height=1080; refresh=144 ;;
+      *[!0-9:]* | :* | *: | *::* | *:*:*:*) width=1920; height=1080; refresh=144 ;;
+      *) ;;
+    esac
+    case "$width:$height:$refresh" in
+      0:* | *:0:* | *:*:0) width=1920; height=1080; refresh=144 ;;
     esac
 
-    printf '%sx%s@%s\n' "$width" "$height" "$refresh" > /tmp/sunshine-client-mode
-    ${niriMsg} output ${virtualDisplayPort} custom-mode "''${width}x''${height}@''${refresh}" || true
-    ${niriMsg} output ${virtualDisplayPort} scale 1 || true
+    mode_file="/run/user/$(id -u)/sunshine-client-mode"
+    umask 077
+    printf 'width=%s\nheight=%s\nrefresh=%s\n' "$width" "$height" "$refresh" > "$mode_file"
+    ${niriMsg} output ${virtualDisplayPort} on
+    ${niriMsg} output ${virtualDisplayPort} custom-mode "''${width}x''${height}@''${refresh}"
+    ${niriMsg} output ${virtualDisplayPort} scale 1
+  '';
+
+  # A nested Gamescope process takes output dimensions from Wayland configure
+  # events. Force one by resizing its Niri window without restarting Steam.
+  niriResizeGamescope = pkgs.writeShellScript "niri-resize-gamescope" ''
+    width="$1"
+    height="$2"
+    steam_workspace_id=$(${niriMsg} -j workspaces | ${lib.getExe pkgs.jq} -r 'map(select(.name == "steam")) | last | .id // empty')
+    if [ -z "$steam_workspace_id" ]; then
+      echo "Steam workspace not found" >&2
+      exit 1
+    fi
+    id=""
+    for i in $(seq 1 40); do
+      id=$(${niriMsg} -j windows | ${lib.getExe pkgs.jq} -r --argjson workspace_id "$steam_workspace_id" 'map(select(.app_id == "gamescope" and .workspace_id == $workspace_id)) | last | .id // empty')
+      [ -n "$id" ] && break
+      sleep 0.25
+    done
+    if [ -z "$id" ]; then
+      echo "Gamescope window not found; cannot resize persistent session" >&2
+      exit 1
+    fi
+
+    ${niriMsg} action fullscreen-window --id "$id" || true
+    sleep 0.2
+    ${niriMsg} action set-window-width --id "$id" "$width"
+    ${niriMsg} action set-window-height --id "$id" "$height"
+    sleep 0.2
+    ${niriMsg} action fullscreen-window --id "$id" || true
+  '';
+
+  gamescopeMode = pkgs.writeShellScript "gamescope-mode" ''
+    width="$1"
+    height="$2"
+    refresh="$3"
+    display=""
+
+    # Steam inherits Gamescope's nested Xwayland DISPLAY. Find that display
+    # from the persistent Steam process rather than guessing :1.
+    for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 40); do
+      display=""
+      for pid in $(${lib.getExe' pkgs.procps "pgrep"} -u "$(id -u)" -f '/home/jeeves/.local/share/Steam/(steam\.sh|ubuntu12_32/steam)( |$)' || true); do
+        display=$(tr '\0' '\n' < "/proc/$pid/environ" | \
+          ${lib.getExe' pkgs.gnugrep "grep"} '^DISPLAY=' | \
+          ${lib.getExe' pkgs.coreutils "cut"} -d= -f2- | \
+          ${lib.getExe' pkgs.coreutils "head"} -n1 || true)
+        case "$display" in
+          :[0-9]*) break ;;
+          *) display="" ;;
+        esac
+      done
+      [ -n "$display" ] && break
+      sleep 0.25
+    done
+
+    if [ -z "$display" ]; then
+      echo "Gamescope Xwayland DISPLAY not found" >&2
+      exit 1
+    fi
+
+    modeline=$(${lib.getExe' pkgs.libxcvt "cvt"} "$width" "$height" "$refresh" | \
+      ${lib.getExe' pkgs.gnugrep "grep"} Modeline)
+    set -- $modeline
+    mode_name="''${4}x''${8}_''${refresh}"
+    output=$(${lib.getExe pkgs.xrandr} -display "$display" --current | \
+      ${lib.getExe' pkgs.gnugrep "grep"} ' connected' | \
+      ${lib.getExe' pkgs.gawk "awk"} '{print $1}' | \
+      ${lib.getExe' pkgs.coreutils "head"} -n1)
+    if [ -z "$output" ]; then
+      echo "Gamescope Xwayland output not found" >&2
+      exit 1
+    fi
+
+    ${lib.getExe pkgs.xrandr} -display "$display" \
+      --newmode "$mode_name" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "''${10}" "''${11}" "''${12}" "''${13}" || true
+    ${lib.getExe pkgs.xrandr} -display "$display" \
+      --addmode "$output" "$mode_name" || true
+    ${lib.getExe pkgs.xprop} \
+      -display "$display" \
+      -root \
+      -f GAMESCOPE_XWAYLAND_MODE_CONTROL 32c \
+      -set GAMESCOPE_XWAYLAND_MODE_CONTROL "0,$width,$height,0"
   '';
 
   steamStart = pkgs.writeShellScript "steam-start" ''
+    set -eu
+    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
     pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
     # Hide physical sinks while gaming so Wine/Proton only enumerates Sunshine.
     "$pactl" list short cards | ${lib.getExe' pkgs.gawk "awk"} '{print $2}' | while read -r card; do
-      "$pactl" set-card-profile "$card" off || true
+      "$pactl" set-card-profile "$card" off
     done
-    systemctl --user restart sunshine-audio-sinks.service || true
+    "$systemctl" --user start sunshine-audio-sinks.service
     ${niriFocus} steam
     . ${sunshineMode}
-    if ${lib.getExe' pkgs.procps "pgrep"} -a -u $(id -u) -f '/bin/gamescope( |$)' >/tmp/sunshine-gamescope 2>/dev/null; then
-      if ! grep -q -- "--output-width $width --output-height $height --nested-refresh $refresh" /tmp/sunshine-gamescope; then
-        echo "gamescope already running with different size; not restarting it" >&2
-      fi
+    "$systemctl" --user stop sunshine-steam-direct.service
+    if "$systemctl" --user is-active --quiet sunshine-gamescope.service; then
+      ${niriResizeGamescope} "$width" "$height"
     else
-      ${niriMsg} action spawn -- ${steamBigPicture} "$width" "$height" "$refresh"
+      "$systemctl" --user start sunshine-gamescope.service
     fi
-    ${niriFocusApp} gamescope || true
+    ${gamescopeMode} "$width" "$height" "$refresh"
+    ${niriFocusApp} gamescope
   '';
 
   steamStop = pkgs.writeShellScript "steam-stop" ''
+    set -eu
+    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
     ${niriFocus} desktop || true
-    ${lib.getExe' pkgs.procps "pkill"} -TERM -u $(id -u) -f '/bin/gamescope( |$)' || true
-    systemctl --user restart wireplumber.service sunshine-audio-sinks.service || true
+    "$systemctl" --user stop sunshine-gamescope.service sunshine-steam-direct.service
+    "$systemctl" --user restart wireplumber.service sunshine-audio-sinks.service
+  ''; 
+
+  steamStopKeepRunning = pkgs.writeShellScript "steam-stop-keep-running" ''
+    ${niriFocus} desktop || true
+  '';
+
+  steamDirectStart = pkgs.writeShellScript "steam-direct-start" ''
+    set -eu
+    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
+    pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
+    # Hide physical sinks while gaming so Wine/Proton only enumerates Sunshine.
+    "$pactl" list short cards | ${lib.getExe' pkgs.gawk "awk"} '{print $2}' | while read -r card; do
+      "$pactl" set-card-profile "$card" off
+    done
+    "$systemctl" --user start sunshine-audio-sinks.service
+    ${niriFocus} steam
+    . ${sunshineMode}
+    if "$systemctl" --user is-active --quiet sunshine-gamescope.service; then
+      ${niriResizeGamescope} "$width" "$height"
+      ${gamescopeMode} "$width" "$height" "$refresh"
+      ${niriFocusApp} gamescope
+      exit 0
+    fi
+    "$systemctl" --user start sunshine-steam-direct.service
+    ${niriFocusApp} steam
+  '';
+
+  steamDirectStopKeepRunning = pkgs.writeShellScript "steam-direct-stop-keep-running" ''
+    ${niriFocus} desktop || true
   '';
 
   desktopStart = pkgs.writeShellScript "desktop-start" ''
@@ -293,6 +494,7 @@ in
 
   services.sunshine = {
     enable = true;
+    package = sunshinePackage;
     autoStart = true;
     openFirewall = true;
     capSysAdmin = true;  # Required for KMS capture
@@ -302,9 +504,9 @@ in
       # KMS capture from the virtual display on the real GPU
       capture = "kms";
       # adapter_name is for VAAPI encoding
-      adapter_name = "/dev/dri/${gpuCards.dgpu.render}";
-      # Sunshine wants the KMS monitor index from its startup log, not the connector name
-      output_name = "0";
+      adapter_name = gpuCards.dgpu.render;
+      # Stable DRM connector name. Numeric monitor indexes depend on discovery order.
+      output_name = virtualDisplayPort;
       # Capture the monitor for the virtual sink Steam is routed to
       audio_sink = sunshineSink;
     };
@@ -312,7 +514,7 @@ in
       env = {
         PATH = "$(PATH):$(HOME)/.local/bin";
         # Tell wlroots-based compositors (cage) to use the dGPU
-        WLR_DRM_DEVICES = "/dev/dri/${gpuCards.dgpu.card}";
+        WLR_DRM_DEVICES = gpuCards.dgpu.card;
         # Use seatd for seat management (required for headless SSH launch)
         LIBSEAT_BACKEND = "seatd";
         # Only use the virtual display (DP-3), not the physical one
@@ -322,8 +524,9 @@ in
       };
       apps = [
         {
-          name = "Steam Big Picture";
-          image-path = "steam.png";
+          # Destructive variant: ending the Sunshine session also ends Steam.
+          name = "Steam Big Picture (close on exit)";
+          image-path = "${sunshineIcons}/steam-close.png";
           prep-cmd = [
             {
               do = "${steamStart}";
@@ -332,8 +535,43 @@ in
           ];
         }
         {
+          # Persistent variant: end streaming without ending Steam/Gamescope.
+          # Starting this app again reapplies the new client output mode first.
+          name = "Steam Big Picture (keep running)";
+          image-path = "${sunshineIcons}/steam-persistent.png";
+          prep-cmd = [
+            {
+              do = "${steamStart}";
+              undo = "${steamStopKeepRunning}";
+            }
+          ];
+        }
+        {
+          # Direct Steam under Niri, without a nested Gamescope session.
+          name = "Steam Big Picture (direct, keep running)";
+          image-path = "${sunshineIcons}/steam-direct.png";
+          prep-cmd = [
+            {
+              do = "${steamDirectStart}";
+              undo = "${steamDirectStopKeepRunning}";
+            }
+          ];
+        }
+        {
+          # Explicitly stop the persistent Steam/Gamescope session.
+          name = "Stop Steam";
+          image-path = "${sunshineIcons}/steam-stop.png";
+          cmd = "${lib.getExe' pkgs.coreutils "true"}";
+          prep-cmd = [
+            {
+              do = "${steamStop}";
+              undo = "";
+            }
+          ];
+        }
+        {
           name = "Desktop";
-          image-path = "desktop.png";
+          image-path = "${sunshineIcons}/desktop.png";
           prep-cmd = [
             {
               do = "${desktopStart}";
@@ -347,18 +585,21 @@ in
 
   # NOTE: Virtual Input Devices configuration
 
-  boot.kernelModules = [
-    "uhid"
-    "uinput"
-  ];
-
-  hardware.uinput.enable = true;
-
-  services.udev.extraRules = lib.concatStringsSep "\n" [
-    # NOTE: As noted in <https://myme.no/posts/2025-12-11-hifi-sunshine-on-nixos.html>
-    ''KERNEL=="uhid",   MODE="0660", GROUP="input"''
-    ''KERNEL=="uinput", MODE="0660", GROUP="input", SYMLINK+="uinput"''
-  ];
+  # Sunshine configures the uinput permissions, but does not load its module.
+  boot.kernelModules = [ "uhid" "uinput" ];
+  # udev's static_node rule did not materialize this node after a late module
+  # load, so ensure it exists before Sunshine starts after every boot.
+  systemd.tmpfiles.settings."sunshine-uinput" = {
+    "/dev/uinput".c = {
+      mode = "0660";
+      user = "root";
+      group = "uinput";
+      argument = "10:223";
+    };
+  };
+  services.udev.extraRules = ''
+    KERNEL=="uhid", MODE="0660", GROUP="input"
+  ''; 
 
   users.users.${sunshineUser} = {
     linger = true;
@@ -392,14 +633,17 @@ in
     description = "Sunshine virtual audio sinks";
     after = [ "pipewire-pulse.service" ];
     wants = [ "pipewire-pulse.service" ];
-    wantedBy = [ "default.target" ];
+    wantedBy = [ "pipewire-pulse.service" ];
+    partOf = [ "pipewire-pulse.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = pkgs.writeShellScript "sunshine-audio-sinks" ''
+        set -euo pipefail
         pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
-        has_sink() { "$pactl" list short sinks | grep -q '^.*[[:space:]]'"$1"'[[:space:]]'; }
-        has_loopback() { "$pactl" list modules | grep -q "source=$1.monitor sink=${sunshineSink}"; }
+        grep=${lib.getExe' pkgs.gnugrep "grep"}
+        has_sink() { "$pactl" list short sinks | "$grep" -q '^.*[[:space:]]'"$1"'[[:space:]]'; }
+        has_loopback() { "$pactl" list modules | "$grep" -q "source=$1.monitor sink=${sunshineSink}"; }
 
         has_sink ${sunshineSink} || \
           "$pactl" load-module module-null-sink sink_name=${sunshineSink} channels=2 rate=48000 sink_properties=device.description=Sunshine-Stereo
@@ -418,6 +662,34 @@ in
     };
   };
 
+  # Steam's launchers are user services, not anonymous descendants of Sunshine.
+  # That gives stop/restart semantics to systemd rather than pgrep/pkill regexes.
+  systemd.user.services.sunshine-gamescope = {
+    after = [ "graphical-session.target" "sunshine-audio-sinks.service" ];
+    wants = [ "sunshine-audio-sinks.service" ];
+    requisite = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    conflicts = [ "sunshine-steam-direct.service" ];
+    serviceConfig = {
+      ExecStart = steamBigPicture;
+      Restart = "on-failure";
+      RestartSec = "2s";
+    };
+  };
+
+  systemd.user.services.sunshine-steam-direct = {
+    after = [ "graphical-session.target" "sunshine-audio-sinks.service" ];
+    wants = [ "sunshine-audio-sinks.service" ];
+    requisite = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    conflicts = [ "sunshine-gamescope.service" ];
+    serviceConfig = {
+      ExecStart = steamBigPictureDirect;
+      Restart = "on-failure";
+      RestartSec = "2s";
+    };
+  };
+
   systemd.user.services.sunshine = {
     wants = [ "sunshine-audio-sinks.service" ];
     serviceConfig = {
@@ -430,24 +702,16 @@ in
   # NOTE: Niri session for Sunshine streaming
   # Kept running so Sunshine has a KMS display to capture before app prep runs
 
-  # Ensure state directory exists
-  systemd.tmpfiles.settings."sunshine-niri" = {
-    "${sunshineNiriDir}".d = {
-      user = "${sunshineUser}";
-      group = "${sunshineGroup}";
-      mode = "0755";
-    };
-  };
-
   systemd.services.sunshine-niri = {
     description = "Niri compositor for Sunshine streaming";
     conflicts = [ "getty@${niriTTY}.service" "autovt@${niriTTY}.service" ];
     wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-user-sessions.service" ];
+    after = [ "systemd-user-sessions.service" "seatd.service" ];
+    wants = [ "seatd.service" ];
 
     environment = {
       XDG_RUNTIME_DIR = "/run/user/%U";
-      WLR_DRM_DEVICES = "/dev/dri/${gpuCards.dgpu.card}";
+      WLR_DRM_DEVICES = gpuCards.dgpu.card;
       WLR_DRM_CONNECTORS = virtualDisplayPort;
       XDG_VTNR = niriVT;
     };
@@ -463,9 +727,13 @@ in
       TTYVHangup = true;
       StandardInput = "tty";
       StandardOutput = "journal";
+      RuntimeDirectory = "sunshine-niri";
+      RuntimeDirectoryMode = "0755";
+      # Niri needs to own the active VT before seatd can grant it DRM master.
+      ExecStartPre = "+${lib.getExe' pkgs.kbd "chvt"} ${niriVT}";
       ExecStart = pkgs.writeShellScript "niri-run" ''
         rm -f /run/user/$(id -u)/niri.*.sock ${niriSocket}
-        ${lib.getExe pkgs.niri} -c ${niriConfig} &
+        ${lib.getExe pkgs.niri} --session -c ${niriConfig} &
         pid=$!
         trap 'kill "$pid" 2>/dev/null || true' TERM INT EXIT
         for _ in $(seq 1 50); do
@@ -478,7 +746,7 @@ in
         done
         wait "$pid"
       '';
-      KillSignal = "SIGKILL";
+      KillSignal = "SIGTERM";
       TimeoutStopSec = "5s";
       Restart = "always";
       RestartSec = "2s";
