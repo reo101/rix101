@@ -57,6 +57,7 @@ final: prev:
   legcord.__output.postInstallPhase.__assign = /* bash */ ''
     mv $out/legcord $out/legcord_broken_ime
     makeShellWrapper "$out/legcord_broken_ime" "$out/legcord" \
+      --add-flags "--class=Legcord" \
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--wayland-text-input-version=3}}"
   '';
 
