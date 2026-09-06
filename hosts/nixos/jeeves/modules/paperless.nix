@@ -59,6 +59,9 @@
     };
   };
 
+  # Major upgrades run database migrations and rebuild the search index here.
+  systemd.services.paperless-scheduler.serviceConfig.TimeoutStartSec = "15min";
+
   services.nginx = {
     virtualHosts.${config.services.paperless.domain} = {
       forceSSL = true;
