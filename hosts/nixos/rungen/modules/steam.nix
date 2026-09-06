@@ -24,13 +24,9 @@
     pkgs.r2modman
     pkgs.protontricks
     pkgs.moonlight-qt
-    pkgs.custom.viiper
-    pkgs.custom.sisr
   ];
 
   boot.kernelModules = [ "vhci-hcd" ];
-
-  system.services.viiper.imports = [ pkgs.custom.viiper.services.default ];
 
   environment.sessionVariables = {
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "/home/reo101/.steam/root/compatibilitytools.d";
