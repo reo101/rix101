@@ -103,20 +103,45 @@ let
   # We create a symlink to the dynamic socket after niri starts
   sunshineNiriDir = "/run/sunshine-niri";
   niriSocket = "${sunshineNiriDir}/niri.sock";
+  sunshineVersion = "2026.906.222525";
+  sunshineSource = pkgs.fetchFromGitHub {
+    owner = "LizardByte";
+    repo = "Sunshine";
+    rev = "v${sunshineVersion}";
+    hash = "sha256-2Ab8KSX/SY3OFeqhwgYmMX/HQdV/jcCpNAFOEdG3V8w=";
+    fetchSubmodules = true;
+  };
+  sunshineUi = pkgs.buildNpmPackage {
+    pname = "sunshine-ui";
+    version = sunshineVersion;
+    src = sunshineSource;
+    npmDepsHash = "sha256-w9/11m9PnwxuA9qJJH3JiGwperBSKNUGW2QAHFiejxo=";
+    installPhase = ''
+      mkdir -p "$out"
+      cp -a . "$out"/
+    '';
+  };
+  sunshineFfmpeg = pkgs.fetchzip {
+    url = "https://github.com/LizardByte/build-deps/releases/download/v2026.724.203728/Linux-x86_64-ffmpeg.tar.gz";
+    hash = "sha256-ERw553AsQ0s/7oEXCiwjJjZEp1hpe9aCgiEBRs0K0R0=";
+  };
   sunshinePackage = lib.infuse pkgs.sunshine {
-    __output.patches.__append = [
-      (pkgs.fetchpatch {
-        name = "sunshine-fix-5257";
-        url = "https://github.com/LizardByte/Sunshine/commit/86a253859e2eac62f41a2821804efa90ae8215c.patch";
-        hash = "sha256-MqkJeywutYu/+YzYlrRNwmNPYh/g8ucxqhepOZp5Dms=";
-      })
-      (pkgs.fetchpatch {
-        name = "sunshine-fix-5346";
-        url = "https://github.com/LizardByte/Sunshine/commit/7ecd0286644590c4214688c8dc1d4bd28f28eafd.patch";
-        hash = "sha256-yFjGNkRdb3EW44bUX8ORCnMLjVQNluKgsvjvUsSavfE=";
-      })
-      # Backport connector-name selection for KMS capture to this package snapshot.
-      ../patches/sunshine-kms-connector-names.patch
+    __output.version.__assign = sunshineVersion;
+    __output.src.__assign = sunshineSource;
+    __output.ui.__assign = sunshineUi;
+    __output.cmakeFlags = [
+      {
+        __filter = lib.compose [
+          (lib.hasPrefix "-DFFMPEG_PREPARED_BINARIES:")
+          lib.not
+        ];
+      }
+      {
+        __append = [
+          (lib.cmakeBool "SUNSHINE_ENABLE_TRAY" false)
+          (lib.cmakeFeature "FFMPEG_PREPARED_BINARIES" "${sunshineFfmpeg}")
+        ];
+      }
     ];
   };
 
@@ -135,12 +160,23 @@ let
       output="$2"
       label="$3"
       color="$4"
+      # Scale the former 512px-square layout to the source cover's height.
+      local layout_height=512 layout_banner_height=114 layout_pointsize=34 layout_text_offset=30
+      local width height banner_height offset pointsize text_offset
+      read -r width height < <(${lib.getExe pkgs.imagemagick} identify -format '%w %h\n' "$input")
+      banner_height=$((height * layout_banner_height / layout_height))
+      offset=$((banner_height / 2))
+      pointsize=$((height * layout_pointsize / layout_height))
+      text_offset=$((height * layout_text_offset / layout_height))
+
       ${lib.getExe pkgs.imagemagick} "$input" \
-        -resize '512x512^' -gravity center -extent 512x512 \
-        -fill "$color" -draw 'rectangle 0,398 512,512' \
+        -crop "''${width}x$((height - offset))+0+''${offset}" +repage \
+        -gravity north -extent "''${width}x''${height}" \
+        -gravity northwest -fill "$color" \
+        -draw "rectangle 0,$((height - banner_height)) ''${width},''${height}" \
         -gravity south -fill white \
         -font ${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans-Bold.ttf \
-        -pointsize 34 -annotate +0+30 "$label" "$out/$output"
+        -pointsize "$pointsize" -annotate "+0+$text_offset" "$label" "$out/$output"
     }
 
     make_icon ${sunshineSteamIcon} steam-close.png "CLOSE ON EXIT" '#a51d2d'
@@ -244,19 +280,6 @@ let
     exit 1
   ''; 
 
-  niriFocusApp = pkgs.writeShellScript "niri-focus-app" ''
-    set -u
-    app_id="$1"
-    for _ in $(seq 1 40); do
-      id=$(${niriMsg} -j windows | ${lib.getExe pkgs.jq} -r --arg app_id "$app_id" 'map(select(.app_id == $app_id)) | last | .id // empty')
-      if [ -n "$id" ] && ${niriMsg} action focus-window --id "$id"; then
-        exit 0
-      fi
-      sleep 0.25
-    done
-    exit 1
-  ''; 
-
   sunshineMode = pkgs.writeShellScript "sunshine-mode" ''
     set -eu
     width="''${SUNSHINE_CLIENT_WIDTH:-1920}"
@@ -299,7 +322,6 @@ let
     ${niriFocus} steam
     . ${sunshineMode}
     "$systemctl" --user start sunshine-steam-direct.service
-    ${niriFocusApp} steam
   '';
 
   steamStopKeepRunning = pkgs.writeShellScript "steam-stop-keep-running" ''
@@ -356,25 +378,16 @@ in
       port = 47989;
       # KMS capture from the virtual display on the real GPU
       capture = "kms";
-      # adapter_name is for VAAPI encoding
+      # Select the dGPU for hardware encoding.
       adapter_name = gpuCards.dgpu.render;
       # Stable DRM connector name. Numeric monitor indexes depend on discovery order.
       output_name = virtualDisplayPort;
       # Capture the monitor for the virtual sink Steam is routed to
       audio_sink = sunshineSink;
+      # The reverse-proxied Web UI is a trusted state-changing API origin.
+      csrf_allowed_origins = "https://sunshine.jeeves.reo101.xyz";
     };
     applications = {
-      env = {
-        PATH = "$(PATH):$(HOME)/.local/bin";
-        # Tell wlroots-based compositors (cage) to use the dGPU
-        WLR_DRM_DEVICES = gpuCards.dgpu.card;
-        # Use seatd for seat management (required for headless SSH launch)
-        LIBSEAT_BACKEND = "seatd";
-        # Only use the virtual display (DP-3), not the physical one
-        WLR_DRM_CONNECTORS = virtualDisplayPort;
-        # Expose niri socket for IPC commands (e.g., `niri msg`)
-        NIRI_SOCKET = niriSocket;
-      };
       apps = [
         {
           # Destructive variant: ending the Sunshine session also ends Steam.
