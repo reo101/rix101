@@ -38,8 +38,10 @@ in
     let
       # TODO: agenix???
       # TODO: module options???
-      name = "reo101";
-      email = "pavel.atanasov2001@gmail.com";
+      user = {
+        name = "reo101";
+        email = "pavel.atanasov2001@gmail.com";
+      };
       # NOTE: GPG
       # key = "675AA7EF13964ACB";
       # NOTE: YubiKey
@@ -71,9 +73,7 @@ in
           enable = true;
         };
         settings = {
-          user = {
-            inherit name email;
-          };
+          inherit user;
           init.defaultBranch = "master";
         };
       };
@@ -82,9 +82,7 @@ in
         enable = true;
         package = pkgs.jujutsu;
         settings = {
-          user = {
-            inherit name email;
-          };
+          inherit user;
           git = {
             fetch = [
               "origin"
