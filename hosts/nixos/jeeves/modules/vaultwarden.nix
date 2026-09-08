@@ -12,6 +12,7 @@ in
   age.secrets."vaultwarden.password" = {
     intermediary = true;
     rekeyFile = lib.custom.repoSecret "home/jeeves/vaultwarden/password.age";
+    generator.script = "alnum";
   };
 
   age.secrets."vaultwarden.secret" = {
@@ -30,6 +31,7 @@ in
         }:
         /* bash */ ''
           ${decrypt} ${lib.escapeShellArg deps."vaultwarden.password".file} \
+            | ${lib.getExe' pkgs.coreutils "tr"} -d '\r\n' \
             | ${lib.getExe pkgs.libargon2} "$(${lib.getExe pkgs.openssl} rand -base64 32)" -e -id -k 19456 -t 2 -p 1 \
             | xargs printf "ADMIN_TOKEN='%s'\n"
         '';
