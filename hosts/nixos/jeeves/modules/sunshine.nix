@@ -145,7 +145,6 @@ let
 
     make_icon ${sunshineSteamIcon} steam-close.png "CLOSE ON EXIT" '#a51d2d'
     make_icon ${sunshineSteamIcon} steam-persistent.png "KEEP RUNNING" '#26a269'
-    make_icon ${sunshineSteamIcon} steam-direct.png "DIRECT" '#1c71d8'
     make_icon ${sunshineSteamIcon} steam-stop.png "STOP STEAM" '#c01c28'
     make_icon ${sunshineDesktopIcon} desktop.png "DESKTOP" '#5e5c64'
   '';
@@ -154,34 +153,6 @@ let
   sunshineSurround71Sink = "sink-sunshine-surround71";
 
   steamBigPicture = pkgs.writeShellScript "steam-big-picture" ''
-    mode_file="/run/user/$(id -u)/sunshine-client-mode"
-    width=1920
-    height=1080
-    refresh=144
-    [ -r "$mode_file" ] && . "$mode_file"
-
-    export PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native"
-    export PULSE_SINK=${lib.escapeShellArg sunshineSink}
-    export SDL_AUDIODRIVER=pulse
-    export WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d'
-
-    exec ${lib.getExe' pkgs.util-linux "setpriv"} --ambient-caps -all --inh-caps -all \
-      ${lib.getExe pkgs.gamescope} \
-        --backend wayland \
-        --output-width "$width" \
-        --output-height "$height" \
-        --nested-refresh "$refresh" \
-        --fullscreen \
-        --steam \
-        -- ${lib.getExe' pkgs.coreutils "env"} \
-          PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native" \
-          PULSE_SINK=${lib.escapeShellArg sunshineSink} \
-          SDL_AUDIODRIVER=pulse \
-          WINEDLLOVERRIDES='winepulse.drv=b;winealsa.drv=d' \
-          ${lib.getExe config.programs.steam.package} -tenfoot
-  '';
-
-  steamBigPictureDirect = pkgs.writeShellScript "steam-big-picture-direct" ''
     export PULSE_SERVER="unix:$XDG_RUNTIME_DIR/pulse/native"
     export PULSE_SINK=${lib.escapeShellArg sunshineSink}
     export SDL_AUDIODRIVER=pulse
@@ -221,7 +192,7 @@ let
       focus-at-startup
     }
 
-    // Let Niri manage Xwayland geometry for direct Steam and games.
+    // Let Niri manage Xwayland geometry for Steam and games.
     xwayland-satellite {
       path "${lib.getExe pkgs.xwayland-satellite}"
     }
@@ -238,12 +209,7 @@ let
       open-on-output "${virtualDisplayPort}"
     }
 
-    // Window rules: Steam Big Picture always goes to "steam" workspace
-    window-rule {
-      match app-id="gamescope"
-      open-on-workspace "steam"
-      open-fullscreen true
-    }
+    // Steam Big Picture always goes to the Steam workspace.
     window-rule {
       match app-id="steam"
       open-on-workspace "steam"
@@ -313,86 +279,12 @@ let
     ${niriMsg} output ${virtualDisplayPort} scale 1
   '';
 
-  # A nested Gamescope process takes output dimensions from Wayland configure
-  # events. Force one by resizing its Niri window without restarting Steam.
-  niriResizeGamescope = pkgs.writeShellScript "niri-resize-gamescope" ''
-    width="$1"
-    height="$2"
-    steam_workspace_id=$(${niriMsg} -j workspaces | ${lib.getExe pkgs.jq} -r 'map(select(.name == "steam")) | last | .id // empty')
-    if [ -z "$steam_workspace_id" ]; then
-      echo "Steam workspace not found" >&2
-      exit 1
-    fi
-    id=""
-    for i in $(seq 1 40); do
-      id=$(${niriMsg} -j windows | ${lib.getExe pkgs.jq} -r --argjson workspace_id "$steam_workspace_id" 'map(select(.app_id == "gamescope" and .workspace_id == $workspace_id)) | last | .id // empty')
-      [ -n "$id" ] && break
-      sleep 0.25
-    done
-    if [ -z "$id" ]; then
-      echo "Gamescope window not found; cannot resize persistent session" >&2
-      exit 1
-    fi
-
-    ${niriMsg} action fullscreen-window --id "$id" || true
-    sleep 0.2
-    ${niriMsg} action set-window-width --id "$id" "$width"
-    ${niriMsg} action set-window-height --id "$id" "$height"
-    sleep 0.2
-    ${niriMsg} action fullscreen-window --id "$id" || true
-  '';
-
-  gamescopeMode = pkgs.writeShellScript "gamescope-mode" ''
-    width="$1"
-    height="$2"
-    refresh="$3"
-    display=""
-
-    # Steam inherits Gamescope's nested Xwayland DISPLAY. Find that display
-    # from the persistent Steam process rather than guessing :1.
-    for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 40); do
-      display=""
-      for pid in $(${lib.getExe' pkgs.procps "pgrep"} -u "$(id -u)" -f '/home/jeeves/.local/share/Steam/(steam\.sh|ubuntu12_32/steam)( |$)' || true); do
-        display=$(tr '\0' '\n' < "/proc/$pid/environ" | \
-          ${lib.getExe' pkgs.gnugrep "grep"} '^DISPLAY=' | \
-          ${lib.getExe' pkgs.coreutils "cut"} -d= -f2- | \
-          ${lib.getExe' pkgs.coreutils "head"} -n1 || true)
-        case "$display" in
-          :[0-9]*) break ;;
-          *) display="" ;;
-        esac
-      done
-      [ -n "$display" ] && break
-      sleep 0.25
-    done
-
-    if [ -z "$display" ]; then
-      echo "Gamescope Xwayland DISPLAY not found" >&2
-      exit 1
-    fi
-
-    modeline=$(${lib.getExe' pkgs.libxcvt "cvt"} "$width" "$height" "$refresh" | \
-      ${lib.getExe' pkgs.gnugrep "grep"} Modeline)
-    set -- $modeline
-    mode_name="''${4}x''${8}_''${refresh}"
-    output=$(${lib.getExe pkgs.xrandr} -display "$display" --current | \
-      ${lib.getExe' pkgs.gnugrep "grep"} ' connected' | \
-      ${lib.getExe' pkgs.gawk "awk"} '{print $1}' | \
-      ${lib.getExe' pkgs.coreutils "head"} -n1)
-    if [ -z "$output" ]; then
-      echo "Gamescope Xwayland output not found" >&2
-      exit 1
-    fi
-
-    ${lib.getExe pkgs.xrandr} -display "$display" \
-      --newmode "$mode_name" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "''${10}" "''${11}" "''${12}" "''${13}" || true
-    ${lib.getExe pkgs.xrandr} -display "$display" \
-      --addmode "$output" "$mode_name" || true
-    ${lib.getExe pkgs.xprop} \
-      -display "$display" \
-      -root \
-      -f GAMESCOPE_XWAYLAND_MODE_CONTROL 32c \
-      -set GAMESCOPE_XWAYLAND_MODE_CONTROL "0,$width,$height,0"
+  steamStop = pkgs.writeShellScript "steam-stop" ''
+    set -eu
+    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
+    ${niriFocus} desktop || true
+    "$systemctl" --user stop sunshine-steam-direct.service
+    "$systemctl" --user restart wireplumber.service sunshine-audio-sinks.service
   '';
 
   steamStart = pkgs.writeShellScript "steam-start" ''
@@ -406,50 +298,11 @@ let
     "$systemctl" --user start sunshine-audio-sinks.service
     ${niriFocus} steam
     . ${sunshineMode}
-    "$systemctl" --user stop sunshine-steam-direct.service
-    if "$systemctl" --user is-active --quiet sunshine-gamescope.service; then
-      ${niriResizeGamescope} "$width" "$height"
-    else
-      "$systemctl" --user start sunshine-gamescope.service
-    fi
-    ${gamescopeMode} "$width" "$height" "$refresh"
-    ${niriFocusApp} gamescope
-  '';
-
-  steamStop = pkgs.writeShellScript "steam-stop" ''
-    set -eu
-    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
-    ${niriFocus} desktop || true
-    "$systemctl" --user stop sunshine-gamescope.service sunshine-steam-direct.service
-    "$systemctl" --user restart wireplumber.service sunshine-audio-sinks.service
-  ''; 
-
-  steamStopKeepRunning = pkgs.writeShellScript "steam-stop-keep-running" ''
-    ${niriFocus} desktop || true
-  '';
-
-  steamDirectStart = pkgs.writeShellScript "steam-direct-start" ''
-    set -eu
-    systemctl=${lib.getExe' pkgs.systemd "systemctl"}
-    pactl=${lib.getExe' pkgs.pulseaudio "pactl"}
-    # Hide physical sinks while gaming so Wine/Proton only enumerates Sunshine.
-    "$pactl" list short cards | ${lib.getExe' pkgs.gawk "awk"} '{print $2}' | while read -r card; do
-      "$pactl" set-card-profile "$card" off
-    done
-    "$systemctl" --user start sunshine-audio-sinks.service
-    ${niriFocus} steam
-    . ${sunshineMode}
-    if "$systemctl" --user is-active --quiet sunshine-gamescope.service; then
-      ${niriResizeGamescope} "$width" "$height"
-      ${gamescopeMode} "$width" "$height" "$refresh"
-      ${niriFocusApp} gamescope
-      exit 0
-    fi
     "$systemctl" --user start sunshine-steam-direct.service
     ${niriFocusApp} steam
   '';
 
-  steamDirectStopKeepRunning = pkgs.writeShellScript "steam-direct-stop-keep-running" ''
+  steamStopKeepRunning = pkgs.writeShellScript "steam-stop-keep-running" ''
     ${niriFocus} desktop || true
   '';
 
@@ -535,7 +388,7 @@ in
           ];
         }
         {
-          # Persistent variant: end streaming without ending Steam/Gamescope.
+          # Persistent variant: end streaming without ending Steam.
           # Starting this app again reapplies the new client output mode first.
           name = "Steam Big Picture (keep running)";
           image-path = "${sunshineIcons}/steam-persistent.png";
@@ -547,18 +400,7 @@ in
           ];
         }
         {
-          # Direct Steam under Niri, without a nested Gamescope session.
-          name = "Steam Big Picture (direct, keep running)";
-          image-path = "${sunshineIcons}/steam-direct.png";
-          prep-cmd = [
-            {
-              do = "${steamDirectStart}";
-              undo = "${steamDirectStopKeepRunning}";
-            }
-          ];
-        }
-        {
-          # Explicitly stop the persistent Steam/Gamescope session.
+          # Explicitly stop the persistent Steam session.
           name = "Stop Steam";
           image-path = "${sunshineIcons}/steam-stop.png";
           cmd = "${lib.getExe' pkgs.coreutils "true"}";
@@ -662,29 +504,15 @@ in
     };
   };
 
-  # Steam's launchers are user services, not anonymous descendants of Sunshine.
+  # Steam's launcher is a user service, not an anonymous Sunshine descendant.
   # That gives stop/restart semantics to systemd rather than pgrep/pkill regexes.
-  systemd.user.services.sunshine-gamescope = {
-    after = [ "graphical-session.target" "sunshine-audio-sinks.service" ];
-    wants = [ "sunshine-audio-sinks.service" ];
-    requisite = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    conflicts = [ "sunshine-steam-direct.service" ];
-    serviceConfig = {
-      ExecStart = steamBigPicture;
-      Restart = "on-failure";
-      RestartSec = "2s";
-    };
-  };
-
   systemd.user.services.sunshine-steam-direct = {
     after = [ "graphical-session.target" "sunshine-audio-sinks.service" ];
     wants = [ "sunshine-audio-sinks.service" ];
     requisite = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
-    conflicts = [ "sunshine-gamescope.service" ];
     serviceConfig = {
-      ExecStart = steamBigPictureDirect;
+      ExecStart = steamBigPicture;
       Restart = "on-failure";
       RestartSec = "2s";
     };
