@@ -33,14 +33,22 @@
                            "Ready")
                        (or path.reason "Unavailable"))]
     (ui.row
-      {:align "center" :gap 10 :padding 10 :fill "surface_variant/0.4" :radius 8}
+      {:key (.. "path-" path.role "-" (tostring (or path.device "")))
+       :align "center"
+       :gap 10
+       :padding 10
+       :fill "surface_variant/0.4"
+       :radius 8}
       [(ui.glyph
          {:name (role-glyph path.role)
           :size 22
           :color (if active "primary" path.ready "on_surface" "on_surface_variant")})
        (ui.column
          {:gap 2 :flexGrow 1}
-         [(ui.label {:text (role-label path.role) :fontWeight "medium"})
+         [(ui.label
+            {:text (role-label path.role)
+             :fontWeight "medium"
+             :maxLines 1})
           (ui.label
             {:text ready-text
              :fontSize 11
@@ -58,9 +66,14 @@
           active-role (if (= status nil) nil (if (= status.active nil) nil status.active.role))
           children
           [(ui.row
-             {:align "center" :gap 8}
+             {:key "header" :align "center" :gap 8}
              [(ui.glyph {:name "route" :size 21 :color "primary"})
-              (ui.label {:text "Netpath" :fontSize 17 :fontWeight "bold" :flexGrow 1})
+              (ui.label
+                {:text "Netpath"
+                 :fontSize 17
+                 :fontWeight "bold"
+                 :flexGrow 1
+                 :maxLines 1})
               (ui.button {:glyph "refresh" :variant "ghost" :tooltip "Refresh" :onClick "refresh"})
               (ui.button {:glyph "close" :variant "ghost" :tooltip "Close" :onClick "closePanel"})])]]
 
@@ -68,35 +81,57 @@
           (table.insert
             children
             (ui.column
-              {:flexGrow 1 :align "center" :justify "center" :gap 8}
+              {:key "status-unavailable"
+               :flexGrow 1
+               :align "center"
+               :justify "center"
+               :gap 8}
               [(ui.glyph {:name "alert-triangle" :size 30 :color "error"})
                (ui.label {:text "Netpath status unavailable" :color "error"})]))
           (do
             (table.insert
               children
               (ui.column
-                {:gap 3 :padding 10 :fill "primary/0.12" :radius 8}
-                [(ui.label {:text "Application address" :fontSize 11 :color "on_surface_variant"})
-                 (ui.label {:text profile.vip :fontSize 16 :fontWeight "bold"})
+                {:key "profile"
+                 :gap 3
+                 :padding 10
+                 :fill "primary/0.12"
+                 :radius 8}
+                [(ui.label
+                 {:text "Application address"
+                  :fontSize 11
+                  :color "on_surface_variant"
+                  :maxLines 1})
+                 (ui.label
+                   {:text profile.vip
+                    :fontSize 16
+                    :fontWeight "bold"
+                    :maxLines 1})
                  (ui.label
                    {:text (if (= active-role nil)
                               "Ordinary routing"
                               (.. "Active on " (role-label active-role)))
                     :fontSize 11
-                    :color (if (= active-role nil) "on_surface_variant" "primary")})]))
+                    :color (if (= active-role nil) "on_surface_variant" "primary")
+                    :maxLines 1})]))
             (each [_ path (ipairs profile.paths)]
               (table.insert children (path-row path active-role)))))
 
       (when (not= error-message nil)
         (table.insert
           children
-          (ui.label {:text error-message :color "error" :maxLines 3 :textAlign "center"})))
+          (ui.label
+            {:key "error"
+             :text error-message
+             :color "error"
+             :maxLines 3
+             :textAlign "center"})))
 
-      (table.insert children (ui.separator {}))
+      (table.insert children (ui.separator {:key "separator"}))
       (table.insert
         children
         (ui.row
-          {:align "center" :gap 8}
+          {:key "actions" :align "center" :gap 8}
           [(ui.button
              {:text (if busy "Switching…" "Auto")
               :glyph "route"
@@ -113,7 +148,8 @@
       (table.insert
         children
         (ui.label
-          {:text "Connect the target first; disconnect the old link after switching"
+          {:key "footer"
+           :text "Connect the target first; disconnect the old link after switching"
            :fontSize 10
            :color "on_surface_variant"
            :textAlign "center"
