@@ -184,7 +184,11 @@
 
       # Boolean helpers
       and = lib.all lib.id;
+      not = value: !value;
       eq = x: y: x == y;
+
+      # Left-to-right function composition: `compose [ f g ] x == g (f x)`
+      compose = lib.flip lib.pipe;
 
       # Directory walking helpers
       inherit recurseDirContracts;
