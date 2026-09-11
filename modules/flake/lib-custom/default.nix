@@ -59,7 +59,7 @@
     inputs.nix-lib-net.overlays.raw
     # Yants
     (final: prev: {
-      yants = import "${inputs.yants.outPath}/default.nix" { lib = prev; };
+      yants = import "${inputs.yants.outPath}/default.nix" { lib = final; };
     })
     # Contracts
     (final: prev: {
@@ -71,26 +71,26 @@
       let
         infuse = (
           import "${inputs.infuse.outPath}/default.nix" {
-            lib = prev;
+            lib = final;
             sugars =
               infuse.v1.default-sugars
-              ++ lib.attrsToList {
+              ++ final.attrsToList {
                 __concatStringsSep =
                   path: infusion: target:
-                  lib.strings.concatStringsSep infusion target;
+                  final.strings.concatStringsSep infusion target;
                 __filter =
                   path: infusion: target:
-                  builtins.filter infusion target;
+                  final.filter infusion target;
                 __map =
                   path: infusion: target:
-                  lib.map infusion target;
+                  final.map infusion target;
                 __swapOutPackage =
                   path: infusion: target:
                   let
                     # TODO: more validation
                     infusion-name = infusion.pname or infusion.name or "";
                   in
-                  lib.map (
+                  final.map (
                     pkg:
                     let
                       pkg-name = pkg.pname or pkg.name or "";
@@ -108,13 +108,13 @@
     )
     # Alloc
     (final: prev: {
-      alloc = import "${inputs.alloc.outPath}/default.nix" { lib = prev; };
+      alloc = import "${inputs.alloc.outPath}/default.nix" { lib = final; };
     })
     # Htnl
     (final: prev: {
       htnl =
         let
-          base = import "${inputs.htnl.outPath}/default.nix" { inherit lib; };
+          base = import "${inputs.htnl.outPath}/default.nix" { lib = final; };
         in
         base
         // {
