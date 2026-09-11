@@ -1,0 +1,13 @@
+diff --git a/haptics.cpp b/haptics.cpp
+--- a/haptics.cpp
++++ b/haptics.cpp
+@@ -459,7 +459,10 @@ int main(int argc, char **argv) {
+     static bool primed = false;
+     static int prime_target = 24, prime_floor = 0;
+-    if (!primed && !g_pids.empty() && g_pids[0] == 0x1303) { prime_target = 8; prime_floor = 2; }
++    if (!primed) {
++      if (!g_pids.empty() && g_pids[0] == 0x1303) { prime_target = 8; prime_floor = 2; }
++      prime_target = std::min(prime_target, std::max(2, g_cap));
++    }
+     { std::lock_guard<std::mutex> lock(sink->queue_mutex);
+       if (!primed && sink->queue.size() >= (size_t)prime_target) primed = true;
