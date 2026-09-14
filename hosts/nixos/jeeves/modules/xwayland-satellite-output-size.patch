@@ -1,0 +1,77 @@
+--- a/src/server/event.rs
++++ b/src/server/event.rs
+@@ -1317,10 +1317,11 @@
+                 height,
+                 refresh,
+             } => {
+-                let Ok((output, dimensions)) = state
+-                    .world
+-                    .query_one_mut::<(&WlOutput, &mut OutputDimensions)>(target)
+-                else {
++                let Ok((output, dimensions, xdg)) = state.world.query_one_mut::<(
++                    &WlOutput,
++                    &mut OutputDimensions,
++                    Option<&XdgOutputServer>,
++                )>(target) else {
+                     return;
+                 };
+ 
+@@ -1330,6 +1331,15 @@
+                 {
+                     dimensions.width = width;
+                     dimensions.height = height;
++                    // logical_size may arrive before the current mode, using the old dimensions.
++                    // Re-send it now so Xwayland's root and pointer bounds use the new size.
++                    if let Some(xdg) = xdg {
++                        if dimensions.rotated_90 {
++                            xdg.logical_size(height, width);
++                        } else {
++                            xdg.logical_size(width, height);
++                        }
++                    }
+                     debug!("{} dimensions: {width}x{height}", output.id());
+                 }
+                 output.mode(convert_wenum(flags), width, height, refresh);
+--- a/tests/integration.rs
++++ b/tests/integration.rs
+@@ -1922,6 +1922,40 @@
+ }
+ 
+ #[test]
++fn output_resize_logical_size_before_mode() {
++    let mut f = Fixture::new_preset(|testwl| {
++        testwl.enable_xdg_output_manager();
++    });
++    let output = f.create_output(0, 0);
++    let xdg_output = f.testwl.get_xdg_output(&output).unwrap();
++    let connection = Connection::new(&f.display);
++
++    for (width, height) in [(2340, 1080), (3120, 1440), (2560, 1600), (1920, 1080)] {
++        // Niri can send xdg_output's logical size before wl_output's current mode.
++        xdg_output.logical_size(width, height);
++        output.mode(wl_output::Mode::Current, width, height, 60000);
++        xdg_output.done();
++        output.done();
++        f.testwl.dispatch();
++
++        let deadline = Instant::now() + Duration::from_secs(2);
++        loop {
++            let geometry = connection.get_reply(&x::GetGeometry {
++                drawable: x::Drawable::Window(connection.root),
++            });
++            if (geometry.width() as i32, geometry.height() as i32) == (width, height) {
++                break;
++            }
++            assert!(Instant::now() < deadline,
++                "X11 root stayed at {}x{} after resize to {width}x{height}",
++                geometry.width(), geometry.height());
++            std::thread::sleep(Duration::from_millis(10));
++            f.testwl.dispatch();
++        }
++    }
++}
++
++#[test]
+ fn xdg_decorations() {
+     let mut f = Fixture::new();
+     let mut connection = Connection::new(&f.display);

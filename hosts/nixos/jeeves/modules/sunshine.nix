@@ -6,6 +6,17 @@ let
   niriTTY = "tty3";
   niriVT = "3";
 
+  # Keep X11 root/pointer bounds in sync when the streaming output changes mode.
+  xwaylandSatellite = lib.infuse pkgs.xwayland-satellite {
+    __output.patches.__append = [ ./xwayland-satellite-output-size.patch ];
+    __output.doCheck.__assign = true;
+    __output.nativeCheckInputs.__append = [ pkgs.xwayland ];
+    __output.preCheck.__append = ''
+      export XDG_RUNTIME_DIR=$(mktemp -d)
+    '';
+    __output.checkFlags.__assign = [ "output_resize_logical_size_before_mode" ];
+  };
+
   # NOTE: GPU and display configuration
   #
   # Stable PCI paths for the iGPU (AMD Raphael integrated) and dGPU (AMD RX
@@ -230,7 +241,7 @@ let
 
     // Let Niri manage Xwayland geometry for Steam and games.
     xwayland-satellite {
-      path "${lib.getExe pkgs.xwayland-satellite}"
+      path "${lib.getExe xwaylandSatellite}"
     }
 
     hotkey-overlay {
