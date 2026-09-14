@@ -1,0 +1,52 @@
+diff --git a/gui_qt.cpp b/gui_qt.cpp
+--- a/gui_qt.cpp
++++ b/gui_qt.cpp
+@@ -10,6 +10,7 @@
+ #include <QTextStream>
+ #include <QDir>
+ #include <QProgressBar>
++#include <QStandardPaths>
+ #include <hidapi/hidapi.h>
+ #include <cstdio>
+ #include <cstring>
+@@ -33,7 +34,7 @@ static void push() {
+ static void populateCap() {
+   capc->clear();
+   QProcess p;
+-  p.start("pactl", QStringList() << "list" << "short" << "sources");
++  p.start("@pactl@", QStringList() << "list" << "short" << "sources");
+   p.waitForFinished(3000);
+   for (const QByteArray &ln : p.readAllStandardOutput().split('\n')) {
+     QStringList f = QString::fromUtf8(ln).split('\t');
+@@ -81,9 +82,9 @@ static void startCore() {
+   if (proc && proc->state() != QProcess::NotRunning) return;
+   QFile::remove("lh.cmd");
+   QStringList a;
+-  a << QString("--gain %1").arg(SldG(), 0, 'f', 1)
+-    << QString("--bass %1").arg(SldB(), 0, 'f', 2)
+-    << QString("--cap %1").arg(SldC());
++  a << "--gain" << QString::number(SldG(), 'f', 1)
++    << "--bass" << QString::number(SldB(), 'f', 2)
++    << "--cap" << QString::number(SldC());
+   if (m16->isChecked()) a << "--16bit";
+   int ci = ch->currentIndex();
+   QString txt = ch->currentText();
+@@ -98,7 +99,7 @@ static void startCore() {
+     proc->setProcessEnvironment(env);
+   }
+   proc->setWorkingDirectory(QDir::currentPath());
+-  proc->start(QDir::currentPath() + "/livehaptics", a);
++  proc->start("@livehaptics@", a);
+   want = true;
+   start->setText("Pause");
+ }
+@@ -177,6 +178,9 @@ int main(int argc, char **argv) {
+     "QLabel{background:transparent;}");
+   QWidget w;
+   QVBoxLayout *root = new QVBoxLayout(&w);
++  QDir runtimeDir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation) + "/livehaptics");
++  runtimeDir.mkpath(".");
++  QDir::setCurrent(runtimeDir.absolutePath());
+   QHBoxLayout *hdr = new QHBoxLayout();
+   QLabel *title = new QLabel("LiveHaptics");
+   title->setStyleSheet("font-size:22px;font-weight:600;");

@@ -2,7 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
-  makeWrapper,
+  makeDesktopItem,
   pkg-config,
   hidapi,
   libpulseaudio,
@@ -12,6 +12,14 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "steam-controller-live-haptics";
+
+  desktopItem = makeDesktopItem {
+    name = "livehaptics";
+    desktopName = "LiveHaptics";
+    comment = "Real-time system-audio haptics for the Steam Controller";
+    exec = "/run/wrappers/bin/livehaptics-gui";
+    categories = [ "AudioVideo" "Audio" ];
+  };
   version = "1.2";
 
   src = fetchFromGitHub {
@@ -25,10 +33,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   patches = [
     ./patches/0001-fix-linux-capture-startup.patch
+    ./patches/0002-fix-gui-launcher.patch
   ];
 
   nativeBuildInputs = [
-    makeWrapper
     pkg-config
     qt5.wrapQtAppsHook
   ];
@@ -44,6 +52,9 @@ stdenv.mkDerivation (finalAttrs: {
     # includes. Keep the build source-based while supplying those source files.
     cp ${./capture_linux.hpp} capture_linux.hpp
     cp ${./web_linux.hpp} web_linux.hpp
+    substituteInPlace gui_qt.cpp \
+      --replace-fail @pactl@ ${pulseaudio}/bin/pactl \
+      --replace-fail @livehaptics@ $out/bin/livehaptics
   '';
 
   buildPhase = ''
@@ -58,27 +69,14 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   installPhase = ''
-            runHook preInstall
+    runHook preInstall
 
-            install -Dm755 livehaptics $out/bin/livehaptics
-            install -Dm755 LiveHapticsGUI $out/libexec/LiveHapticsGUI
+    install -Dm755 livehaptics $out/bin/livehaptics
+    install -Dm755 LiveHapticsGUI $out/bin/LiveHapticsGUI
+    install -Dm444 ${finalAttrs.desktopItem}/share/applications/livehaptics.desktop \
+      $out/share/applications/livehaptics.desktop
 
-        cat > $out/libexec/LiveHapticsGUI-launcher <<'EOF'
-    #!${stdenv.shell}
-    runtime_dir="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/livehaptics"
-    mkdir -p "$runtime_dir"
-    ln -sf @OUT@/bin/livehaptics "$runtime_dir/livehaptics"
-    cd "$runtime_dir"
-    exec @OUT@/libexec/LiveHapticsGUI "$@"
-    EOF
-        substituteInPlace $out/libexec/LiveHapticsGUI-launcher \
-          --replace-fail @OUT@ $out
-        chmod 755 $out/libexec/LiveHapticsGUI-launcher
-
-        makeWrapper $out/libexec/LiveHapticsGUI-launcher $out/bin/LiveHapticsGUI \
-          --prefix PATH : ${lib.makeBinPath [ pulseaudio ]}
-
-            runHook postInstall
+    runHook postInstall
   '';
 
   meta = {
