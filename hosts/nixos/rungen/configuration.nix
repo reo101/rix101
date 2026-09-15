@@ -29,6 +29,7 @@
     }
     ./modules/tftp.nix
     ./modules/recording.nix
+    ./modules/septabee.nix
   ];
 
   time.timeZone = "Europe/Sofia";
