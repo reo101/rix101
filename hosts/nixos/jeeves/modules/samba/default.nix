@@ -44,6 +44,17 @@
       };
 
       # Shares
+      # Read-only guest export of the Lidarr library, consumed by
+      # satellite MPD instances (`music_directory = "smb://jeeves/music"`)
+      music = {
+        "path" = "/data/media/music";
+        "browseable" = "yes";
+        "read only" = "yes";
+        "guest ok" = "yes";
+        "force user" = "lidarr";
+        "force group" = "media";
+        "follow symlinks" = "yes";
+      };
       public = {
         "path" = "/data/samba/public";
         "browseable" = "yes";

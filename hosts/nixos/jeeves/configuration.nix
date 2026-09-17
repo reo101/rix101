@@ -34,6 +34,7 @@
     ./modules/atuin.nix
     ./modules/syncthing.nix
     ./modules/ups.nix
+    ./modules/mpd.nix
     ./modules/syncyomi.nix
     ./modules/torquepro-web.nix
     ./modules/vaultwarden.nix
@@ -119,6 +120,7 @@
         extraGroups = [
           "wheel"
           "networkmanager"
+          "pipewire"
           "audio"
           "docker"
           "transmission"

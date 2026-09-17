@@ -122,6 +122,7 @@ in
       git.enable = true;
       jj.enable = true;
     };
+    mpd-satellite.enable = true;
   };
 
   services.yubikey-touch-detector = {
