@@ -9,6 +9,23 @@
   services.nginx = {
     enable = true;
     package = pkgs.openresty;
+
+    # NOTE: as per <https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples#nginx-nixos-by-tklitschi-samdoshi>
+    recommendedGzipSettings = true;
+    recommendedOptimisation = true;
+    # NOTE: sets Host / X-Real-IP / X-Forwarded-For / X-Forwarded-Proto on every proxied location,
+    #       so upstreams (e.g. vaultwarden) see real client IPs
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+
+    # NOTE: baseline headers only; do NOT add CSP here, apps like vaultwarden manage their own
+    #       <https://github.com/dani-garcia/vaultwarden/discussions/6344>
+    commonHttpConfig = /* nginx */ ''
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header X-Robots-Tag "noindex, nofollow" always;
+    '';
   };
 
   age.secrets."epik.api.secrets" = {

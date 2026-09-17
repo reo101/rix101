@@ -98,6 +98,12 @@ in
       // {
         locations."/" = {
           proxyPass = "http://127.0.0.1:${toString cfg.rocketPort}";
+          proxyWebsockets = true;
+          extraConfig = /* nginx */ ''
+            # NOTE: as per <https://github.com/dani-garcia/vaultwarden/wiki/Proxy-examples#nginx-by-blackdex>
+            client_max_body_size 525M;
+            access_log /var/log/nginx/vaultwarden.access.log;
+          '';
         };
       };
     };

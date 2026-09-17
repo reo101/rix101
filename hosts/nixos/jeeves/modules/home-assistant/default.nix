@@ -250,12 +250,6 @@ in
     locations."/" = {
       proxyPass = "http://${vmIP}:${builtins.toString config.microvm.vms.${vmName}.config.config.services.home-assistant.config.http.server_port}";
       proxyWebsockets = true;
-      extraConfig = /* nginx */ ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
     };
   };
 }
