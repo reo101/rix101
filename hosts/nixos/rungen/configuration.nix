@@ -30,6 +30,7 @@
     ./modules/tftp.nix
     ./modules/recording.nix
     ./modules/septabee.nix
+    ./modules/osu-touchpad.nix
   ];
 
   time.timeZone = "Europe/Sofia";

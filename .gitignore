@@ -1,4 +1,6 @@
 /.direnv/
+.zig-cache/
+zig-out/
 /hosts/nixos/gomi/firmware
 /result
 /.secret

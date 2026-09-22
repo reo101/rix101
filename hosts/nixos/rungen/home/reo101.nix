@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, ... }:
+{ inputs, lib, pkgs, config, ... }:
 
 let
   username = "reo101";
@@ -123,6 +123,31 @@ in
       jj.enable = true;
     };
     mpd-satellite.enable = true;
+  };
+
+  home.services.osu-touchpad = {
+    imports = [ pkgs.custom.osu-touchpad.services.default ];
+
+    osu-touchpad = {
+      watchProcess = "osu!";
+      focusMatch = "osu";
+      focusQuery = "${lib.getExe config.programs.niri.package} msg focused-window";
+      # Map the top-right region of the pad to the output.
+      activeArea = rec {
+        xMin = xMax - 2805;
+        xMax = 3841;
+        yMin = 0;
+        yMax = (xMax - xMin) * 3 / 4;
+      };
+      clickOnTouch = false;
+      debug = true;
+    };
+
+    systemd.service = {
+      after = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
+      wantedBy = lib.mkForce [ "graphical-session.target" ];
+    };
   };
 
   services.yubikey-touch-detector = {
