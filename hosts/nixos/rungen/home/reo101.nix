@@ -150,6 +150,8 @@ in
     };
   };
 
+  home.services.clipboard-url-cleaner.imports = [ pkgs.custom.clipboard-url-cleaner.services.default ];
+
   services.yubikey-touch-detector = {
     enable = true;
   };
