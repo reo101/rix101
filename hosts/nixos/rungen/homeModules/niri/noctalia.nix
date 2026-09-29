@@ -116,14 +116,15 @@ in
       };
       theme = {
         mode = lib.mkForce "dark";
-        source = lib.mkForce "wallpaper";
-        builtin = "Tokyo-Night";
-        wallpaper_scheme = "m3-fruit-salad";
+        source = lib.mkForce "community";
+        builtin = "Catppuccin";
+        community_palette = "Kemuri Koke";
+        wallpaper_scheme = "m3-content";
       };
       backdrop = {
         enabled = true;
         blur_intensity = 0.2;
-        tint_intensity = 0.4;
+        tint_intensity = 0.6;
       };
       brightness = {
         enable_ddcutil = true;
@@ -137,7 +138,21 @@ in
         font_family = config.stylix.fonts.sansSerif.name;
         launch_apps_as_systemd_services = true;
         niri_overview_type_to_launch_enabled = true;
+        screen_time_enabled = true;
         settings_show_advanced = true;
+        keyboard_layout.custom_labels = {
+          "Bulgarian (traditional phonetic)" = "BG";
+          "English (US)" = "EN";
+        };
+        launcher = {
+          show_app_actions = true;
+          providers = {
+            calculator.prefix = "=";
+            panels.prefix = "pan";
+            windows.prefix = "win";
+          };
+        };
+        window_switcher.mru = true;
         show_location = true;
         clipboard_enabled = true;
         clipboard_history_max_entries = 100;
@@ -161,20 +176,24 @@ in
       };
       battery = {
         warning_threshold = 30;
+        device."/org/freedesktop/UPower/devices/headset_dev_2C_BE_EE_5D_BA_6A".warning_threshold = 15;
       };
-      control_center.shortcuts = [
-        { type = "wifi"; }
-        { type = "bluetooth"; }
-        { type = "caffeine"; }
-        { type = "notification"; }
-        { type = "power_profile"; }
-        { type = "screen_recorder"; }
-      ];
+      control_center = {
+        calendar.show_week_numbers = true;
+        shortcuts = [
+          { type = "wifi"; }
+          { type = "bluetooth"; }
+          { type = "caffeine"; }
+          { type = "notification"; }
+          { type = "power_profile"; }
+          { type = "screen_recorder"; }
+        ];
+      };
       dock = {
         enabled = false;
       };
       plugins = {
-        auto_update = false;
+        auto_update = "none";
         # NOTE: expose only adopted plugins; add another link when enabling one.
         source = [
           {
@@ -220,8 +239,14 @@ in
           "reo101/netpath"
         ];
       };
+      location.auto_locate = false;
+      lockscreen = {
+        blur_intensity = 0.75;
+        blurred_desktop = true;
+        tint_intensity = 0.5;
+      };
       lockscreen_widgets = {
-        enabled = false;
+        enabled = true;
         schema_version = 2;
         widget_order = [ "lockscreen-login-box@eDP-1" ];
         grid = {
@@ -231,27 +256,33 @@ in
         };
         widget = {
           "lockscreen-login-box@eDP-1" = {
-            box_height = 0.0;
-            box_width = 0.0;
+            box_height = 196.0;
+            box_width = 810.0;
             cx = 1024.0;
             cy = 1157.0;
             output = "eDP-1";
+            placement_height = 1280.0;
+            placement_width = 2048.0;
             rotation = 0.0;
             type = "login_box";
             settings = {
               background_color = "surface_variant";
               background_opacity = 0.88;
               background_radius = 12.0;
+              center_password_text = false;
               input_opacity = 1.0;
               input_radius = 6.0;
+              layout = "regular";
+              show_caps_lock = true;
+              show_keyboard_layout = true;
               show_login_button = true;
+              show_media = true;
+              show_session_buttons = true;
+              show_unlock_hint = true;
+              show_weather = true;
             };
           };
         };
-      };
-      location = {
-        auto_locate = true;
-        # address = "Sofia, Bulgaria";
       };
       weather = {
         enabled = true;
@@ -269,8 +300,8 @@ in
       };
       system.monitor.enabled = true;
       audio = {
-        enable_overdrive = false;
-        enable_sounds = false;
+        enable_overdrive = true;
+        enable_sounds = true;
       };
       wallpaper = {
         enabled = true;
