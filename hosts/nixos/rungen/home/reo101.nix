@@ -81,16 +81,13 @@ in
     rustdeskX11
 
     # Learning
-    (pkgs.anki.withAddons (
-      with pkgs.ankiAddons;
-      [
-        adjust-sound-volume
-        anki-connect
-        review-heatmap
-        reviewer-refocus-card
-        yomichan-forvo-server
-      ]
-    ))
+    (pkgs.anki.withAddons [
+      pkgs.ankiAddons.adjust-sound-volume
+      pkgs.ankiAddons.anki-connect
+      pkgs.ankiAddons.review-heatmap
+      pkgs.ankiAddons.reviewer-refocus-card
+      pkgs.ankiAddons.yomichan-forvo-server
+    ])
 
     # VW
     pkgs.bitwarden-cli

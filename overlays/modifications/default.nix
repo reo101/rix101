@@ -65,6 +65,12 @@ final: prev:
     ./offline-mode-prism-launcher.diff
   ];
 
+  # Night-mode theme palettes ship inverted (heavy days render light); drop
+  # the overrides so both variants use the day palette direction.
+  ankiAddons.review-heatmap.__output.patches.__append = [
+    ./remove-night-mode-palette-overrides.diff
+  ];
+
   # NOTE: this broad LuaJIT override works, but it rebuilds far more of the
   #       package set than desired. Keep the patched runtime scoped to Neovim
   #       and related packages instead.
