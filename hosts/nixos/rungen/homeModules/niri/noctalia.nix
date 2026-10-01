@@ -49,6 +49,9 @@ let
   ];
 in
 {
+  # HACK: Home Manager moved its Noctalia module; upstream still disables the old path.
+  disabledModules = [ "programs/noctalia" ];
+
   imports = [
     inputs.noctalia.homeModules.default
   ];

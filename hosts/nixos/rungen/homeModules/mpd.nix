@@ -40,8 +40,7 @@
 
   services.mpd-mpris = {
     enable = true;
-    mpd = {
-      useLocal = false;
+    settings = {
       host = "127.0.0.1";
       port = 6601;
     };
