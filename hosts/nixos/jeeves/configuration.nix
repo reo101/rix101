@@ -17,10 +17,8 @@
     ./modules/nixarr.nix
     # ./modules/home-assistant
     ./modules/samba
-    # ./modules/steam.nix
     ./modules/ollama.nix
-    ./modules/steam.nix
-    ./modules/sunshine.nix
+    ./modules/gaming
     ./modules/rustdesk
     # ./modules/photoprism.nix
     ./modules/immich.nix

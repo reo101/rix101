@@ -106,12 +106,6 @@
     scheduler = "scx_lavd";
   };
 
-  # VR
-  programs.alvr = {
-    enable = true;
-    openFirewall = true;
-  };
-
   # Sound
   security.rtkit.enable = true;
   services.pipewire = {
