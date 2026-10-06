@@ -90,7 +90,8 @@ def cachix-cookie-jar-via-github-oauth [cookies_db: string] {
   let api_host = (env-default CACHIX_API_HOST "https://app.cachix.org" | str replace -r "/+$" "")
   print -e "No live Cachix cookies found; trying Cachix GitHub OAuth via Firefox GitHub cookies."
 
-  let login = (do { ^curl -sS -i --max-time 15 $"($api_host)/api/v1/login/github?redirect=/" } | complete)
+  let cachix_cookie_file = (^mktemp | str trim)
+  let login = (do { ^curl -sS -i --max-time 15 -c $cachix_cookie_file $"($api_host)/api/v1/login/github?redirect=/" } | complete)
   if $login.exit_code != 0 { die $"Failed to start Cachix GitHub login: ($login.stderr)" }
 
   let github_authorize_url = (first-location $login.stdout)
@@ -108,8 +109,7 @@ def cachix-cookie-jar-via-github-oauth [cookies_db: string] {
     die "GitHub did not redirect back to Cachix. You may need to be logged into GitHub in Firefox and have authorized the Cachix OAuth app."
   }
 
-  let cachix_cookie_file = (^mktemp | str trim)
-  let callback_status = (^curl -sS -o /dev/null -w "%{http_code}" -c $cachix_cookie_file -A "Mozilla/5.0" $callback | str trim)
+  let callback_status = (^curl -sS -o /dev/null -w "%{http_code}" -b $cachix_cookie_file -c $cachix_cookie_file -A "Mozilla/5.0" $callback | str trim)
   if not ($callback_status in ["200", "302", "303"]) { die $"Cachix login callback failed: HTTP ($callback_status)" }
 
   let user_status = (^curl -sS -o /dev/null -w "%{http_code}" -b $cachix_cookie_file $"($api_host)/api/v1/user" | str trim)
@@ -242,8 +242,15 @@ def api-post-empty [api_host: string, auth_args: list<string>, path: string] {
 }
 
 def nix-netrc-file [] {
-  let configured = (do { ^nix config show netrc-file } | complete)
-  let path = if (($configured.exit_code == 0) and (($configured.stdout | str trim) != "")) {
+  let explicit = (env-default CACHIX_NIX_NETRC_FILE "")
+  if $explicit != "" { return ($explicit | path expand) }
+
+  let configured = (try {
+    do { ^nix config show netrc-file } | complete
+  } catch {
+    null
+  })
+  let path = if (($configured != null) and ($configured.exit_code == 0) and (($configured.stdout | str trim) != "")) {
     $configured.stdout | str trim
   } else {
     "~/.config/nix/netrc"
@@ -318,6 +325,7 @@ def print-token-summary [cache: string, prefix: string, token] {
 # - `CACHIX_TOKEN_USER`: defaults to current user name
 # - `CACHIX_TOKEN_HOSTNAME`: defaults to short hostname
 # - `CACHIX_PERMISSION`: defaults to `Read`
+# - `CACHIX_NIX_NETRC_FILE`: overrides the netrc path used for Nix auth
 #
 # On refresh, this updates both Cachix's CLI config and Nix's configured
 # `netrc-file`, since `cachix authtoken` alone does not update the token Nix
@@ -384,6 +392,13 @@ def main [
   install-nix-netrc-token $cache $new_token
   print $"Installed new Cachix token ($description) for ($cache), expiring at ($expires_on)."
 
-  ^nix store info --store $"https://($cache).cachix.org" out> /dev/null
+  let netrc = (nix-netrc-file)
+  let verification = (do {
+    ^curl -sS -o /dev/null -w "%{http_code}" --netrc-file $netrc $"https://($cache).cachix.org/nix-cache-info"
+  } | complete)
+  let status = ($verification.stdout | str trim)
+  if (($verification.exit_code != 0) or ($status != "200")) {
+    die $"Cachix cache verification failed for ($cache): HTTP ($status)"
+  }
   print $"Verified https://($cache).cachix.org."
 }
