@@ -85,6 +85,7 @@ in
       pkgs.ankiAddons.adjust-sound-volume
       pkgs.ankiAddons.anki-connect
       pkgs.ankiAddons.review-heatmap
+      pkgs.custom.anki-study-time-stats
       pkgs.ankiAddons.reviewer-refocus-card
       pkgs.ankiAddons.yomichan-forvo-server
     ])
