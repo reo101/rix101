@@ -54,8 +54,6 @@
 
   rix101.shell = {
     enable = true;
-    username = "reo101";
-    hostname = "cheetah";
     atuin = true;
     direnv = true;
     zoxide = true;
@@ -72,8 +70,10 @@
 
   services.gpg-agent = {
     enable = true;
-    defaultCacheTtl = 86400;
-    maxCacheTtl = 86400;
+    defaultCacheTtl = 7200;
+    maxCacheTtl = 7200;
+    defaultCacheTtlSsh = 7200;
+    maxCacheTtlSsh = 7200;
     pinentry.package = pkgs.pinentry-tty;
     enableSshSupport = true;
     sshKeys = [ "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7" ];

@@ -299,6 +299,10 @@
                                 inherit inputs;
                               };
                               modules = [
+                                ./meta-modules/configuration.nix
+                                {
+                                  configurationType = name;
+                                }
                                 # {} if no `metaModule` is provided
                                 metaModule
                                 # {} if no `meta.nix` is provided

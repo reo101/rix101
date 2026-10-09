@@ -64,8 +64,6 @@
 
   rix101.shell = {
     enable = true;
-    username = "reo101";
-    hostname = "kibo";
     atuin = true;
     direnv = true;
     zoxide = true;

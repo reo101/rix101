@@ -1,19 +1,32 @@
-{ lib, pkgs, config, meta, ... }:
+moduleArguments@{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 let
+  meta = moduleArguments.meta or (config._module.args.meta or { });
   cfg = config.rix101.shell;
 
-  inherit (lib)
-    mkEnableOption
-    mkOption
-    types
-    mkIf
-    optionals
-    optionalString
-    mkMerge
-    ;
-
-  carapaceBridges = "inshellisense,carapace,zsh,fish,bash";
+  inshellisenseAvailable =
+    pkgs ? inshellisense && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.inshellisense;
+  carapaceBridges = lib.concatStringsSep "," (
+    lib.optionals inshellisenseAvailable [ "inshellisense" ]
+    ++ [
+      "carapace"
+      "zsh"
+      "fish"
+      "bash"
+    ]
+  );
+  carapaceBridgePackages = [
+    pkgs.zsh
+    pkgs.fish
+    pkgs.bashInteractive
+  ]
+  ++ lib.optionals inshellisenseAvailable [ pkgs.inshellisense ];
+  carapacePackage = config.programs.carapace.finalPackage;
 
   # Cache dynamic shell init snippets at build time. Spawning helper binaries
   # just to print mostly-static zsh is very visible on cold or slow filesystems.
@@ -24,7 +37,7 @@ let
     name: nativeBuildInputs: script:
     pkgs.runCommand "rix101-shell-zsh-${name}-init"
       {
-        nativeBuildInputs = [ pkgs.zsh ] ++ nativeBuildInputs;
+        nativeBuildInputs = [ config.programs.zsh.package ] ++ nativeBuildInputs;
       }
       ''
         mkdir -p "$out"
@@ -39,265 +52,242 @@ let
     export XDG_DATA_HOME="$TMPDIR/data"
     mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
 
-    ${lib.getExe pkgs.atuin} init zsh > "$out/init.zsh"
+    # Disable generated bindings before caching, not via a runtime-only variable.
+    ${lib.getExe config.programs.atuin.package} init zsh \
+      --disable-ctrl-r --disable-up-arrow --disable-ai > "$out/init.zsh"
     substituteInPlace "$out/init.zsh" \
-      --replace-fail 'atuin ' '${lib.getExe pkgs.atuin} '
-    substituteInPlace "$out/init.zsh" \
-      --replace-fail 'export ATUIN_SESSION=$(${lib.getExe pkgs.atuin} uuid)' 'if [ -r /proc/sys/kernel/random/uuid ]; then
-        IFS= read -r ATUIN_SESSION < /proc/sys/kernel/random/uuid
-        export ATUIN_SESSION
-    else
-        export ATUIN_SESSION=$(${lib.getExe pkgs.atuin} uuid)
-    fi'
+      --replace-fail 'atuin ' '${lib.getExe config.programs.atuin.package} '
   '';
 
-  zshCarapaceInit =
-    zshCachedInit "carapace"
-      (
-        [
-          pkgs.bashInteractive
-          pkgs.fish
-        ]
-        ++ lib.optional (
-          pkgs ? inshellisense && lib.meta.availableOn pkgs.stdenv.hostPlatform pkgs.inshellisense
-        ) pkgs.inshellisense
-      )
-      ''
-        export HOME="$TMPDIR/home"
-        export XDG_CONFIG_HOME="$TMPDIR/config"
-        export CARAPACE_BRIDGES=${lib.escapeShellArg carapaceBridges}
-        mkdir -p "$HOME" "$XDG_CONFIG_HOME"
+  zshCarapaceInit = zshCachedInit "carapace" [ ] ''
+    export HOME="$TMPDIR/home"
+    export XDG_CONFIG_HOME="$TMPDIR/config"
+    export CARAPACE_BRIDGES=${lib.escapeShellArg carapaceBridges}
+    mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 
-        ${lib.getExe pkgs.carapace} _carapace zsh > "$out/init.zsh"
-        substituteInPlace "$out/init.zsh" \
-          --replace-fail "$XDG_CONFIG_HOME/carapace" '${config.xdg.configHome}/carapace'
-        substituteInPlace "$out/init.zsh" \
-          --replace-fail 'xargs carapace ' 'xargs ${lib.getExe pkgs.carapace} '
-      '';
+    ${lib.getExe carapacePackage} _carapace zsh > "$out/init.zsh"
+    substituteInPlace "$out/init.zsh" \
+      --replace-fail "$XDG_CONFIG_HOME/carapace" '${config.xdg.configHome}/carapace'
+    substituteInPlace "$out/init.zsh" \
+      --replace-fail 'xargs carapace ' 'xargs ${lib.getExe carapacePackage} '
+  '';
 
   zshDirenvInit = zshCachedInit "direnv" [ ] ''
-    ${lib.getExe pkgs.direnv} hook zsh > "$out/init.zsh"
+    ${lib.getExe config.programs.direnv.package} hook zsh > "$out/init.zsh"
   '';
 
   zshStarshipInit = zshCachedInit "starship" [ ] ''
-    ${lib.getExe pkgs.starship} init zsh > "$out/init.zsh"
+    ${lib.getExe config.programs.starship.package} init zsh > "$out/init.zsh"
   '';
 
   zshZoxideInit = zshCachedInit "zoxide" [ ] ''
-    ${lib.getExe pkgs.zoxide} init zsh > "$out/init.zsh"
+    ${lib.getExe config.programs.zoxide.package} init zsh > "$out/init.zsh"
     substituteInPlace "$out/init.zsh" \
-      --replace-fail '\command zoxide' '\command ${lib.getExe pkgs.zoxide}'
+      --replace-fail '\command zoxide' '\command ${lib.getExe config.programs.zoxide.package}'
   '';
 
-  shellAliases = {
-    # cp = "${pkgs.custom.advcpmv}/bin/advcp -rvi";
-    # mv = "${pkgs.custom.advcpmv}/bin/advmv -vi";
-    rebuild =
+  starshipNuConfig =
+    pkgs.runCommand "starship-nushell.toml"
+      {
+        nativeBuildInputs = [ pkgs.yq ];
+      }
+      ''
+        tomlq -t '.character.disabled = true' ${
+          lib.escapeShellArg (
+            builtins.toString config.home.file.${config.programs.starship.configPath}.source
+          )
+        } > "$out"
+      '';
+
+  rebuildCommand =
+    if cfg.rebuildBackend == "nixos" then
       let
-        rebuild_script = pkgs.writeShellScript "rebuild" ''
-          ${
-            let
-              inherit (lib.strings)
-                hasInfix
-                ;
-              inherit (pkgs.stdenv.hostPlatform)
-                isx86_64
-                isAarch64
-                isLinux
-                isDarwin
-                ;
-            in
-            if isx86_64 && isLinux then
-              let
-                nixForRebuild = lib.infuse pkgs.custom.nix-enraged {
-                  __input.monitored.__assign = true;
-                };
-                nixosRebuild = lib.infuse pkgs.nixos-rebuild-ng {
-                  __input.nix.__assign = nixForRebuild;
-                };
-              in
-              "sudo --validate && ${lib.getExe nixosRebuild} --no-reexec --sudo"
-            else if isDarwin then
-              "darwin-rebuild"
-            else if isAarch64 then
-              "nix-on-droid"
-            else
-              "home-manager"
-          } --flake ${
-            if cfg.hostname != null then "${cfg.flakePath}#${cfg.hostname}" else "${cfg.flakePath}"
-          } ''$''\{1:-switch''\} "''$''\{@:2''\}" # |& nix run nixpkgs#nix-output-monitor
-        '';
+        nixForRebuild = lib.infuse pkgs.custom.nix-enraged {
+          __input.monitored.__assign = true;
+        };
+        nixosRebuild = lib.infuse pkgs.nixos-rebuild-ng {
+          __input.nix.__assign = nixForRebuild;
+        };
       in
-      "${rebuild_script}";
+      "sudo --validate && ${lib.getExe nixosRebuild} --no-reexec --sudo"
+    else
+      {
+        nix-darwin = "darwin-rebuild";
+        nix-on-droid = "nix-on-droid";
+        home-manager = "home-manager";
+      }
+      .${cfg.rebuildBackend};
+
+  rebuildScript = pkgs.writeShellScript "rebuild" ''
+    ${rebuildCommand} --flake ${
+      lib.escapeShellArg (
+        cfg.flakePath + lib.optionalString (cfg.rebuildTarget != null) "#${cfg.rebuildTarget}"
+      )
+    } "''${1:-switch}" "''${@:2}"
+  '';
+
+  shellAliases.rebuild = "${rebuildScript}";
+
+  migrationArguments =
+    lib.optionals
+      (cfg.atuin && cfg.atuinDataDir != null && cfg.atuinDataDir != "${config.xdg.dataHome}/atuin")
+      [
+        "--atuin-source"
+        "${config.xdg.dataHome}/atuin"
+        "--atuin-destination"
+        cfg.atuinDataDir
+      ]
+    ++ lib.optionals (cfg.historyPath != "${config.xdg.dataHome}/zsh/history") [
+      "--history-source"
+      "${config.xdg.dataHome}/zsh/history"
+      "--history-destination"
+      cfg.historyPath
+    ];
+  migrateState = pkgs.writeShellApplication {
+    name = "migrate-shell-state";
+    text = ''
+      # Explicit source/destination pairs select components for recovery or manual use.
+      for argument in "$@"; do
+        case "$argument" in
+          --atuin-source*|--atuin-destination*|--history-source*|--history-destination*)
+            exec ${lib.getExe pkgs.python3} ${./migrate-state.py} "$@"
+            ;;
+        esac
+      done
+      exec ${lib.getExe pkgs.python3} ${./migrate-state.py} ${lib.escapeShellArgs migrationArguments} "$@"
+    '';
   };
 in
 {
   imports = [
+    (lib.mkRenamedOptionModule [ "rix101" "shell" "hostname" ] [ "rix101" "shell" "rebuildTarget" ])
   ];
 
   options = {
     rix101.shell = {
-      enable = mkEnableOption "rix101 shell setup";
-      username = mkOption {
-        type = types.str;
-        description = "Username to be used (for prompt)";
-        default = "${config.home.username}";
+      enable = lib.mkEnableOption "rix101 shell setup";
+      rebuildBackend = lib.mkOption {
+        type = lib.types.enum [
+          "nixos"
+          "nix-darwin"
+          "nix-on-droid"
+          "home-manager"
+        ];
+        default = meta.configurationType or "home-manager";
+        description = "Rebuild backend, derived from the configuration generator.";
       };
-      hostname = mkOption {
-        type = types.nullOr types.str;
-        description = "Hostname to be used (for `rebuild`)";
-        default = null;
+      rebuildTarget = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = meta.hostname or null;
+        description = "Flake configuration attribute for rebuild. Defaults to the machine hostname.";
       };
-      shells = mkOption {
-        type =
-          lib.pipe
-            [
-              "nushell"
-              "zsh"
-            ]
-            [
-              types.enum
-              types.listOf
-            ];
-        description = "Shells to be configured (first one is used for $SHELL)";
+      shells = lib.mkOption {
+        type = lib.types.addCheck (lib.types.listOf (
+          lib.types.enum [
+            "nushell"
+            "zsh"
+          ]
+        )) (shells: shells != [ ]);
+        description = "Nonempty list of shells to configure. The first sets $SHELL, not the account login shell.";
         default = [
           "nushell"
           "zsh"
         ];
       };
-      starship = mkOption {
-        type = types.bool;
+      starship = lib.mkOption {
+        type = lib.types.bool;
         description = "Use starship prompt";
         default = true;
       };
-      atuin = mkOption {
-        type = types.bool;
+      atuin = lib.mkOption {
+        type = lib.types.bool;
         description = "Integrate with atuin";
         default = true;
       };
-      atuinDataDir = mkOption {
+      atuinDataDir = lib.mkOption {
         description = "Directory for Atuin data files.";
-        type = types.nullOr types.str;
+        type = lib.types.nullOr lib.types.str;
         default = null;
       };
-      carapace = mkOption {
-        type = types.bool;
+      carapace = lib.mkOption {
+        type = lib.types.bool;
         description = "Integrate with carapace";
         default = true;
       };
-      direnv = mkOption {
-        type = types.bool;
+      direnv = lib.mkOption {
+        type = lib.types.bool;
         description = "Integrate with direnv";
         default = true;
       };
       gpg = {
-        enable = mkEnableOption "GPG setup";
-        pinentryPackage = mkOption {
-          type = types.nullOr types.package;
+        enable = lib.mkEnableOption "GPG setup";
+        pinentryPackage = lib.mkOption {
+          type = lib.types.nullOr lib.types.package;
           example = lib.literalExpression "pkgs.pinentry-gnome3";
           default = null;
         };
       };
-      zellij = mkOption {
-        type = types.bool;
+      zellij = lib.mkOption {
+        type = lib.types.bool;
         description = "Integrate with zellij";
         default = true;
       };
-      zoxide = mkOption {
-        type = types.bool;
+      zoxide = lib.mkOption {
+        type = lib.types.bool;
         description = "Integrate with zoxide";
         default = true;
       };
-      historyPath = mkOption {
+      historyPath = lib.mkOption {
         description = "Path to the zsh history file.";
-        type = types.str;
+        type = lib.types.str;
         default = "${config.xdg.dataHome}/zsh/history";
       };
-      flakePath = mkOption {
-        type = types.str;
+      flakePath = lib.mkOption {
+        type = lib.types.str;
         description = "Flake path (for `rebuild`)";
         default = "${config.xdg.configHome}/rix101";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages =
-      with pkgs;
-      lib.concatLists [
-        (optionals cfg.starship [
-          starship
-        ])
-        (optionals cfg.atuin [
-          atuin
-        ])
-        (optionals cfg.carapace [
-          carapace
-        ])
-        (optionals cfg.direnv [
-          direnv
-        ])
-        (optionals cfg.gpg.enable [
-          gnupg
-          yubikey-manager
-          yubikey-personalization
-        ])
-        (optionals cfg.zellij [
-          zellij
-        ])
-        (optionals cfg.zoxide [
-          zoxide
-        ])
-      ];
+      lib.optionals cfg.gpg.enable [
+        pkgs.yubikey-manager
+        pkgs.yubikey-personalization
+      ]
+      # gpg-agent references the package but does not install its CLI.
+      ++ lib.optionals (cfg.gpg.enable && !config.programs.gpg.enable) [ config.programs.gpg.package ]
+      ++ lib.optionals (migrationArguments != [ ]) [ migrateState ];
 
-    xdg.configFile."atuin/config.toml" = mkIf cfg.atuin {
-      # TODO: use pkgs.substituteAll
-      # TODO: agenix?
-      text = import ./atuin.nix {
+    programs.atuin = lib.mkIf cfg.atuin {
+      enable = true;
+      enableNushellIntegration = builtins.elem "nushell" cfg.shells;
+      # HM still runs `atuin init zsh` at startup; retain the compiled store init.
+      enableZshIntegration = false;
+      enableBashIntegration = false;
+      enableFishIntegration = false;
+      settings = import ./atuin.nix {
         inherit lib;
         dataDir = cfg.atuinDataDir;
         keyPath =
-          if cfg.atuinDataDir != null then
-            "${cfg.atuinDataDir}/key"
-          else
-            "${config.xdg.dataHome}/atuin/key";
+          if cfg.atuinDataDir != null then "${cfg.atuinDataDir}/key" else "${config.xdg.dataHome}/atuin/key";
       };
     };
 
-    home.activation.rix101ShellState =
-      let
-        defaultAtuinDataDir = "${config.xdg.dataHome}/atuin";
-        defaultHistoryPath = "${config.xdg.dataHome}/zsh/history";
-      in
-      lib.mkIf (cfg.atuinDataDir != null || cfg.historyPath != defaultHistoryPath) (
-        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          ${optionalString (cfg.atuinDataDir != null) ''
-            old=${lib.escapeShellArg defaultAtuinDataDir}
-            new=${lib.escapeShellArg cfg.atuinDataDir}
-            if [ -d "$old" ] && [ ! -e "$new/history.db" ]; then
-              $DRY_RUN_CMD mkdir -p "$new"
-              $DRY_RUN_CMD cp -a "$old/." "$new/"
-            fi
-          ''}
-          ${optionalString (cfg.historyPath != defaultHistoryPath) ''
-            old=${lib.escapeShellArg defaultHistoryPath}
-            new=${lib.escapeShellArg cfg.historyPath}
-            if [ -f "$old" ] && [ ! -e "$new" ]; then
-              $DRY_RUN_CMD mkdir -p "$(${pkgs.coreutils}/bin/dirname "$new")"
-              $DRY_RUN_CMD cp -a "$old" "$new"
-            fi
-          ''}
-        ''
-      );
-
     # Carapace
-    programs.carapace = mkIf cfg.carapace {
+    programs.carapace = lib.mkIf cfg.carapace {
       enable = true;
+      enableNushellIntegration = builtins.elem "nushell" cfg.shells;
       enableZshIntegration = false;
+      environment.CARAPACE_BRIDGES = carapaceBridges;
+      # The Nix completer assumes legacy channel programs.sqlite databases.
+      environment.CARAPACE_EXCLUDES = "nix";
+      extraPackages = carapaceBridgePackages;
     };
 
     # Direnv
-    programs.direnv = mkIf cfg.direnv {
+    programs.direnv = lib.mkIf cfg.direnv {
       enable = true;
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
@@ -309,13 +299,14 @@ in
     };
 
     # Starship
-    programs.starship = mkIf cfg.starship {
+    programs.starship = lib.mkIf cfg.starship {
       enable = true;
 
-      package = pkgs.starship;
+      package = import ./starship-package.nix { inherit pkgs; };
 
       settings = import ./starship.nix {
-        inherit (cfg) username;
+        inherit lib;
+        schema = config.programs.starship.package.jsonschema.config;
       };
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
@@ -323,59 +314,58 @@ in
     };
 
     # Zellij
-    programs.zellij = mkIf cfg.zellij {
+    programs.zellij = lib.mkIf cfg.zellij {
       enable = true;
 
-      package = pkgs.zellij;
-
-      # NOTE: runs inside every shell, not wanted
-      # enableZshIntegration = builtins.elem "zsh" cfg.shells;
+      # Do not attach a session inside every interactive shell.
       enableZshIntegration = false;
     };
 
     # Zoxide
-    programs.zoxide = mkIf cfg.zoxide {
+    programs.zoxide = lib.mkIf cfg.zoxide {
       enable = true;
-
-      package = pkgs.zoxide;
 
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;
       enableZshIntegration = false;
     };
 
     # GnuPG
-    services.gpg-agent =
-      mkIf cfg.gpg.enable (
+    services.gpg-agent = lib.mkMerge [
+      (lib.mkIf cfg.gpg.enable (
         let
-          # 24 hours
-          ttl = 24 * 60 * 60;
+          ttl = 2 * 60 * 60;
         in
         {
           enable = true;
-          defaultCacheTtl = 86400;
-          maxCacheTtl = 86400;
+          defaultCacheTtl = ttl;
+          maxCacheTtl = ttl;
+          defaultCacheTtlSsh = ttl;
+          maxCacheTtlSsh = ttl;
           pinentry.package =
             if cfg.gpg.pinentryPackage != null then
               cfg.gpg.pinentryPackage
             else if pkgs.stdenv.hostPlatform.isDarwin then
               pkgs.pinentry_mac
-            # TODO: `pinentry` for GUI systems
-            else if meta.gui then
+            else if meta.gui or false then
               pkgs.pinentry-qt
             else
               pkgs.pinentry-tty;
           enableSshSupport = true;
-          enableZshIntegration = false;
+          # WARN: GnuPG deprecated `sshcontrol` in favor of the
+          # `Use-for-ssh` key attribute. Keep this until Home Manager
+          # exposes a declarative replacement for `sshKeys`.
           sshKeys = [
             # NOTE: will mainly be using `YubiKey`s, this is a fallback
             "CFDE97EDC2FDB2FD27020A084F1E3F40221BAFE7"
           ];
         }
-      )
-      // {
-        enableNushellIntegration = builtins.elem "nushell" cfg.shells;
-        enableZshIntegration = false;
-      };
+      ))
+      (lib.mkIf config.services.gpg-agent.enable {
+        # Replace HM's synchronous terminal update, not its SSH socket selection.
+        enableNushellIntegration = lib.mkIf (builtins.elem "nushell" cfg.shells) (lib.mkDefault false);
+        enableZshIntegration = lib.mkIf (builtins.elem "zsh" cfg.shells) (lib.mkDefault false);
+      })
+    ];
 
     # WARN: `disable-ccid` routes GnuPG's smartcard access through PC/SC
     # (pcscd) instead of GnuPG's own internal CCID (libusb) driver. Do NOT
@@ -383,124 +373,76 @@ in
     # client) both try to claim the YubiKey's single CCID interface, the loser
     # gets "Can't claim interface: LIBUSB_ERROR_BUSY" / "No such device", and
     # the only cure is replugging. A single PC/SC owner serializes both.
-    home.file.".gnupg/scdaemon.conf" =
-      mkIf cfg.gpg.enable {
-        text = ''
-          disable-ccid
-        '';
-      };
+    home.file."${config.programs.gpg.homedir}/scdaemon.conf" = lib.mkIf cfg.gpg.enable {
+      text = ''
+        disable-ccid
+      '';
+    };
 
     # Shell
-    home.sessionVariables = mkMerge [
+    home.sessionVariables = lib.mkMerge [
       {
         SHELL =
           let
             shellPackage = config.programs.${builtins.head cfg.shells}.package;
           in
-          "${shellPackage}/${shellPackage.shellPath}";
+          "${shellPackage}${shellPackage.shellPath}";
         EDITOR = "nvim";
         MANPAGER = "nvim +Man!";
       }
-      (mkIf cfg.carapace {
+      (lib.mkIf cfg.carapace {
         CARAPACE_BRIDGES = carapaceBridges;
       })
-      (mkIf cfg.direnv {
+      (lib.mkIf cfg.direnv {
+        # Deliberately suppress slow-load warnings; environment loading still runs normally.
         DIRENV_WARN_TIMEOUT = "0";
       })
     ];
 
     # Nushell
-    programs.nushell = mkMerge [
-      (mkIf (builtins.elem "nushell" cfg.shells) {
-        enable = true;
-
-        package = pkgs.nushell;
-
-        configFile.source = ./nushell/config.nu;
-        envFile.source = ./nushell/env.nu;
-        loginFile.source = ./nushell/login.nu;
-
-        inherit shellAliases;
-
-        environmentVariables = { };
-      })
-      (mkIf cfg.atuin {
-        extraEnv = # nu
+    programs.nushell = lib.mkIf (builtins.elem "nushell" cfg.shells) {
+      enable = true;
+      configFile.text = ''
+        const gitignore_move_program = "${lib.getExe' pkgs.coreutils "mv"}"
+        ${builtins.readFile ./nushell/config.nu}
+      '';
+      envFile.source = ./nushell/env.nu;
+      inherit shellAliases;
+      extraConfig = lib.mkMerge [
+        (lib.mkIf (config.services.gpg-agent.enable && !config.services.gpg-agent.enableNushellIntegration)
           ''
-            let atuin_cache = "${config.xdg.cacheHome}/atuin"
-            if not ($atuin_cache | path exists) {
-                mkdir $atuin_cache
+            let terminal = (do { ${lib.getExe' pkgs.coreutils "tty"} } | complete)
+            if $terminal.exit_code == 0 {
+              $env.GPG_TTY = ($terminal.stdout | str trim)
+              job spawn {
+                ${lib.getExe' config.programs.gpg.package "gpg-connect-agent"} --quiet updatestartuptty /bye | complete | ignore
+              } | ignore
             }
-            ${pkgs.atuin}/bin/atuin init nu | save --force ${config.xdg.cacheHome}/atuin/init.nu
-          '';
-
-        extraConfig = # nu
           ''
-            source ${config.xdg.cacheHome}/atuin/init.nu
-
-            # Ctrl-R
-            $env.config = (
-                $env.config | upsert keybindings (
-                    $env.config.keybindings
-                    | append {
-                        name: atuin
-                        modifier: control
-                        keycode: char_r
-                        mode: [emacs, vi_normal, vi_insert]
-                        event: { send: executehostcommand cmd: (_atuin_search_cmd) }
-                    }
-                )
-            )
-
-            # Up
-            $env.config = (
-                $env.config | upsert keybindings (
-                    $env.config.keybindings
-                    | append {
-                        name: atuin
-                        modifier: none
-                        keycode: up
-                        mode: [emacs, vi_normal, vi_insert]
-                        event: { send: executehostcommand cmd: (_atuin_search_cmd '--shell-up-key-binding') }
-                    }
-                )
-            )
-          '';
-      })
-    ];
+        )
+        (lib.mkIf cfg.starship (
+          lib.mkAfter ''
+            # HM's Starship init resets indicators. Nu owns its vi-mode character.
+            $env.STARSHIP_CONFIG = "${starshipNuConfig}"
+            ${builtins.readFile ./nushell/env.nu}
+            ${lib.optionalString ((config.programs.starship.settings.right_format or "") == "") ''
+              # Do not launch another Starship process for an empty right prompt.
+              $env.PROMPT_COMMAND_RIGHT = ""
+            ''}
+          ''
+        ))
+      ];
+    };
 
     # Zsh
-    programs.zsh = mkIf (builtins.elem "zsh" cfg.shells) {
+    programs.zsh = lib.mkIf (builtins.elem "zsh" cfg.shells) {
       enable = true;
-      package = pkgs.zsh;
-
       enableCompletion = true;
+      autosuggestion.enable = true;
+      fastSyntaxHighlighting.enable = true;
 
-      completionInit = /* sh */ ''
-        autoload -Uz compinit
-
-        _rix101_zcompdump_dir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
-        _rix101_zcompdump="$_rix101_zcompdump_dir/zcompdump-$HOST-$ZSH_VERSION"
-        mkdir -p "$_rix101_zcompdump_dir"
-
-        # Fast path: reuse the dump without compaudit. Fall back to a full
-        # compinit when the dump is missing or a Nix profile symlink changed
-        # since it was generated.
-        _rix101_compinit_flags=(-C)
-        if [ ! -s "$_rix101_zcompdump" ]; then
-          _rix101_compinit_flags=(-i)
-        else
-          for _rix101_profile in ''${(z)NIX_PROFILES}; do
-            if [ -e "$_rix101_profile" ] && [ "$_rix101_profile" -nt "$_rix101_zcompdump" ]; then
-              _rix101_compinit_flags=(-i)
-              break
-            fi
-          done
-        fi
-
-        compinit "''${_rix101_compinit_flags[@]}" -d "$_rix101_zcompdump"
-        unset _rix101_compinit_flags _rix101_profile _rix101_zcompdump _rix101_zcompdump_dir
-      '';
+      # Inline the file: no extra source lookup on the startup path.
+      completionInit = builtins.readFile ./zsh/completion-init.zsh;
 
       dotDir = "${config.xdg.configHome}/zsh";
 
@@ -512,9 +454,10 @@ in
       history = {
         size = 10000;
         path = cfg.historyPath;
+        ignoreSpace = true;
       };
 
-      initContent = mkMerge [
+      initContent = lib.mkMerge [
         (lib.mkOrder 565 /* sh */ ''
           # - The stock Home Manager `fpath` loop adds the same zsh stdlib
           #   directory once per profile
@@ -522,14 +465,13 @@ in
           #   for every duplicate on cold cache
           # - Keep profile site/vendor completions,
           #   but keep only the real zsh package's stdlib
-          fpath+=("${pkgs.zsh}/share/zsh/$ZSH_VERSION/functions")
-          typeset -U fpath
+          fpath+=("${config.programs.zsh.package}/share/zsh/$ZSH_VERSION/functions")
           _rix101_fpath=()
           for _rix101_dir in "''${fpath[@]}"; do
             [ -d "$_rix101_dir" ] || continue
             case "$_rix101_dir" in
               */share/zsh/$ZSH_VERSION/functions)
-                [ "$_rix101_dir" = "${pkgs.zsh}/share/zsh/$ZSH_VERSION/functions" ] || continue
+                [ "$_rix101_dir" = "${config.programs.zsh.package}/share/zsh/$ZSH_VERSION/functions" ] || continue
                 ;;
             esac
             _rix101_fpath+=("$_rix101_dir")
@@ -544,15 +486,17 @@ in
               mkdir -p "''$''\{@''\}" && cd "''$''\{@''\}"
             }
           ''
-          (optionalString cfg.atuin /* sh */ ''
-            export ATUIN_NOBIND="true"
+          (lib.optionalString cfg.atuin /* sh */ ''
             source ${zshAtuinInit}/init.zsh
             function zvm_after_init() {
-              # bindkey "^r" _atuin_search_widget
-              zvm_bindkey viins "^R" _atuin_search_widget
+              zvm_bindkey viins "^R" atuin-search-viins
             }
           '')
-          (optionalString cfg.zoxide /* sh */ ''
+          /* sh */ ''
+            # vi-mode's lazy initialization replaces autosuggestion widgets.
+            zvm_after_init_commands+=(_zsh_autosuggest_bind_widgets)
+          ''
+          (lib.optionalString cfg.zoxide /* sh */ ''
             source ${zshZoxideInit}/init.zsh
           '')
           /* sh */ ''
@@ -561,74 +505,52 @@ in
               source "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
             fi
           ''
-          (optionalString cfg.starship /* sh */ ''
+          (lib.optionalString cfg.starship /* sh */ ''
             if [ "''${TERM:-}" != "dumb" ]; then
+              # Reset the shell-specific config when entering Zsh from Nushell.
+              export STARSHIP_CONFIG=${lib.escapeShellArg config.programs.starship.configPath}
               source ${zshStarshipInit}/init.zsh
+              ${lib.optionalString ((config.programs.starship.settings.right_format or "") == "") ''
+                # An empty right format does not need a second prompt process.
+                RPROMPT=""
+              ''}
             fi
           '')
-          (optionalString cfg.direnv /* sh */ ''
+          (lib.optionalString cfg.direnv /* sh */ ''
             source ${zshDirenvInit}/init.zsh
           '')
-          (optionalString cfg.carapace /* sh */ ''
+          (lib.optionalString cfg.carapace /* sh */ ''
             source ${zshCarapaceInit}/init.zsh
           '')
-          (optionalString cfg.gpg.enable /* sh */ ''
-            # Keep `pinentry`'s TTY fresh,
-            # but never block prompt rendering on cold gpg/gnupg store paths
-            if [ -n "''${TTY:-}" ]; then
-              { ${lib.getExe' pkgs.gnupg "gpg-connect-agent"} --quiet updatestartuptty /bye >/dev/null 2>&1 &! }
-            fi
-          '')
-          # cfg.extraConfig
+          (lib.optionalString
+            (config.services.gpg-agent.enable && !config.services.gpg-agent.enableZshIntegration)
+            /* sh */ ''
+              # Export the current TTY before scheduling the nonblocking agent update.
+              if [ -n "''${TTY:-}" ]; then
+                export GPG_TTY="$TTY"
+                { ${lib.getExe' config.programs.gpg.package "gpg-connect-agent"} --quiet updatestartuptty /bye >/dev/null 2>&1 &! }
+              fi
+            ''
+          )
         ])
       ];
 
       plugins = [
         {
           name = "zsh-nix-shell";
-          file = "nix-shell.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "chisui";
-            repo = "zsh-nix-shell";
-            rev = "v0.8.0";
-            hash = "sha256-Z6EYQdasvpl1P78poj9efnnLj7QQg13Me8x1Ryyw+dM=";
-          };
-        }
-        {
-          name = "fast-syntax-highlighting";
-          file = "fast-syntax-highlighting.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "zdharma-continuum";
-            repo = "fast-syntax-highlighting";
-            rev = "cf318e06a9b7c9f2219d78f41b46fa6e06011fd9";
-            hash = "sha256-RVX9ZSzjBW3LpFs2W86lKI6vtcvDWP6EPxzeTcRZua4=";
-          };
-        }
-        {
-          name = "zsh-autosuggestions";
-          file = "zsh-autosuggestions.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "zsh-users";
-            repo = "zsh-autosuggestions";
-            rev = "c3d4e576c9c86eac62884bd47c01f6faed043fc5";
-            hash = "sha256-B+Kz3B7d97CM/3ztpQyVkE6EfMipVF8Y4HJNfSRXHtU=";
-          };
+          file = "share/zsh-nix-shell/nix-shell.plugin.zsh";
+          src = pkgs.zsh-nix-shell;
         }
         {
           name = "zsh-vi-mode";
-          file = "zsh-vi-mode.plugin.zsh";
-          src = pkgs.fetchFromGitHub {
-            owner = "jeffreytse";
-            repo = "zsh-vi-mode";
-            rev = "287efa19ec492b2f24bb93d1f4eaac3049743a63";
-            hash = "sha256-HMfC4s7KW4bO7H6RYzLnSARoFr1Ez89Z2VGONKMpGbw=";
-          };
+          file = "share/zsh-vi-mode/zsh-vi-mode.plugin.zsh";
+          src = pkgs.zsh-vi-mode;
         }
       ];
     };
   };
 
   meta = {
-    maintainers = with lib.maintainers; [ reo101 ];
+    maintainers = [ lib.maintainers.reo101 ];
   };
 }
