@@ -522,6 +522,23 @@ in
           (lib.optionalString cfg.carapace /* sh */ ''
             source ${zshCarapaceInit}/init.zsh
           '')
+          (lib.optionalString cfg.direnv /* sh */ ''
+            # Run after direnv has exported the current environment. Reapply
+            # integrations whose completion definitions/widgets compinit resets.
+            _rix101_completion_refresh() {
+              if _rix101_completion_synchronize || [[ $? == 2 ]]; then
+                # Restore integrations even if compinit failed after clearing mappings.
+                # Carapace init prepends its user bin directory; keep that
+                # repeated prepend local while restoring its definitions.
+                local PATH="$PATH"
+                ${lib.optionalString cfg.carapace "source ${zshCarapaceInit}/init.zsh"}
+                (( $+functions[_zsh_autosuggest_bind_widgets] )) && _zsh_autosuggest_bind_widgets
+              fi
+              return 0
+            }
+            autoload -Uz add-zsh-hook
+            add-zsh-hook precmd _rix101_completion_refresh
+          '')
           (lib.optionalString
             (config.services.gpg-agent.enable && !config.services.gpg-agent.enableZshIntegration)
             /* sh */ ''

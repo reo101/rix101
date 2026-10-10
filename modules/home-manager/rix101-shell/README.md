@@ -16,7 +16,7 @@ Compared against Home Manager revision `f53f3267f5d009dd8f99443505e609389d7ff267
 | --- | --- | --- |
 | Zsh Atuin, Carapace, direnv, Starship, zoxide | Generated, syntax-checked and compiled in the store | HM still executes these init generators at startup. Avoid five generator launches and repeated parsing. |
 | Nu integrations | HM-generated store files and native hooks | No custom Atuin init cache or startup regeneration. |
-| Zsh completion | Profile/fpath identity fingerprint, reduced stdlib fpath | Store timestamps cannot detect profile target changes; duplicate stdlib traversal hurts slow filesystems. Site/vendor completions remain. |
+| Zsh completion | Profile/fpath identity fingerprint, reduced stdlib fpath, XDG environment refresh | Store timestamps cannot detect profile target changes; direnv adds completion directories after startup. Site/vendor completions remain. |
 | Autosuggestions and fast highlighting | Native HM integration | Direct store-file sourcing already avoids generators. |
 | vi-mode and nix-shell plugins | nixpkgs packages | No separate source pins. Rebind autosuggestions after lazy vi-mode setup. |
 | GPG terminal update | Export TTY, then background update | Avoid blocking startup; retain HM's forwarding-aware SSH socket selection. |
@@ -35,6 +35,19 @@ profile symlink targets invalidate automatically. After changing completions or
 permissions in place at an unchanged path, delete the relevant
 `$XDG_CACHE_HOME/zsh/zcompdump-*.paths` marker (fallback: `$HOME/.cache/zsh`) and
 restart Zsh. Misses use `compinit -i`, excluding insecure directories.
+
+With direnv enabled, a late `precmd` hook discovers `zsh/site-functions`,
+versioned `zsh/$ZSH_VERSION/functions`, and `zsh/vendor-completions` under
+`XDG_DATA_DIRS`. Entering, rebuilding, and leaving a devshell reindex completion
+only when that variable changes. Unchanged prompts do no directory scanning or
+reindexing. The integration removes only paths it added, unloads stale environment
+function bodies, removes obsolete command mappings, and restores profile
+completions on exit. Carapace definitions and autosuggestion widget bindings are
+reapplied after refresh, including failed initialization. Failed attempts are not
+retried on unchanged prompts; change the environment or restart Zsh to retry.
+No per-command loader, copied completion file, or
+additional plugin is required. `mkShell` already exports package share directories;
+non-Nix direnv environments must export their data directories themselves.
 
 Carapace's `nix` completer is excluded with `CARAPACE_EXCLUDES=nix`: it assumes
 legacy channel `programs.sqlite` databases even for `nixpkgs#...` references.
@@ -124,10 +137,12 @@ Run from the repository root with the flake's pinned packages:
 
 ```nu
 nu --no-config-file modules/home-manager/rix101-shell/tests/completion.nu
+nix shell --inputs-from . nixpkgs#zsh nixpkgs#coreutils --command zsh -f modules/home-manager/rix101-shell/tests/completion-environment.zsh modules/home-manager/rix101-shell/zsh/completion-init.zsh
 nix shell --inputs-from . nixpkgs#coreutils --command nu --no-config-file modules/home-manager/rix101-shell/tests/gitignore.nu
 nu --no-config-file modules/home-manager/rix101-shell/tests/clipboard.nu
 nix shell --inputs-from . nixpkgs#python3 --command python3 modules/home-manager/rix101-shell/tests/migration.py
 nix eval --impure --json --file modules/home-manager/rix101-shell/tests/configuration.nix
+nix build --impure --no-link --builders '' --file modules/home-manager/rix101-shell/tests/completion-generated.nix
 let generated = (nix build --impure --no-link --print-out-paths --file modules/home-manager/rix101-shell/tests/generated.nix | str trim)
 nix shell --inputs-from . nixpkgs#python3 --command python3 modules/home-manager/rix101-shell/tests/integration.py $generated
 ```

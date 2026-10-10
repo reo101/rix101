@@ -1,27 +1,72 @@
 autoload -Uz compinit
 
-_rix101_completion_directory="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
-_rix101_completion_dump="$_rix101_completion_directory/zcompdump-$HOST-$ZSH_VERSION"
-_rix101_completion_targets=()
-for _rix101_completion_path in ${(z)NIX_PROFILES} "${fpath[@]}"; do
-  _rix101_completion_targets+=("$_rix101_completion_path" "${_rix101_completion_path:A}")
-done
-_rix101_completion_signature="${(pj:\n:)_rix101_completion_targets}"
+_rix101_completion_initialize() {
+  local directory="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+  local dump="$directory/zcompdump-$HOST-$ZSH_VERSION"
+  local target signature
+  local -a targets
+  for target in ${(z)NIX_PROFILES} "${fpath[@]}"; do
+    targets+=("$target" "${target:A}")
+  done
+  signature="${(pj:\n:)targets}"
 
-# Nix store mtimes are normalized. Compare resolved profile/fpath identities,
-# not timestamps, and force regeneration even when the file count is unchanged.
-# Mutable completions at an unchanged path require deleting the dump or marker.
-if [[ -s "$_rix101_completion_dump" && -r "$_rix101_completion_dump.paths" ]] \
-    && [[ "$(<"$_rix101_completion_dump.paths")" == "$_rix101_completion_signature" ]]; then
-  compinit -C -d "$_rix101_completion_dump"
-else
-  command mkdir -p -- "$_rix101_completion_directory"
-  command rm -f -- "$_rix101_completion_dump" "$_rix101_completion_dump.zwc"
-  # Audit permissions and exclude insecure directories without blocking startup.
-  if compinit -i -d "$_rix101_completion_dump"; then
-    print -r -- "$_rix101_completion_signature" > "$_rix101_completion_dump.paths.$$"
-    command mv -f -- "$_rix101_completion_dump.paths.$$" "$_rix101_completion_dump.paths"
+  # Nix store mtimes are normalized. Compare resolved profile/fpath identities,
+  # not timestamps, and regenerate even when the file count is unchanged.
+  # Mutable completions at an unchanged path require deleting the marker.
+  if [[ -s "$dump" && -r "$dump.paths" ]] \
+      && [[ "$(<"$dump.paths")" == "$signature" ]]; then
+    compinit -C -d "$dump"
+  else
+    command mkdir -p -- "$directory"
+    command rm -f -- "$dump" "$dump.zwc"
+    # Exclude insecure directories without blocking startup or prompt refresh.
+    compinit -i -d "$dump" || return
+    print -r -- "$signature" > "$dump.paths.$$"
+    command mv -f -- "$dump.paths.$$" "$dump.paths"
   fi
-fi
-unset _rix101_completion_directory _rix101_completion_dump _rix101_completion_targets
-unset _rix101_completion_path _rix101_completion_signature
+}
+
+typeset -ga _rix101_completion_environment_directories
+
+# Return 0 after refresh, 1 when unchanged, and 2 when initialization fails.
+_rix101_completion_synchronize() {
+  local dataDirectories="${XDG_DATA_DIRS-}"
+  [[ -v _rix101_completion_data_signature && "$dataDirectories" == "$_rix101_completion_data_signature" ]] && return 1
+  local directory dataDirectory file
+  local -a directories
+  local -A seen
+
+  # Remove only the directories this integration previously added. Preserve
+  # profile paths and additions from other shell integrations.
+  fpath=("${(@)fpath:|_rix101_completion_environment_directories}")
+  for directory in "${fpath[@]}"; do seen[${directory:A}]=1; done
+  for dataDirectory in "${(@s.:.)dataDirectories}"; do
+    [[ -n "$dataDirectory" ]] || continue
+    for directory in "$dataDirectory/zsh/site-functions" "$dataDirectory/zsh/$ZSH_VERSION/functions" "$dataDirectory/zsh/vendor-completions"; do
+      [[ -d "$directory" ]] || continue
+      directory=${directory:A}
+      [[ -v "seen[$directory]" ]] && continue
+      directories+=("$directory")
+      seen[$directory]=1
+    done
+  done
+
+  # An autoloaded function retains its old body after fpath changes. Unload
+  # both departing and overriding environment functions before reindexing.
+  for directory in "${_rix101_completion_environment_directories[@]}" "${directories[@]}"; do
+    for file in "$directory"/_*(N-.); do
+      (( $+functions[${file:t}] )) && unfunction -- "${file:t}"
+    done
+  done
+  fpath=("${directories[@]}" "${fpath[@]}")
+  _rix101_completion_environment_directories=("${directories[@]}")
+  # compinit adds definitions but does not remove obsolete command mappings.
+  if (( $+_comps )); then
+    _comps=() _services=() _patcomps=() _postpatcomps=() _compautos=()
+  fi
+  # Remember failed attempts too, so an unchanged prompt cannot retry forever.
+  typeset -g _rix101_completion_data_signature="$dataDirectories"
+  _rix101_completion_initialize || return 2
+}
+
+_rix101_completion_synchronize || _rix101_completion_initialize

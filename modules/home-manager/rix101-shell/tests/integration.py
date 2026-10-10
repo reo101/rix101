@@ -170,10 +170,10 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
             binaries["starship"] in initialization
             and ".starship-wrapped" not in initialization
         )
-    sources = re.findall(
+    sources = list(dict.fromkeys(re.findall(
         r"source (/nix/store/\S*rix101-shell-zsh-\S*/init\.zsh)",
         (root / "zshrc").read_text(),
-    )
+    )))
     assert len(sources) == 5
     for source in sources:
         assert Path(source + ".zwc").is_file()
@@ -185,6 +185,39 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
             f'source "{root / "zshrc"}"; (( $+functions[zvm_init] && $+functions[_zsh_autosuggest_bind_widgets] && $+widgets[atuin-search-viins] )) && [[ $_comps[nix] != _carapace_completer ]]',
         ]
     )
+    completion_directories = []
+    for version in ("first", "second"):
+        data_directory = root / f"completion {version}"
+        functions = data_directory / "zsh/site-functions"
+        functions.mkdir(parents=True)
+        (functions / "_environment_complete").write_text(
+            f"#compdef environment-command\nprint -r -- {version}\n"
+        )
+        completion_directories.append(data_directory)
+    completion_test = f'''
+        source {shlex.quote(str(root / "zshrc"))}
+        setopt errexit
+        (( $precmd_functions[(Ie)_direnv_hook] < $precmd_functions[(Ie)_rix101_completion_refresh] ))
+        original_git_handler=$_comps[git]
+        original_key_binding=$(bindkey -M viins '^R')
+        original_data_directories=${{XDG_DATA_DIRS-}}
+        export XDG_DATA_DIRS={shlex.quote(str(completion_directories[0]))}:$original_data_directories
+        _rix101_completion_refresh
+        [[ $_comps[environment-command] == _environment_complete ]]
+        [[ "$(_environment_complete)" == first ]]
+        _environment_complete > /dev/null
+        export XDG_DATA_DIRS={shlex.quote(str(completion_directories[1]))}:$original_data_directories
+        _rix101_completion_refresh
+        [[ "$(_environment_complete)" == second ]]
+        _environment_complete > /dev/null
+        [[ $_comps[git] == $original_git_handler ]]
+        [[ "$(bindkey -M viins '^R')" == "$original_key_binding" ]]
+        export XDG_DATA_DIRS=$original_data_directories
+        _rix101_completion_refresh
+        [[ ! -v '_comps[environment-command]' ]]
+        [[ $_comps[git] == $original_git_handler ]]
+    '''
+    run([binaries["zsh"], "-dfi", "-c", completion_test])
     terminal_state = run_terminal(
         [binaries["zsh"], "-dfi"],
         (
