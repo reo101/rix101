@@ -142,7 +142,6 @@ nix shell --inputs-from . nixpkgs#coreutils --command nu --no-config-file module
 nu --no-config-file modules/home-manager/rix101-shell/tests/clipboard.nu
 nix shell --inputs-from . nixpkgs#python3 --command python3 modules/home-manager/rix101-shell/tests/migration.py
 nix eval --impure --json --file modules/home-manager/rix101-shell/tests/configuration.nix
-nix build --impure --no-link --builders '' --file modules/home-manager/rix101-shell/tests/completion-generated.nix
 let generated = (nix build --impure --no-link --print-out-paths --file modules/home-manager/rix101-shell/tests/generated.nix | str trim)
 nix shell --inputs-from . nixpkgs#python3 --command python3 modules/home-manager/rix101-shell/tests/integration.py $generated
 ```
@@ -151,5 +150,4 @@ nix shell --inputs-from . nixpkgs#python3 --command python3 modules/home-manager
 The generated-config test builds files/init snippets, not an activation package.
 Integration checks use temporary homes and jj/Git fixtures, disable Atuin sync,
 capture terminal output, and replace the GPG agent command with a test executable.
-Add `--benchmark` to repeat the warm init-only comparison. Darwin and Droid are
-evaluated but runtime/PTY checks currently run on Linux.
+Darwin and Droid are evaluated but runtime/PTY checks currently run on Linux.

@@ -33,21 +33,17 @@ _rix101_completion_synchronize() {
   local dataDirectories="${XDG_DATA_DIRS-}"
   [[ -v _rix101_completion_data_signature && "$dataDirectories" == "$_rix101_completion_data_signature" ]] && return 1
   local directory dataDirectory file
-  local -a directories
-  local -A seen
+  local -aU directories
 
   # Remove only the directories this integration previously added. Preserve
   # profile paths and additions from other shell integrations.
   fpath=("${(@)fpath:|_rix101_completion_environment_directories}")
-  for directory in "${fpath[@]}"; do seen[${directory:A}]=1; done
+  local -a existingDirectories=("${(@)fpath:A}")
   for dataDirectory in "${(@s.:.)dataDirectories}"; do
     [[ -n "$dataDirectory" ]] || continue
-    for directory in "$dataDirectory/zsh/site-functions" "$dataDirectory/zsh/$ZSH_VERSION/functions" "$dataDirectory/zsh/vendor-completions"; do
-      [[ -d "$directory" ]] || continue
+    for directory in "$dataDirectory"/zsh/{site-functions,$ZSH_VERSION/functions,vendor-completions}(N-/); do
       directory=${directory:A}
-      [[ -v "seen[$directory]" ]] && continue
-      directories+=("$directory")
-      seen[$directory]=1
+      (( ${existingDirectories[(Ie)$directory]} )) || directories+=("$directory")
     done
   done
 

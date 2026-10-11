@@ -13,6 +13,8 @@ print -r -- $'#compdef environment-command\nprint -r -- first' > "$root/version 
 print -r -- $'#compdef environment-command\nprint -r -- second' > "$root/version two/zsh/site-functions/_environment_complete"
 print -r -- $'#compdef environment-only\nprint -r -- temporary' > "$root/version one/zsh/site-functions/_environment_only"
 command touch -r "$root/version one/zsh/site-functions/_environment_complete" "$root/version two/zsh/site-functions/_environment_complete"
+command mkdir -p "$root/version alias/zsh"
+command ln -s "$root/version one/zsh/site-functions" "$root/version alias/zsh/site-functions"
 
 fpath=("$root/profile" $fpath)
 source "${1:?completion initializer path required}"
@@ -32,7 +34,7 @@ fpath=("$root/custom" $fpath)
 if _rix101_completion_synchronize; then exit 11; fi
 (( initializations == 0 ))
 
-export XDG_DATA_DIRS="$root/version one:$root/version one"
+export XDG_DATA_DIRS=":$root/version alias:$root/version one:$root/version one:"
 _rix101_completion_synchronize
 (( initializations == 1 ))
 [[ "$fpath[1]" == "$root/version one/zsh/site-functions" ]]

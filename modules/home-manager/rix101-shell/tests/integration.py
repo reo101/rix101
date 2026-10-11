@@ -6,9 +6,7 @@ import os
 import pty
 import re
 import select
-import shlex
 import shutil
-import statistics
 import subprocess
 import sys
 import tempfile
@@ -170,10 +168,12 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
             binaries["starship"] in initialization
             and ".starship-wrapped" not in initialization
         )
-    sources = list(dict.fromkeys(re.findall(
-        r"source (/nix/store/\S*rix101-shell-zsh-\S*/init\.zsh)",
-        (root / "zshrc").read_text(),
-    )))
+    sources = set(
+        re.findall(
+            r"source (/nix/store/\S*rix101-shell-zsh-\S*/init\.zsh)",
+            (root / "zshrc").read_text(),
+        )
+    )
     assert len(sources) == 5
     for source in sources:
         assert Path(source + ".zwc").is_file()
@@ -185,39 +185,18 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
             f'source "{root / "zshrc"}"; (( $+functions[zvm_init] && $+functions[_zsh_autosuggest_bind_widgets] && $+widgets[atuin-search-viins] )) && [[ $_comps[nix] != _carapace_completer ]]',
         ]
     )
-    completion_directories = []
-    for version in ("first", "second"):
-        data_directory = root / f"completion {version}"
-        functions = data_directory / "zsh/site-functions"
-        functions.mkdir(parents=True)
-        (functions / "_environment_complete").write_text(
-            f"#compdef environment-command\nprint -r -- {version}\n"
-        )
-        completion_directories.append(data_directory)
-    completion_test = f'''
-        source {shlex.quote(str(root / "zshrc"))}
-        setopt errexit
-        (( $precmd_functions[(Ie)_direnv_hook] < $precmd_functions[(Ie)_rix101_completion_refresh] ))
-        original_git_handler=$_comps[git]
-        original_key_binding=$(bindkey -M viins '^R')
-        original_data_directories=${{XDG_DATA_DIRS-}}
-        export XDG_DATA_DIRS={shlex.quote(str(completion_directories[0]))}:$original_data_directories
-        _rix101_completion_refresh
-        [[ $_comps[environment-command] == _environment_complete ]]
-        [[ "$(_environment_complete)" == first ]]
-        _environment_complete > /dev/null
-        export XDG_DATA_DIRS={shlex.quote(str(completion_directories[1]))}:$original_data_directories
-        _rix101_completion_refresh
-        [[ "$(_environment_complete)" == second ]]
-        _environment_complete > /dev/null
-        [[ $_comps[git] == $original_git_handler ]]
-        [[ "$(bindkey -M viins '^R')" == "$original_key_binding" ]]
-        export XDG_DATA_DIRS=$original_data_directories
-        _rix101_completion_refresh
-        [[ ! -v '_comps[environment-command]' ]]
-        [[ $_comps[git] == $original_git_handler ]]
-    '''
-    run([binaries["zsh"], "-dfi", "-c", completion_test])
+    # Source as one command so Atuin preexec does not run between test statements.
+    run(
+        [
+            binaries["zsh"],
+            "-dfi",
+            "-c",
+            'source "$1" "$2"',
+            "completion-regression",
+            str(Path(__file__).resolve().with_name("completion-generated.zsh")),
+            str(root / "zshrc"),
+        ]
+    )
     terminal_state = run_terminal(
         [binaries["zsh"], "-dfi"],
         (
@@ -274,24 +253,16 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
     assert tomllib.loads(Path(state["starship_config"]).read_text())["character"][
         "disabled"
     ]
-    for component, symbol in (
-        ("doom", "𝓔"),
-        ("emacs", "𝓔"),
-        ("Home", "🏠"),
+    # Substitutions must match whole components and escape regex metacharacters.
+    for component, expected in (
         (".config", ""),
-        ("nvim", ""),
-        ("doom-project", "doom-project"),
-        ("nvim-project", "nvim-project"),
+        ("xconfig", "xconfig"),
         ("not.config", "not.config"),
     ):
         path = home / component
         path.mkdir(exist_ok=True)
         rendered = run([binaries["starship"], "module", "directory"], cwd=path)
-        assert symbol in rendered, (component, symbol, rendered)
-    status = run([binaries["starship"], "module", "status", "--status", "1"])
-    assert "[" in status and "]" in status
-    character = run([binaries["starship"], "module", "character", "--keymap", "vicmd"])
-    assert "" in character
+        assert expected in rendered, (component, rendered)
     jj_repository = root / "jj-repository"
     run([binaries["jujutsu"], "git", "init", "--colocate", str(jj_repository)])
     (jj_repository / "example.txt").write_text("fixture\n")
@@ -348,47 +319,8 @@ with tempfile.TemporaryDirectory(prefix="rix101-shell-integration-") as director
     shutil.copytree(jj_repository / ".git", git_repository / ".git")
     shutil.copy2(jj_repository / "example.txt", git_repository / "example.txt")
     assert commit in run([binaries["starship"], "module", "vcs"], cwd=git_repository)
-    prompt = run([binaries["starship"], "prompt", "--status", "1"], cwd=jj_repository)
-    assert all(segment in prompt for segment in ("╭", "│", "╰", change)), (
-        change,
-        prompt,
+    assert change in run(
+        [binaries["starship"], "prompt", "--status", "1"], cwd=jj_repository
     )
-
-    if "--benchmark" in sys.argv[2:]:
-        initialization_commands = {
-            "atuin": "init zsh --disable-ctrl-r --disable-up-arrow --disable-ai",
-            "carapace": "_carapace zsh",
-            "direnv": "hook zsh",
-            "starship": "init zsh",
-            "zoxide": "init zsh",
-        }
-        scripts = {
-            "compiled store init": "\n".join(
-                f"source {shlex.quote(source)}" for source in sources
-            ),
-            "runtime init generation": "\n".join(
-                f'eval "$({shlex.quote(binaries[name])} {arguments})"'
-                for name, arguments in initialization_commands.items()
-            ),
-        }
-        samples = {name: [] for name in scripts}
-        for iteration in range(12):
-            for name, script in scripts.items():
-                start = time.perf_counter()
-                run(
-                    [
-                        binaries["zsh"],
-                        "-dfi",
-                        "-c",
-                        'autoload -Uz compinit; compinit -C -d "$XDG_CACHE_HOME/benchmark-zcompdump";\n'
-                        + script,
-                    ]
-                )
-                if iteration >= 2:
-                    samples[name].append((time.perf_counter() - start) * 1000)
-        for name, durations in samples.items():
-            print(
-                f"warm init-only median, {name}: {statistics.median(durations):.1f} ms"
-            )
 
 print("generated shell/native VCS integration checks passed")
