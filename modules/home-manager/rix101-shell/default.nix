@@ -260,6 +260,15 @@ in
       ++ lib.optionals (cfg.gpg.enable && !config.programs.gpg.enable) [ config.programs.gpg.package ]
       ++ lib.optionals (migrationArguments != [ ]) [ migrateState ];
 
+    programs.jujutsu.settings.merge-tools.jj-hunk = lib.mkIf config.programs.jujutsu.enable {
+      program = lib.getExe pkgs.custom.jj-hunk;
+      edit-args = [
+        "select"
+        "$left"
+        "$right"
+      ];
+    };
+
     programs.atuin = lib.mkIf cfg.atuin {
       enable = true;
       enableNushellIntegration = builtins.elem "nushell" cfg.shells;

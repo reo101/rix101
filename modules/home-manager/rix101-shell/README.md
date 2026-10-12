@@ -8,6 +8,10 @@ not CPU architecture or `meta.deploy.hostname`. Override `rebuildBackend` and
 Home Manager with no selector. `rebuild` accepts an action first, then arguments,
 for example `rebuild test --show-trace`.
 
+When `programs.jujutsu.enable` is true, this module registers `merge-tools.jj-hunk`
+with the custom package's absolute executable path. The default diff editor is
+unchanged, and `jj-hunk` is not installed on `PATH`.
+
 ## Why some integration remains custom
 
 Compared against Home Manager revision `f53f3267f5d009dd8f99443505e609389d7ff267`:

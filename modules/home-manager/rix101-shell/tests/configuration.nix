@@ -40,7 +40,11 @@ let
     programs.nushell.enable = true;
     services.gpg-agent.enable = true;
   };
-  disabled = configuration metadata { rix101.shell.enable = lib.mkForce false; };
+  withJujutsu = configuration metadata { programs.jujutsu.enable = true; };
+  disabled = configuration metadata {
+    rix101.shell.enable = lib.mkForce false;
+    programs.jujutsu.enable = true;
+  };
   arm = flake.nixosConfigurations.cheetah-avf.config.home-manager.users.reo101;
   identity = configuration: {
     inherit (configuration.rix101.shell) rebuildBackend rebuildTarget;
@@ -54,6 +58,17 @@ assert overridden.rix101.shell.rebuildTarget == "custom-target";
 assert overridden.rix101.shell.rebuildBackend == "nix-darwin";
 assert !emptyShells.success;
 assert !disabled.programs.zsh.enable && !disabled.programs.nushell.enable;
+assert !((configured.programs.jujutsu.settings.merge-tools or { }) ? jj-hunk);
+assert !((disabled.programs.jujutsu.settings.merge-tools or { }) ? jj-hunk);
+assert
+  withJujutsu.programs.jujutsu.settings.merge-tools.jj-hunk == {
+    program = lib.getExe pkgs.custom.jj-hunk;
+    edit-args = [
+      "select"
+      "$left"
+      "$right"
+    ];
+  };
 assert configured.programs.atuin.enable && configured.programs.atuin.enableNushellIntegration;
 assert !configured.programs.atuin.enableZshIntegration;
 assert configured.programs.carapace.environment.CARAPACE_EXCLUDES == "nix";
