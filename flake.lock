@@ -2018,6 +2018,7 @@
         "stylix": "stylix",
         "systems": "systems_2",
         "terranix": "terranix",
+        "tranquil": "tranquil",
         "treefmt-nix": "treefmt-nix",
         "ukiyo": "ukiyo",
         "wired": "wired",
@@ -2316,6 +2317,26 @@
         "owner": "tinted-theming",
         "repo": "base16-zed",
         "type": "github"
+      }
+    },
+    "tranquil": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792008549,
+        "narHash": "sha256-7m95Ng3TgBjWupfxeqpmRACYkIQQ4F5Oxg8lBtMeMVI=",
+        "ref": "refs/heads/main",
+        "rev": "9817f52e5467416f6c3a0b08ad1362fc18fc907c",
+        "revCount": 630,
+        "type": "git",
+        "url": "https://tangled.org/tranquil.farm/tranquil-pds"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://tangled.org/tranquil.farm/tranquil-pds"
       }
     },
     "treefmt": {

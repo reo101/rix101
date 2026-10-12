@@ -42,6 +42,7 @@
     ./modules/slskd.nix
     ./modules/certs
     ./modules/nix-serve.nix
+    ./modules/pds.nix
   ];
 
   # services.kanidm = { };

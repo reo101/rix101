@@ -365,6 +365,10 @@
       url = "github:terranix/terranix";
       flake = false;
     };
+    tranquil = {
+      url = "git+https://tangled.org/tranquil.farm/tranquil-pds";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";

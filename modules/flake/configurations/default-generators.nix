@@ -317,6 +317,11 @@ let
     outputs;
 in
 {
+  flake-file.inputs.tranquil = {
+    url = "git+https://tangled.org/tranquil.farm/tranquil-pds";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   auto.configurations.configurationTypes = lib.mkDefault {
     nixos = {
       predicate = (
