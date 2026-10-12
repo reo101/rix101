@@ -42,6 +42,7 @@
     ./modules/slskd.nix
     ./modules/certs
     ./modules/nix-serve.nix
+    ./modules/tangled
     ./modules/pds.nix
   ];
 

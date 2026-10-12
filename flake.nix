@@ -361,6 +361,10 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    tangled = {
+      url = "git+https://tangled.org/tangled.org/core";
+      inputs.flake-compat.follows = "flake-compat";
+    };
     terranix = {
       url = "github:terranix/terranix";
       flake = false;

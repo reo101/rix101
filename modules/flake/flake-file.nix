@@ -190,6 +190,11 @@
         inputs.nixpkgs.follows = "nixpkgs";
       };
 
+      tangled = {
+        url = "git+https://tangled.org/tangled.org/core";
+        inputs.flake-compat.follows = "flake-compat";
+      };
+
       ida-pro = {
         url = "github:reo101/ida-pro-nix";
         inputs.nixpkgs.follows = "nixpkgs";
