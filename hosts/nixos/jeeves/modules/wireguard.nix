@@ -14,6 +14,7 @@ let
   wireguard-network-host-cidr = lib.net.cidr.hostCidr 1 wireguard-network-cidr;
   wireguard-network-gateway = lib.net.cidr.host 1 wireguard-network-cidr;
   restrictedPeers = lib.filterAttrs (_: peer: (peer.allowedTCPPorts or null) != null) wgServer.peers;
+  isolatedPeers = lib.filterAttrs (_: peer: !(peer.allowForwarding or true)) wgServer.peers;
   peerIP = peer: lib.net.cidr.host peer.hostIndex wireguard-network-cidr;
   peerFirewallRules =
     peer:
@@ -30,6 +31,16 @@ let
     '') peer.allowedTCPPorts
     + /* bash */ ''
       iptables -D INPUT -i ${wireguard-interface} -s ${peerIP peer} -j DROP 2>/dev/null || true
+    '';
+  peerForwardRules =
+    peer: /* bash */ ''
+      iptables -I FORWARD 1 -i ${wireguard-interface} -s ${peerIP peer} -j DROP
+      iptables -I FORWARD 1 -o ${wireguard-interface} -d ${peerIP peer} -j DROP
+    '';
+  peerForwardStopRules =
+    peer: /* bash */ ''
+      iptables -D FORWARD -i ${wireguard-interface} -s ${peerIP peer} -j DROP 2>/dev/null || true
+      iptables -D FORWARD -o ${wireguard-interface} -d ${peerIP peer} -j DROP 2>/dev/null || true
     '';
 in
 {
@@ -86,10 +97,12 @@ in
 
     # A peer with non-null `allowedTCPPorts` is denied everything else before NixOS's
     # general firewall rules (which otherwise apply to every WireGuard peer).
-    extraCommands = lib.concatMapAttrsStringSep "\n" (_: peer: peerFirewallRules peer) restrictedPeers;
-    extraStopCommands = lib.concatMapAttrsStringSep "\n" (
-      _: peer: peerFirewallStopRules peer
-    ) restrictedPeers;
+    extraCommands =
+      lib.concatMapAttrsStringSep "\n" (_: peer: peerFirewallRules peer) restrictedPeers
+      + lib.concatMapAttrsStringSep "\n" (_: peer: peerForwardRules peer) isolatedPeers;
+    extraStopCommands =
+      lib.concatMapAttrsStringSep "\n" (_: peer: peerFirewallStopRules peer) restrictedPeers
+      + lib.concatMapAttrsStringSep "\n" (_: peer: peerForwardStopRules peer) isolatedPeers;
   };
 
   # Local DNS resolving, mainly for `jeeves.lan`

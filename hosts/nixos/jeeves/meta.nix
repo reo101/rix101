@@ -57,15 +57,22 @@
       iso = {
         hostIndex = 10;
       };
-      dtd = {
-        publicKey = "EC2gIHyM4KSYKYxQWh6azQPHp/IZ0xMpYEZhXSFwFmM=";
+      pocketbook = {
+        publicKey = "iOLbnnNRaDMVQMSYsuAtczpDwsAWxFaylaZsUeUNNGw=";
         hostIndex = 11;
-        allowedTCPPorts = [ 8096 ];
+        allowedTCPPorts = [ 8443 ];
+        allowForwarding = false;
       };
       nomadalgia = {
         publicKey = "ZJ7gdrWAyB+LcOILHTZXfQ+VvUl1+ei2E5HoWxG3Vzs=";
         hostIndex = 12;
         allowedTCPPorts = [ 8096 ];
+      };
+      david = {
+        publicKey = "xTTo01hRFpXlaYKhr20IsdRplQan1eRmotN4JBmm+G8=";
+        hostIndex = 13;
+        allowedTCPPorts = [ 8096 ];
+        allowForwarding = false;
       };
     };
   };

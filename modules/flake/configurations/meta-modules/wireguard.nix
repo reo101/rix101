@@ -66,6 +66,11 @@ in
                           default = null;
                           description = "TCP ports this peer may access on the WireGuard server. null allows all ports.";
                         };
+                        allowForwarding = lib.mkOption {
+                          type = types.bool;
+                          default = true;
+                          description = "Whether this peer may route traffic through the WireGuard server.";
+                        };
                       };
                     }
                   )
