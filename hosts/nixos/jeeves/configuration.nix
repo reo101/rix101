@@ -24,6 +24,7 @@
     ./modules/immich.nix
     # ./modules/nextcloud.nix
     ./modules/paperless.nix
+    ./modules/paper-reading.nix
     ./modules/podman.nix
     ./modules/anki.nix
     ./modules/stirling-pdf.nix

@@ -35,6 +35,17 @@
 
   time.timeZone = "Europe/Sofia";
 
+  age.secrets."koreader.zotero-api-key" = {
+    owner = "reo101";
+    mode = "0400";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/zotero/api-key.age";
+  };
+  age.secrets."koreader.zotero-webdav-password" = {
+    owner = "reo101";
+    mode = "0400";
+    rekeyFile = lib.custom.repoSecret "home/jeeves/zotero/webdav-password.age";
+  };
+
   users.users.reo101.extraGroups = lib.mkAfter [ "users" ];
 
   networking.hostId = "a8997eee";

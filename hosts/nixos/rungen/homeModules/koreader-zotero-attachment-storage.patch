@@ -1,0 +1,49 @@
+--- a/main.lua
++++ b/main.lua
+@@ -205,7 +205,11 @@
+ function Plugin:initAPIAndBrowser()
+     self.zotero_dir_path = DataStorage:getDataDir() .. "/zotero"
+     lfs.mkdir(self.zotero_dir_path)
+-    ZoteroAPI.init(self.zotero_dir_path)
++    local attachment_dir
++    if Device.isPocketBook() then
++        attachment_dir = "/mnt/ext1/Papers"
++    end
++    ZoteroAPI.init(self.zotero_dir_path, attachment_dir)
+     self.small_font_face = Font:getFace("smallffont")
+     self.browser = ZoteroBrowser:new{
+         refresh_callback = function()
+--- a/zoteroapi.lua
++++ b/zoteroapi.lua
+@@ -64,7 +64,7 @@
+     return math.floor(x * fac) / fac
+ end
+ 
+-function API.init(zotero_dir)
++function API.init(zotero_dir, attachment_dir)
+     print("Z: initializing API")
+     API.zotero_dir = zotero_dir
+     local settings_path = BaseUtil.joinPath(API.zotero_dir, "meta.lua")
+@@ -72,7 +72,7 @@
+     API.settings = LuaSettings:open(settings_path)
+     print("Z: settings opened")
+ 
+-    API.storage_dir = BaseUtil.joinPath(API.zotero_dir, "storage")
++    API.storage_dir = attachment_dir or BaseUtil.joinPath(API.zotero_dir, "storage")
+     if not file_exists(API.storage_dir) then
+         lfs.mkdir(API.storage_dir)
+     end
+@@ -520,11 +520,11 @@ function API.downloadWebDAV(key, targetDir, targetPath)
+     local zip_cmd = "unzip -qq '" .. zipPath .. "' -d '" .. targetDir .. "'"
+     print("Unzipping with " .. zip_cmd)
+     local zip_result = os.execute(zip_cmd)
+-    if zip_result then
++    if zip_result == 0 then
++        os.remove(zipPath)
+         return targetPath
+     else
+         return nil, "Unzipping failed"
+     end
+ 
+-    local remove_result = os.remove(zipPath)
+ end

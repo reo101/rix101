@@ -1,7 +1,41 @@
-{ inputs, lib, pkgs, config, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  config,
+  osConfig,
+  ...
+}:
 
 let
   username = "reo101";
+  koreaderZoteroPlugin = pkgs.applyPatches {
+    name = "koreader-zotero-plugin";
+    src = pkgs.fetchFromGitHub {
+      owner = "stelzch";
+      repo = "zotero.koplugin";
+      rev = "73caca82e5d084367181c9347249664121158abe";
+      hash = "sha256-Bg5lbIUn2Jn+UbIDxiHbyIjn7bYcqb/OkUD3VNf7K+Q=";
+    };
+    patches = [
+      ../homeModules/koreader-zotero-secrets.patch
+      ../homeModules/koreader-zotero-attachment-storage.patch
+    ];
+  };
+  koreader = pkgs.symlinkJoin {
+    name = "koreader";
+    paths = [ pkgs.koreader ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/koreader" --prefix PATH : ${pkgs.unzip}/bin --set KOREADER_ZOTERO_API_KEY_FILE ${
+        lib.escapeShellArg
+        osConfig.age.secrets."koreader.zotero-api-key".path
+      } --set KOREADER_ZOTERO_WEBDAV_PASSWORD_FILE ${
+        lib.escapeShellArg
+        osConfig.age.secrets."koreader.zotero-webdav-password".path
+      }
+    '';
+  };
   rustdeskX11 = pkgs.symlinkJoin {
     name = "rustdesk-x11";
     paths = [ pkgs.rustdesk ];
@@ -43,6 +77,7 @@ in
 
   home.packages = [
     ## Core
+    koreader
     pkgs.ripgrep
     pkgs.fd
     pkgs.gnupg
@@ -147,6 +182,8 @@ in
       wantedBy = lib.mkForce [ "graphical-session.target" ];
     };
   };
+
+  home.file.".config/koreader/plugins/zotero.koplugin".source = koreaderZoteroPlugin;
 
   home.services.clipboard-url-cleaner.imports = [ pkgs.custom.clipboard-url-cleaner.services.default ];
 
