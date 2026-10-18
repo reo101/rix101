@@ -44,7 +44,7 @@
       };
 
       flake-file = {
-        url = "github:vic/flake-file";
+        url = "github:denful/flake-file";
       };
 
       flake-compat = {

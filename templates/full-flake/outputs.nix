@@ -32,7 +32,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
         };
 
         flake-file = {
-          url = "github:vic/flake-file";
+          url = "github:denful/flake-file";
         };
 
         flake-parts = {
