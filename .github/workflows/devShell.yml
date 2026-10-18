@@ -18,5 +18,5 @@ jobs:
        # systems=(x86_64-linux aarch64-linux)
        systems=(x86_64-linux)
        for system in "${systems[@]}"; do
-         nix build .#devShells.${system}.default --verbose --print-build-logs
+         nix build --accept-flake-config ".#devShells.${system}.default" --verbose --print-build-logs
        done

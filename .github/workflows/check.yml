@@ -24,7 +24,7 @@ jobs:
         name: rix101
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - run: >-
-        nix eval --raw
+        nix eval --accept-flake-config --raw
         ".#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel.drvPath"
 
   generated-flake:
@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: DeterminateSystems/nix-installer-action@v4
     - run: |
-        nix run .#write-flake
+        nix run --accept-flake-config .#write-flake
         git diff --exit-code -- flake.nix
 
   check:
@@ -56,4 +56,4 @@ jobs:
     - run: |
        # NOTE: `--no-build` to avoid building darwin stuff
        #       `--impure` because of `nix-on-droid`
-       nix flake check --no-build --verbose --print-build-logs --impure
+       nix flake check --accept-flake-config --no-build --verbose --print-build-logs --impure
