@@ -45,6 +45,7 @@
     ./modules/nix-serve.nix
     ./modules/tangled
     ./modules/pds.nix
+    ./modules/service-snapshots.nix
   ];
 
   # services.kanidm = { };
