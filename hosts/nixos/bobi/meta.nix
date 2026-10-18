@@ -1,11 +1,8 @@
+{ aspects, ... }:
 {
   system = "x86_64-linux";
 
-  roles = [
-    "common/rix101"
-    "desktop/wayland"
-    "desktop/firefox"
-  ];
+  users.reo101.aspects = [ aspects.workstation ];
 
   gui = true;
 

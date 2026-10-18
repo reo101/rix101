@@ -83,6 +83,7 @@
         purescript-overlay.inputs.flake-compat.follows = "flake-compat";
       };
     };
+    flake-aspects.url = "github:denful/flake-aspects";
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;

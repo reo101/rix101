@@ -46,31 +46,7 @@ let
       ))
     ];
 
-  moduleRegistryFor =
-    hostType:
-    {
-      nixos = config.flake.nixosModules;
-      nix-on-droid = config.flake.nixOnDroidModules;
-      nix-darwin = config.flake.darwinModules;
-      home-manager = config.flake.homeManagerModules;
-    }
-    .${hostType} or { };
-
-  getRole = roleName: (config.flake.roles or { }).${roleName} or (throw "Unknown role '${roleName}'");
-
-  resolveRoleModules =
-    hostType: roleNames:
-    let
-      registry = moduleRegistryFor hostType;
-      resolveModule =
-        moduleName:
-        registry.${moduleName}
-          or (throw "Unknown ${hostType} module '${moduleName}' referenced by role selection");
-      moduleNames = lib.unique (
-        lib.concatMap (roleName: (getRole roleName).${hostType} or [ ]) roleNames
-      );
-    in
-    lib.map resolveModule moduleNames;
+  composition = config.lib.composition;
 
   agenix-module-for =
     host-type:
@@ -89,10 +65,6 @@ let
   homeManagerModule =
     {
       meta,
-      # NOTE: `{}` is default for normal systems
-      #       set to module directly for `nixOnDroid`
-      # FIXME: `nixOnDroid` module has to not be an attrset
-      users ? { },
       extraModules ? [ ],
     }:
     {
@@ -101,7 +73,7 @@ let
         useGlobalPkgs = true;
         # Do not keep packages in ${HOME}
         useUserPackages = true;
-        # Import the Home Manager modules selected by this host's roles.
+        # Shared modules provide framework support, not user feature selections.
         sharedModules = extraModules ++ [
           (
             { lib, ... }:
@@ -117,19 +89,7 @@ let
           inherit meta;
           # inherit lib;
         };
-      }
-      // (
-        if builtins.isAttrs users then
-          {
-            # Not nixOnDroid
-            inherit users;
-          }
-        else
-          {
-            # nixOnDroid
-            config = users;
-          }
-      );
+      };
     };
 
   mkNixosHost =
@@ -151,8 +111,15 @@ let
         # Home Manager
         inputs.home-manager.nixosModules.home-manager
         (homeManagerModule {
-          inherit meta users;
+          inherit meta;
           extraModules = extraHomeModules;
+        })
+        { home-manager.users = users; }
+
+        (composition.resolveHost {
+          class = "nixos";
+          inherit meta;
+          userNames = builtins.attrNames users;
         })
 
         # nix-topology
@@ -181,6 +148,11 @@ let
       extraModules ? [ ],
       extraHomeModules ? [ ],
     }:
+    let
+      userNames = builtins.attrNames meta.users;
+    in
+    assert lib.assertMsg (builtins.length userNames == 1)
+      "Nix-on-Droid requires exactly one named Home Manager aspect binding";
     inputs.nix-on-droid.lib.nixOnDroidConfiguration {
       # NOTE: inferred by `pkgs.system`
       # inherit system;
@@ -192,8 +164,20 @@ let
         # Home Manager
         (homeManagerModule {
           inherit meta;
-          users = homeConfiguration;
-          extraModules = extraHomeModules;
+          extraModules = extraHomeModules ++ [
+            ({ config, ... }: {
+              assertions = [{
+                assertion = config.home.username == builtins.head userNames;
+                message = "Nix-on-Droid Home Manager username does not match its aspect binding";
+              }];
+            })
+          ];
+        })
+        { home-manager.config = homeConfiguration; }
+        (composition.resolveHost {
+          class = "nixOnDroid";
+          inherit meta userNames;
+          homePath = _: [ "home-manager" "config" ];
         })
         # UID and GUI
         {
@@ -236,8 +220,14 @@ let
         # Home Manager
         inputs.home-manager.darwinModules.home-manager
         (homeManagerModule {
-          inherit meta users;
+          inherit meta;
           extraModules = extraHomeModules;
+        })
+        { home-manager.users = users; }
+        (composition.resolveHost {
+          class = "darwin";
+          inherit meta;
+          userNames = builtins.attrNames users;
         })
       ]
       ++ extraModules;
@@ -257,11 +247,11 @@ let
       extraModules ? [ ],
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
-      inherit (meta) system;
       pkgs = pkgsFor meta.system meta.nixpkgs;
 
       modules = [
         configuration
+        (composition.resolveModules "homeManager" meta.aspects)
       ]
       ++ extraModules;
 
@@ -308,7 +298,10 @@ let
       liminix = inputs.liminix.outPath;
       outputs = (import "${liminix}/default.nix" {
         # Liminix configs are plain modules (evaluated with its own evalModules)
-        liminix-config = configuration;
+        liminix-config = {
+          imports = [ configuration (composition.resolveModules "liminix" meta.aspects) ];
+          _module.args = { inherit inputs meta; };
+        };
         device = import "${liminix}/devices/${meta.device}";
         nixpkgs = inputs.nixpkgs;
         system = meta.system;
@@ -340,7 +333,7 @@ in
             metaModules.hostname
             metaModules.nixpkgs
             metaModules.pubkey
-            metaModules.roles
+            metaModules.aspects
             metaModules.deploy
             metaModules.gui
             metaModules.wireguard
@@ -353,11 +346,11 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = resolveRoleModules "nixos" meta.roles ++ [
+          extraModules = [
             (agenix-module-for "nixos")
             ../../nixos/nix-build
           ];
-          extraHomeModules = resolveRoleModules "home-manager" meta.roles ++ [
+          extraHomeModules = [
             (agenix-module-for "homeManager")
           ];
         }
@@ -389,7 +382,7 @@ in
             metaModules.hostname
             metaModules.nixpkgs
             metaModules.pubkey
-            metaModules.roles
+            metaModules.aspects
             metaModules.deploy
           ];
 
@@ -415,8 +408,6 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           homeConfiguration = configurationFiles."home.nix".content;
-          extraModules = resolveRoleModules "nix-on-droid" meta.roles;
-          extraHomeModules = resolveRoleModules "home-manager" meta.roles;
         }
       );
       mkDeployNode = (
@@ -454,7 +445,7 @@ in
             metaModules.hostname
             metaModules.nixpkgs
             metaModules.pubkey
-            metaModules.roles
+            metaModules.aspects
             metaModules.deploy
           ];
         };
@@ -464,10 +455,10 @@ in
           inherit meta;
           configuration = configurationFiles."configuration.nix".content;
           users = genUsers configurationFiles;
-          extraModules = resolveRoleModules "nix-darwin" meta.roles ++ [
+          extraModules = [
             (agenix-module-for "darwin")
           ];
-          extraHomeModules = resolveRoleModules "home-manager" meta.roles ++ [
+          extraHomeModules = [
             (agenix-module-for "homeManager")
           ];
         }
@@ -502,7 +493,7 @@ in
             metaModules.enable
             metaModules.system
             metaModules.hostname
-            metaModules.roles
+            metaModules.aspects
             metaModules.nixpkgs
             # metaModules.pubkey
           ];
@@ -512,7 +503,6 @@ in
         mkHomeManagerHost {
           inherit meta;
           configuration = configurationFiles."home.nix".content;
-          extraModules = resolveRoleModules "home-manager" meta.roles;
         }
       );
     };
@@ -529,7 +519,6 @@ in
           imports = [
             metaModules.enable
             metaModules.system
-            metaModules.roles
             metaModules.nixpkgs
             metaModules.openwrt
           ];
@@ -583,7 +572,7 @@ in
           imports = [
             metaModules.enable
             metaModules.system
-            metaModules.roles
+            metaModules.aspects
             metaModules.nixpkgs
           ];
 

@@ -231,7 +231,7 @@
                         configuration
                         # Home Manager
                         inputs.home-manager.nixosModules.home-manager
-                      ] ++ (lib.attrValues config.flake.nixosModules);
+                      ] ++ (lib.attrValues config.flake.modules.nixos);
 
                       specialArgs = {
                         inherit inputs;
@@ -295,8 +295,10 @@
                                 inherit (config) lib;
                                 # Pass through `host` (default for `hostname`, etc.)
                                 inherit host;
+                                configurationType = name;
                                 # Pass through `inputs` (used for seeing the available `nixpkgs` inputs)
                                 inherit inputs;
+                                aspects = config.composition.aspects;
                               };
                               modules = [
                                 ./meta-modules/configuration.nix

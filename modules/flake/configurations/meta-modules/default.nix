@@ -7,7 +7,7 @@
   nixpkgs = ./nixpkgs.nix;
   openwrt = ./openwrt.nix;
   pubkey = ./pubkey.nix;
-  roles = ./roles.nix;
+  aspects = ./aspects.nix;
   system = ./system.nix;
   wireguard = ./wireguard.nix;
 }

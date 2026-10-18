@@ -1,11 +1,10 @@
+{ aspects, ... }:
 {
   # The `system` of the host
   system = "x86_64-linux";
 
-  roles = [
-    "common/rix101"
-    "server/selfhosted"
-  ];
+  aspects = [ aspects.server ];
+  users.jeeves.aspects = [ aspects.standardEnvironment ];
 
   # The host SSH key, used for encrypting agenix secrets
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPopSTZ81UyKp9JSljCLp+Syk51zacjh9fLteqxQ6/aB";

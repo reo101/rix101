@@ -1,10 +1,9 @@
+{ aspects, ... }:
 {
   system = "aarch64-linux";
   # HACK: newer versions fail to allocate `PTY`s in `NoD`
   nixpkgs = "88d3861acdd3d2f0e361767018218e51810df8a1";
-  roles = [
-    "common/rix101"
-  ];
+  users.nix-on-droid.aspects = [ aspects.standardEnvironment ];
   uid = 10578;
   gid = 10578;
   deploy = {

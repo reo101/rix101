@@ -1,0 +1,5 @@
+{
+  systems =
+    { lib, stdenv, ... }:
+    false;
+}

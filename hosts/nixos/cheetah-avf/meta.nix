@@ -1,10 +1,8 @@
+{ aspects, ... }:
 {
   system = "aarch64-linux";
 
-  roles = [
-    "common/rix101"
-    "desktop/wayland"
-  ];
+  users.reo101.aspects = with aspects; [ standardEnvironment wayland ];
 
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHoPr13i+vYcyUqoJocd5UNyNXJjpWzMHQJZC7oWwKE/ root@nixos";
 

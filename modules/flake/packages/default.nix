@@ -37,9 +37,7 @@
           inherit baseDir;
           thingType = "package";
           raw = false;
-          extras.systems = {
-            default = lib.const true;
-          };
+          extras.meta.default = { };
         };
     in
     {
@@ -66,7 +64,21 @@
                 types.submodule {
                   options = {
                     package = lib.mkOption { type = types.unspecified; };
-                    systems = lib.mkOption { type = types.functionTo types.bool; };
+                    meta = lib.mkOption {
+                      default = { };
+                      type = types.submodule {
+                        options = {
+                          systems = lib.mkOption {
+                            type = types.functionTo types.bool;
+                            default = lib.const true;
+                          };
+                          curried = lib.mkOption {
+                            type = types.bool;
+                            default = false;
+                          };
+                        };
+                      };
+                    };
                   };
                 }
               );
@@ -110,8 +122,8 @@
         legacyPackagesFromPkgs = lib.pipe config.auto.packages.result [
           (lib.filterAttrs (
             name:
-            { package, systems }:
-            systems {
+            { meta, ... }:
+            meta.systems {
               inherit (pkgsPure)
                 lib
                 stdenv
@@ -120,13 +132,14 @@
           ))
           (lib.mapAttrs (
             name:
-            { package, systems }:
+            result@{ meta, ... }:
             let
-              # Handle curried packages: { inputs }: { ... }: ...
-              packageArgs = builtins.functionArgs package;
-              isCurriedInputs = packageArgs == { inputs = false; };
-              actualPackage = if isCurriedInputs then package { inherit inputs; } else package;
-              # TODO: put in `autoThings` `handle`?
+              actualPackage = (
+                if meta.curried then
+                  lib.custom.defaultThingHandle { raw = false; thingType = "package"; } name result
+                else
+                  result
+              ).package;
               # TODO: keep source `dream2nix` module for overriding?
               isDream2Nix = lib.pipe actualPackage [
                 builtins.functionArgs

@@ -16,40 +16,20 @@
         hasNixFiles
         ;
     in
-    rec {
-      # Try to passthru `inputs` by default
+    {
       defaultThingHandle =
-        { raw, thingType }:
-        name: result:
+        {
+          raw,
+          thingType,
+          arguments ? { inherit inputs; inherit (config) lib; },
+        }:
+        _name: result:
         let
-          thing = if raw then result else result.${thingType};
-          # NOTE: use `config.lib` to get the extended lib with custom functions
-          passthru = {
-            inherit inputs;
-            inherit (config) lib;
-          };
-          thingArgs = lib.pipe thing [
-            builtins.functionArgs
-            builtins.attrNames
-          ];
-          handledThing =
-            if
-              and [
-                (builtins.isFunction thing)
-                # Check that all function's required arguments are present in passthru
-                (lib.all (arg: builtins.hasAttr arg passthru) thingArgs)
-              ]
-            # { inputs, ... }: { foo, ... }: bar
-            then
-              thing (lib.getAttrs thingArgs passthru)
-            # { foo, ... }: bar
-            else
-              thing;
-          handledResult = if raw then handledThing else result // { ${thingType} = handledThing; };
+          definition = if raw then result else result.${thingType};
+          appliedDefinition = definition (lib.intersectAttrs (lib.functionArgs definition) arguments);
         in
-        handledResult;
+        if raw then appliedDefinition else result // { ${thingType} = appliedDefinition; };
 
-      # TODO: make `passthru` more generic (maybe take `thing` as arg and decide itself what to do?)
       createThings =
         {
           baseDir,
@@ -68,7 +48,7 @@
               type == "regular" && lib.hasSuffix ".nix" name
           ),
           mkThing ? ({ thingDir, ... }: import thingDir),
-          handle ? (defaultThingHandle { inherit raw thingType; }),
+          handle ? (_: thing: thing),
           raw ? true,
           extras ? { },
         }:

@@ -8,7 +8,7 @@
 
 {
   imports = [
-    inputs.self.modules.home-manager.ida-pro
+    inputs.self.modules.homeManager.ida-pro
   ];
 
   # Home Manager needs a bit of information about you and the

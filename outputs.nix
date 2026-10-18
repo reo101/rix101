@@ -7,7 +7,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
     # BUG: infinite recursion
     # imports = [
     #   ./modules/flake/modules
-    # ] ++ inputs.self.flakeModules;
+    # ] ++ builtins.attrValues inputs.self.modules.flake;
 
     imports = [
       ./modules/flake/flake-file.nix
@@ -15,7 +15,7 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       ./modules/flake/lib-custom
       ./modules/flake/pkgs
       ./modules/flake/modules
-      ./modules/flake/roles
+      ./modules/flake/aspects
       ./modules/flake/configurations
       ./modules/flake/agenix
       ./modules/flake/topology
@@ -29,9 +29,6 @@ inputs.flake-parts.lib.mkFlake { inherit inputs; } (
     auto = {
       # Automatic modules, see `./modules/flake/modules/default.nix`
       modules.enableAll = true;
-
-      # Automatic roles, see `./modules/flake/roles/default.nix`
-      roles.enable = true;
 
       # Automatic configurations, see `./modules/flake/configurations/default.nix`
       configurations.enableAll = true;

@@ -9,7 +9,7 @@ let
   spindle = config.services.tangled.spindle;
 in
 {
-  imports = [ inputs.self.nixosModules.service-snapshots ];
+  imports = [ inputs.self.modules.nixos.service-snapshots ];
 
   rix101.serviceSnapshots.groups.atproto = {
     units = [

@@ -2,9 +2,9 @@
 
 {
   imports = [
-    inputs.self.modules.nix-on-droid.am
-    inputs.self.modules.nix-on-droid.rish
-    inputs.self.modules.nix-on-droid.home-manager-users-stub
+    inputs.self.modules.nixOnDroid.am
+    inputs.self.modules.nixOnDroid.rish
+    inputs.self.modules.nixOnDroid.home-manager-users-stub
   ];
 
   environment.packages = with pkgs; [ ];

@@ -1,9 +1,6 @@
+{ aspects, ... }:
 {
   system = "x86_64-darwin";
-  roles = [
-    "common/rix101"
-    "darwin/workstation"
-    "desktop/wezterm"
-  ];
+  users.pavelatanasov.aspects = [ aspects.darwinWorkstation ];
   enable = false;
 }

@@ -21,6 +21,8 @@
       createThings {
         inherit baseDir;
         thingType = "module";
+        mkThing = { thingDir, type, ... }:
+          if type == "directory" then "${thingDir}/default.nix" else thingDir;
       };
   in {
     auto.modules = lib.mkOption {
@@ -29,13 +31,13 @@
       '';
       type = types.submodule (autoModulesSubmodule: let
         inherit (autoModulesSubmodule.config)
-          moduleTypes
+          classes
           enableAll
           baseDir
           ;
       in {
         options = {
-          enableAll = lib.mkEnableOption "Automatic ${builtins.toString moduleTypes} modules extraction";
+          enableAll = lib.mkEnableOption "Automatic ${builtins.toString classes} modules extraction";
           baseDir = lib.mkOption {
             description = ''
               Base directory of the contained modules, used as a base for the rest of the options
@@ -44,10 +46,10 @@
             default = "${self}/modules";
             defaultText = ''''${self}/modules'';
           };
-          moduleTypes = lib.mkOption {
+          classes = lib.mkOption {
             # NOTE: default value set in the global `config` below, for visibility
-            type = types.attrsOf (types.submodule (moduleTypeSubmodule@{ name, ... }: let
-              inherit (moduleTypeSubmodule.config)
+            type = types.attrsOf (types.submodule (classSubmodule@{ name, ... }: let
+              inherit (classSubmodule.config)
                 enable
                 dir
                 ;
@@ -62,12 +64,19 @@
                   type = types.path;
                   default = "${baseDir}/${name}";
                 };
+                class = lib.mkOption {
+                  description = "Module class used for aspect composition";
+                  type = types.str;
+                  default = {
+                    nix-darwin = "darwin";
+                    home-manager = "homeManager";
+                    nix-on-droid = "nixOnDroid";
+                  }.${name} or name;
+                };
                 modulesName = lib.mkOption {
                   description = ''
-                    Name(s) for the modules output.
-                    Can be a string (used as `old`, with `new = null`) or an attrset with `old` and/or `new`.
-                    - `old`: Name for the `''${moduleType}Modules` output (null to skip)
-                    - `new`: Name for the `modules.''${moduleType}` output (null to skip)
+                    Public module export names. A string selects only the legacy export.
+                    Set `old` or `new` to `null` to disable that export.
                   '';
                   type = types.either types.str (types.submodule {
                     options = {
@@ -81,8 +90,11 @@
                       };
                     };
                   });
-                  default = { old = "${kebabToCamel name}Modules"; new = name; };
-                  apply = v: if builtins.isString v then { old = v; new = null; } else v;
+                  default = {
+                    old = if name == "nix-darwin" then "darwinModules" else "${kebabToCamel name}Modules";
+                    new = classSubmodule.config.class;
+                  };
+                  apply = value: if builtins.isString value then { old = value; new = null; } else value;
                 };
                 resultModules = lib.mkOption {
                   description = ''
@@ -101,26 +113,11 @@
           };
           result = lib.mkOption {
             readOnly = true;
-            default = {
-              modules = let
-                mkResultModules = new: lib.pipe moduleTypes ([
-                  (lib.concatMapAttrs
-                    (_moduleType: moduleTypeConfig:
-                      let name = moduleTypeConfig.modulesName.${if new then "new" else "old"};
-                      in lib.optionalAttrs (name != null) {
-                        ${name} =
-                          lib.mapAttrs
-                            (_host: module: module)
-                            moduleTypeConfig.resultModules;
-                      }))
-                ] ++ lib.optional new (modules: { inherit modules; }));
-              in {
-                # NOTE: old:  ${name}Modules.${module}
-                #       new: modules.${name}.${module}
-                old = mkResultModules false;
-                new = mkResultModules true;
-              };
-            };
+            default = lib.concatMapAttrs
+              (_className: classConfig: {
+                ${classConfig.class} = classConfig.resultModules;
+              })
+              classes;
           };
         };
       });
@@ -129,19 +126,22 @@
   };
 
   config = {
-    auto.modules.moduleTypes = lib.mkOptionDefault {
+    auto.modules.classes = lib.mkOptionDefault {
       nixos = {};
       nix-on-droid = {};
-      nix-darwin = {
-        modulesName = { old = "darwinModules"; new = "darwin"; };
-      };
+      nix-darwin = {};
       home-manager = {};
       flake = {};
     };
 
     flake = let
-      modulesOld = config.auto.modules.result.modules.old;
-      modulesNew = config.auto.modules.result.modules.new;
-    in modulesOld // modulesNew;
+      moduleExports = scheme: lib.concatMapAttrs
+        (_className: classConfig:
+          let name = classConfig.modulesName.${scheme};
+          in lib.optionalAttrs (name != null) {
+            ${name} = classConfig.resultModules;
+          })
+        config.auto.modules.classes;
+    in moduleExports "old" // { modules = moduleExports "new"; };
   };
 }

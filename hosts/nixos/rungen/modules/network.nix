@@ -30,7 +30,7 @@ let
   homeCidr = "192.168.1.0/24";
 in
 {
-  imports = [ inputs.self.nixosModules.netpath ];
+  imports = [ inputs.self.modules.nixos.netpath ];
 
   environment.systemPackages = [
     pkgs.iw

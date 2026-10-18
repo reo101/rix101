@@ -1,11 +1,7 @@
+{ aspects, ... }:
 {
   system = "aarch64-darwin";
-  roles = [
-    "common/rix101"
-    "darwin/workstation"
-    "desktop/wezterm"
-    "media/spotify"
-  ];
+  users.pavelatanasov.aspects = with aspects; [ darwinWorkstation spotify ];
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK2DM5F3nLKDiWoxqTwJw4bi5Q1RGZYtEPmTcLxTC7c9";
   deploy = {
     hostname = "localhost";

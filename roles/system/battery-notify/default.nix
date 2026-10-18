@@ -1,5 +1,0 @@
-{
-  nixos = [
-    "battery-notify"
-  ];
-}

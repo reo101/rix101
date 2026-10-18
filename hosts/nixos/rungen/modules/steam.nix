@@ -6,7 +6,7 @@
 }:
 {
   imports = [
-    inputs.self.nixosModules.steam
+    inputs.self.modules.nixos.steam
     inputs.steamlesslink.nixosModules.steamless-link-controller
   ];
 

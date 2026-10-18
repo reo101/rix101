@@ -1,12 +1,9 @@
+{ aspects, ... }:
 {
   system = "aarch64-linux";
 
-  roles = [
-    "common/rix101"
-    "desktop/wayland"
-    "desktop/firefox"
-    "system/battery-notify"
-  ];
+  aspects = [ aspects.batteryNotification ];
+  users.reo101.aspects = [ aspects.workstation ];
 
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZFRF6sDONR9q7Hx+11ARCOaJ8b/7WvOclm4GxK79Nk";
 

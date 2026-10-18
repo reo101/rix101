@@ -1,4 +1,4 @@
-{ inputs, self, lib, config, ... }:
+{ self, lib, config, ... }:
 
 {
   key = "rix101.modules.flake.overlays";
@@ -61,9 +61,10 @@
         lib.pipe
           config.auto.overlays.result
           [
-            (lib.mapAttrs
-              (name: overlay:
-                overlay))
+            (lib.mapAttrs (config.lib.custom.defaultThingHandle {
+              raw = true;
+              thingType = "overlay";
+            }))
           ];
     in {
       inherit overlays;

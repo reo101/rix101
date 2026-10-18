@@ -1,12 +1,8 @@
+{ aspects, ... }:
 {
   system = "x86_64-linux";
 
-  roles = [
-    "common/rix101"
-    "desktop/wayland"
-    "desktop/firefox"
-    "media/mpd-satellite"
-  ];
+  users.reo101.aspects = with aspects; [ workstation mpdSatellite ];
 
   pubkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2SviyDaz+wZpQpn9PwYnz/Jl4C4MsxiK6A2NmfRKY2 root@rungen";
 
