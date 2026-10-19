@@ -253,10 +253,14 @@ let
 
   waitForTransmission = pkgs.writeShellApplication {
     name = "wait-for-transmission";
-    runtimeInputs = [ pkgs.coreutils pkgs.curl ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.curl
+    ];
     text = ''
       for ((attempt = 1; attempt <= 60; attempt++)); do
-        if curl --silent --output /dev/null --max-time 1 http://127.0.0.1:${builtins.toString config.services.transmission.settings.rpc-port}/transmission/rpc; then
+        # OPTIONS checks readiness without counting as a failed RPC login.
+        if curl --silent --request OPTIONS --output /dev/null --max-time 1 http://127.0.0.1:${builtins.toString config.services.transmission.settings.rpc-port}/transmission/rpc; then
           exit 0
         fi
         sleep 1
