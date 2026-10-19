@@ -68,10 +68,21 @@
         hostIndex = 12;
         allowedTCPPorts = [ 8096 ];
       };
-      david = {
+      david-tv = {
         publicKey = "xTTo01hRFpXlaYKhr20IsdRplQan1eRmotN4JBmm+G8=";
         hostIndex = 13;
         allowedTCPPorts = [ 8096 ];
+        allowForwarding = false;
+      };
+      david-phone = {
+        publicKey = "bV8v0QRcMLqwSUMt1b4CyBAiCmC63OQWeZsAbFugYmE=";
+        hostIndex = 14;
+        allowedTCPPorts = [
+          # Seerr
+          5055
+          # Jellyfin
+          8096
+        ];
         allowForwarding = false;
       };
     };
