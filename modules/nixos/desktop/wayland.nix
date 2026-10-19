@@ -466,13 +466,18 @@ in
         opacity = cfg.stylix.opacity;
       };
 
-      fonts.packages = lib.unique [
-        pkgs.noto-fonts
-        pkgs.noto-fonts-cjk-sans
-        cfg.stylix.fonts.monospace.package
-        cfg.stylix.fonts.serif.package
-        cfg.stylix.fonts.sansSerif.package
-        cfg.stylix.fonts.emoji.package
+      fonts.packages = lib.mkMerge [
+        (lib.unique [
+          pkgs.noto-fonts
+          pkgs.noto-fonts-cjk-sans
+          cfg.stylix.fonts.monospace.package
+          cfg.stylix.fonts.serif.package
+          cfg.stylix.fonts.sansSerif.package
+          cfg.stylix.fonts.emoji.package
+        ])
+        (lib.mkBefore [
+          pkgs.uiua386
+        ])
       ];
 
       environment.sessionVariables = {
