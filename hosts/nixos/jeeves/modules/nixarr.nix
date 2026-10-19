@@ -512,9 +512,12 @@ in
             };
           }
           {
-            name = "Zamunda RIP";
-            sort_name = "zamunda rip";
-            fields.definitionFile = "zamundarip";
+            name = "Zamunda LIFE";
+            sort_name = "zamunda life";
+            fields = {
+              definitionFile = "zamundalife";
+              baseUrl = "https://zamunda.life/";
+            };
           }
         ];
       };
