@@ -201,6 +201,56 @@ let
     '';
   };
 
+  prowlarrProxyConfigurator = pkgs.writers.writePython3Bin "prowlarr-proxy-configurator" {
+    flakeIgnore = [ "E501" ];
+  } ''
+    import json
+    import pathlib
+    import time
+    import urllib.error
+    import urllib.request
+
+    api_url = "http://127.0.0.1:${toString config.nixarr.prowlarr.port}/api/v1"
+    solver_url = "http://127.0.0.1:${toString config.services.flaresolverr.port}/"
+    api_key = pathlib.Path("${config.nixarr.stateDir}/secrets/prowlarr.api-key").read_text().strip()
+    headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
+
+
+    def request(endpoint, data=None, method=None):
+        body = None if data is None else json.dumps(data).encode()
+        response = urllib.request.urlopen(urllib.request.Request(
+            f"{api_url}/{endpoint}", data=body, headers=headers, method=method
+        ), timeout=30)
+        content = response.read()
+        return json.loads(content) if content else None
+
+
+    for attempt in range(60):
+        try:
+            urllib.request.urlopen(solver_url, timeout=2).close()
+            break
+        except (urllib.error.URLError, TimeoutError):
+            time.sleep(1)
+    else:
+        raise RuntimeError("FlareSolverr did not become ready")
+
+    tag = next((item for item in request("tag") if item["label"] == "flaresolverr"), None)
+    if tag is None:
+        tag = request("tag", {"label": "flaresolverr"})
+    proxy = next((item for item in request("indexerproxy") if item["name"] == "FlareSolverr"), None)
+    if proxy is None:
+        proxy = next(item for item in request("indexerproxy/schema") if item["implementation"] == "FlareSolverr")
+    proxy["name"] = "FlareSolverr"
+    proxy["tags"] = [tag["id"]]
+    for field in proxy["fields"]:
+        if field["name"] == "host":
+            field["value"] = solver_url
+        elif field["name"] == "requestTimeout":
+            field["value"] = 120
+    endpoint = f"indexerproxy/{proxy['id']}" if "id" in proxy else "indexerproxy"
+    request(endpoint, proxy, "PUT" if "id" in proxy else "POST")
+  '';
+
   waitForTransmission = pkgs.writeShellApplication {
     name = "wait-for-transmission";
     runtimeInputs = [ pkgs.coreutils pkgs.curl ];
@@ -366,6 +416,7 @@ in
       enable = true;
       settings-sync = {
         enable-nixarr-apps = true;
+        tags = [ "flaresolverr" ];
 
         # Category ids are `Newznab`/`Torznab` categories exposed by Prowlarr
         # Reference: <https://newznab.readthedocs.io/en/latest/misc/api/#predefined-categories>
@@ -449,6 +500,7 @@ in
           {
             name = "RuTracker.org";
             sort_name = "rutracker org";
+            tags = [ "flaresolverr" ];
             fields = {
               baseUrl = "https://rutracker.org/";
               username = "reo101";
@@ -484,6 +536,7 @@ in
   };
 
   services = {
+    flaresolverr.enable = true;
     prowlarr.settings.auth.required = "DisabledForLocalAddresses";
     sonarr.settings.auth.required = "DisabledForLocalAddresses";
     radarr.settings.auth.required = "DisabledForLocalAddresses";
@@ -530,9 +583,22 @@ in
       # after `TimeoutStartSec` and Lidarr reports a bogus auth/client failure
       transmission.serviceConfig.Type = lib.mkForce "simple";
 
+      flaresolverr.environment = {
+        HOST = "127.0.0.1";
+        # Solver request logs can contain login form credentials.
+        LOG_LEVEL = "warning";
+      };
+
       # Prowlarr validates indexers against their upstream sites during sync.
       # Tracker outages should be logged but must not roll back a system switch.
-      prowlarr-sync-config.serviceConfig.SuccessExitStatus = [ 1 ];
+      prowlarr-sync-config = {
+        after = [ "flaresolverr.service" ];
+        requires = [ "flaresolverr.service" ];
+        serviceConfig = {
+          ExecStartPre = lib.getExe prowlarrProxyConfigurator;
+          SuccessExitStatus = [ 1 ];
+        };
+      };
 
       sonarr-sync-config = {
         after = [ "transmission.service" ];
