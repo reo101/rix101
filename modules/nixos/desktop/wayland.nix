@@ -629,6 +629,8 @@ in
           addons = [
             pkgs.fcitx5-mozc
             pkgs.fcitx5-gtk
+            pkgs.libsForQt5.fcitx5-qt
+            pkgs.kdePackages.fcitx5-qt
           ];
         };
       };
