@@ -201,6 +201,31 @@ let
     '';
   };
 
+  lidarrMetadataExporter = pkgs.writers.writeNuBin "lidarr-metadata-exporter" ''
+    let api_url = "http://127.0.0.1:${builtins.toString config.nixarr.lidarr.port}/api/v1"
+    let config_xml = "${config.nixarr.stateDir}/lidarr/config.xml"
+    let api_key = (open $config_xml | get content | where tag == ApiKey | get -o 0.content.0.content)
+    if ($api_key | is-empty) or $api_key == "null" {
+      error make {msg: $"failed to read Lidarr API key from ($config_xml)"}
+    }
+
+    let headers = {X-Api-Key: $api_key}
+    for _ in 1..60 {
+      try {
+        http get --headers $headers --max-time 5sec $"($api_url)/system/status" | ignore
+        break
+      }
+      sleep 5sec
+    }
+
+    let kodi = (http get --headers $headers $"($api_url)/metadata" | where implementation == XbmcMetadata | first)
+    if $kodi.enable { exit 0 }
+
+    http put --headers $headers --content-type application/json $"($api_url)/metadata/($kodi.id)" ($kodi | update enable true) | ignore
+    let artist_ids = (http get --headers $headers $"($api_url)/artist" | get id)
+    http post --headers $headers --content-type application/json $"($api_url)/command" {name: RescanFolders, artistIds: $artist_ids} | ignore
+  '';
+
   prowlarrProxyConfigurator = pkgs.writers.writePython3Bin "prowlarr-proxy-configurator" {
     flakeIgnore = [ "E501" ];
   } ''
@@ -616,6 +641,19 @@ in
         after = [ "transmission.service" ];
         requires = [ "transmission.service" ];
         serviceConfig.ExecStartPre = lib.mkBefore (lib.getExe waitForTransmission);
+      };
+
+      lidarr-metadata-exporter = {
+        description = "Enable Lidarr Kodi/Emby metadata export";
+        after = [ "lidarr.service" ];
+        wants = [ "lidarr.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          ExecStart = lib.getExe lidarrMetadataExporter;
+          Type = "oneshot";
+          User = "lidarr";
+          Group = "media";
+        };
       };
 
       lidarr-queue-maintainer = {
