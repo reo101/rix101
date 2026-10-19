@@ -12,6 +12,10 @@
 
   services.steamless-link-controller = {
     enable = true;
+    productIds = [
+      4866 # 0x1302, USB
+      4867 # 0x1303, Bluetooth
+    ];
     host = "jeeves.lan";
   };
 
@@ -19,12 +23,20 @@
   systemd.services.steamless-link-controller.wantedBy = lib.mkForce [ ];
 
   environment.systemPackages = [
+    pkgs.custom.steam-controller-live-haptics
     pkgs.mangohud
     pkgs.protonup-ng
     pkgs.r2modman
     pkgs.protontricks
     pkgs.moonlight-qt
   ];
+
+  security.wrappers.livehaptics-gui = {
+    source = "${pkgs.custom.steam-controller-live-haptics}/bin/LiveHapticsGUI";
+    owner = "root";
+    group = "steamless-link-input";
+    setgid = true;
+  };
 
   boot.kernelModules = [ "vhci-hcd" ];
 
