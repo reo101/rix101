@@ -32,6 +32,9 @@ stdenv.mkDerivation rec {
       It enables streaming games from a powerful desktop to Samsung Smart TVs running
       Tizen OS 5.5 or higher.
 
+      This package provides the prebuilt .wgt application file for installation on
+      Samsung Smart TVs with Tizen OS 5.5 or higher.
+
       To install on your TV:
       1. Enable Developer Mode: Apps > 12345 > Developer mode > On
       2. Connect: sdb connect <TV_IP>
