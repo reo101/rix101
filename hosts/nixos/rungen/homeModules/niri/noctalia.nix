@@ -326,6 +326,8 @@ in
       wallpaper = {
         enabled = true;
         directory = "${config.xdg.dataHome}/wallpapers";
+        fill_color = "primary";
+        fill_mode = "fit";
         automation = {
           recursive = true;
         };
