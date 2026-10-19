@@ -31,6 +31,7 @@
     ./modules/taskwarrior.nix
     ./modules/nix-ld.nix
     ./modules/atuin.nix
+    ./modules/shell-state.nix
     ./modules/syncthing.nix
     ./modules/ups.nix
     ./modules/mpd.nix
