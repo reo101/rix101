@@ -527,9 +527,10 @@ in
   systemd.user.services.sunshine = {
     wants = [ "sunshine-audio-sinks.service" ];
     serviceConfig = {
-      # Sunshine caches KMS monitor indexes at startup. Wait until Niri has
-      # enabled DP-3 and disabled the physical outputs before enumeration.
-      ExecStartPre = pkgs.writeShellScript "sunshine-wait-display" ''
+      # Niri starts after user activation. Wait in the main process so activation
+      # can proceed, but Sunshine cannot enumerate outputs before DP-3 is ready.
+      Type = "simple";
+      ExecStart = lib.mkForce (pkgs.writeShellScript "sunshine-start" ''
         set -euo pipefail
         echo "Waiting for Niri output ${virtualDisplayPort}"
         until ${lib.getExe' pkgs.coreutils "timeout"} 1s ${niriMsg} --json outputs 2>/dev/null \
@@ -537,8 +538,8 @@ in
             '.[$output].logical != null' >/dev/null 2>&1; do
           ${lib.getExe' pkgs.coreutils "sleep"} 0.5
         done
-      '';
-      TimeoutStartSec = "90s";
+        exec ${config.security.wrapperDir}/sunshine ${(pkgs.formats.keyValue { }).generate "sunshine.conf" config.services.sunshine.settings}
+      '');
       PrivateDevices = false;
       KillSignal = "SIGKILL";
       TimeoutStopSec = "5s";
