@@ -91,6 +91,7 @@ in
         nix-cargo-integration.inputs.parts.follows = "flake-parts";
         nix-cargo-integration.inputs.dream2nix.follows = "dream2nix";
         nix-cargo-integration.inputs.crane.follows = "crane";
+        nix-cargo-integration.inputs.rust-overlay.follows = "rust-overlay";
         nix-bindings-rust.inputs.nix.inputs.flake-parts.follows = "flake-parts";
         nix-bindings-rust.inputs.nix.inputs.flake-compat.follows =
           "flake-compat";

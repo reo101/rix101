@@ -33,6 +33,7 @@
     agenix-rekey = {
       url = "github:oddlama/agenix-rekey";
       inputs = {
+        flake-compat.follows = "flake-compat";
         flake-parts.follows = "flake-parts";
         nixpkgs.follows = "nixpkgs";
         pre-commit-hooks.inputs = {
@@ -248,6 +249,7 @@
           crane.follows = "crane";
           dream2nix.follows = "dream2nix";
           parts.follows = "flake-parts";
+          rust-overlay.follows = "rust-overlay";
         };
         nixpkgs.follows = "nixpkgs";
       };
@@ -363,7 +365,12 @@
     systems.url = "github:nix-systems/default";
     tangled = {
       url = "git+https://tangled.org/tangled.org/core";
-      inputs.flake-compat.follows = "flake-compat";
+      inputs = {
+        flake-compat.follows = "flake-compat";
+        gomod2nix.inputs.flake-utils.follows = "flake-utils";
+        microvm.follows = "microvm";
+        nixpkgs.follows = "nixpkgs";
+      };
     };
     terranix = {
       url = "github:terranix/terranix";

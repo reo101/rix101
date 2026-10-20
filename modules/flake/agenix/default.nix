@@ -25,6 +25,7 @@
 
     agenix-rekey = {
       url = "github:oddlama/agenix-rekey";
+      inputs.flake-compat.follows = "flake-compat";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       inputs.pre-commit-hooks.inputs.flake-compat.follows = "flake-compat";

@@ -193,6 +193,9 @@
       tangled = {
         url = "git+https://tangled.org/tangled.org/core";
         inputs.flake-compat.follows = "flake-compat";
+        inputs.gomod2nix.inputs.flake-utils.follows = "flake-utils";
+        inputs.microvm.follows = "microvm";
+        inputs.nixpkgs.follows = "nixpkgs";
       };
 
       ida-pro = {

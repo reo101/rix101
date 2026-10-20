@@ -13,7 +13,15 @@ let
   knotDomain = "knot.jeeves.reo101.xyz";
   spindleDomain = "spindle.jeeves.reo101.xyz";
   publicHttpsPort = 9443;
-  image = inputs.tangled.packages.${pkgs.stdenv.hostPlatform.system}.spindle-nixos-image;
+  image = inputs.tangled.packages.${pkgs.stdenv.hostPlatform.system}.spindle-nixos-image.override (
+    { nixosSystem, ... }:
+    {
+      # HACK: compatibility alias until Tangled starts using `microvm.kernel.target`
+      nixosSystem = lib.recursiveUpdate nixosSystem {
+        pkgs.stdenv.hostPlatform.linux-kernel.target = nixosSystem.config.microvm.kernel.target;
+      };
+    }
+  );
 in
 {
   imports = [
