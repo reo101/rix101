@@ -10,8 +10,8 @@ buildHomeAssistantComponent rec {
   domain = "philips_airplus";
   version = "0.3.0";
 
-  # WARN: `buildHomeAssistantComponent`'s manifest hook reads `domain` from the environment
-  __structuredAttrs = false;
+  # The manifest checker reads `domain` from NIX_ATTRS_JSON_FILE.
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     inherit owner;

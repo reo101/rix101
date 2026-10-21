@@ -12,8 +12,8 @@ buildHomeAssistantComponent rec {
   domain = "philips_airpurifier_coap";
   version = "0.34.3";
 
-  # WARN: `buildHomeAssistantComponent`'s manifest hook reads `domain` from the environment
-  __structuredAttrs = false;
+  # The manifest checker reads `domain` from NIX_ATTRS_JSON_FILE.
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     inherit owner;
@@ -25,6 +25,10 @@ buildHomeAssistantComponent rec {
   dependencies = [
     python314Packages.aioairctrl
     python314Packages.getmac
+  ];
+
+  ignoreVersionRequirement = [
+    "aioairctrl"
   ];
 
   postPatch = ''

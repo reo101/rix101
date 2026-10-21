@@ -9,8 +9,8 @@ buildHomeAssistantComponent rec {
   domain = "frosted_glass_manager";
   version = "1.3.0.1";
 
-  # WARN: `buildHomeAssistantComponent`'s manifest hook reads `domain` from the environment
-  __structuredAttrs = false;
+  # The manifest checker reads `domain` from NIX_ATTRS_JSON_FILE.
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     inherit owner;
