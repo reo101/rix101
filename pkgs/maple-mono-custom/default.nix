@@ -3,7 +3,6 @@
   stdenvNoCC,
   fetchFromGitHub,
   fetchurl,
-  unzip,
   python3,
 
   enableNerdFont ? true,
@@ -35,8 +34,8 @@
     "eight"
     "nine"
   ],
-  # Keywords to turn into pills (e.g. `["TASK" "DONE"]`)
-  # Automatically mapped to tag styles based on length (4, 5, or 7).
+  # Keywords to turn into pills (e.g. `["TASK" "DONE"]`).
+  # Built-in tags are left alone; unknown keywords get a composed `.bg` tag.
   pillKeywords ? [
     "TODO"
     "TASK"
@@ -45,199 +44,115 @@
   ],
   # Remove alt pill syntax (`todo))`)
   disableAltPill ? true,
-  # Build specific subfamily for smaller derivation (e.g. "Regular")
+  # Cap style for custom tags: block, circle, or sharp
+  pillStyle ? "block",
+  # Build only Regular / Bold / Italic / BoldItalic
+  leastStyles ? true,
+  # Build one specific subfamily (e.g. "Regular"); overrides leastStyles
   buildStyle ? null,
 }:
 
 let
   ps = python3.pkgs;
 
-  cnBaseStatic = fetchurl {
-    url = "https://github.com/subframe7536/maple-font/releases/download/cn-base/cn-base-static.zip";
-    hash = "sha256-HkBRGojXBoWnJ3q0ismVaav0GGuZj+hs0vOGbH8XYvs=";
+  cjkBaseStatic = fetchurl {
+    url = "https://github.com/subframe7536/maple-font/releases/download/cjk-base/cn-base-static.zip";
+    hash = "sha256-BF7VCQEpCi5DMhpvTpVyn6r+w7yKZXWFU8/xRs7ZAs4=";
   };
 
-  ufo-extractor = ps.buildPythonPackage (finalAttrs: {
-    pname = "ufo-extractor";
-    version = "0.8.1";
-    format = "wheel";
-    src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/cd/cf/34b74c79439ac47ee16e129b709b1fe61ef20211175ac358a252ae50dd3b/ufo_extractor-0.8.1-py2.py3-none-any.whl";
-      hash = "sha256-izsLstgfeAIgPpQIUbB85FWbZ9Yn7zMDTou9j61m1ac=";
-    };
-    dependencies = [
-      ps.fonttools
-      ps.fontfeatures
-    ];
-    doCheck = false;
-  });
+  pythonEnv = python3.withPackages (
+    ps: with ps; [
+      brotli
+      fontmake
+      fonttools
+      glyphslib
+      hy
+      py7zr
+      skia-pathops
+      ttfautohint-py
+    ]
+  );
 
-  foundrytools = ps.buildPythonPackage (finalAttrs: {
-    pname = "foundrytools";
-    version = "0.1.4";
-    pyproject = true;
-    src = ps.fetchPypi {
-      inherit (finalAttrs) pname version;
-      hash = "sha256-pWHSIhj0g1jUs6ij5o2NGcDBrgJDBCXjQyJmSpYOxfo=";
-    };
-    build-system = [ ps.setuptools ];
-    dependencies = [
-      ps.afdko
-      ps.fonttools
-      ps.skia-pathops
-      ps.brotli
-      ps.ttfautohint-py
-      ps.dehinter
-      ps.ufo2ft
-      ps.cffsubr
-      ufo-extractor
-    ];
-    doCheck = false;
-  });
+  outDir =
+    if enableNerdFont && enableCN then
+      "NF-CN"
+    else if enableNerdFont then
+      "NF"
+    else if enableCN then
+      "CN"
+    else if enableHinting then
+      "TTF-AutoHint"
+    else
+      "TTF";
 
-  foundrytools-cli = ps.buildPythonPackage (finalAttrs: {
-    pname = "foundrytools-cli";
-    version = "2.0.2";
-    pyproject = true;
-    src = ps.fetchPypi {
-      pname = "foundrytools_cli";
-      inherit (finalAttrs) version;
-      hash = "sha256-wOs6ka+M4vAvi4ydTdFHRbOvocyjI7gHWJ/n3YrV2Ws=";
-    };
-    build-system = [ ps.hatchling ];
-    dependencies = [
-      foundrytools
-      ps.afdko
-      ps.fonttools
-      ps.skia-pathops
-      ps.brotli
-      ps.click
-      ps.rich
-      ps.loguru
-      ps.pathvalidate
-    ];
-    doCheck = false;
-  });
+  fontName =
+    "Maple Mono"
+    + lib.optionalString (!enableLigature) " NL"
+    + lib.optionalString enableNerdFont " NF"
+    + lib.optionalString enableCN " CN";
 
-  python-minifier = ps.buildPythonPackage (finalAttrs: {
-    pname = "python-minifier";
-    version = "3.1.0";
-    pyproject = true;
-    src = ps.fetchPypi {
-      pname = "python_minifier";
-      inherit (finalAttrs) version;
-      hash = "sha256-hbzPmbd1alIdaqO/XwCVDifslIDqYtZu2VW9uO7CTBQ=";
-    };
-    build-system = [ ps.setuptools ];
-    doCheck = false;
-  });
-
-  pythonEnv = python3.withPackages (ps: [
-    ps.fonttools
-    ps.glyphslib
-    ps.ttfautohint-py
-    ps.brotli
-    ps.skia-pathops
-    ps.setuptools
-    ps.hy
-    foundrytools-cli
-    python-minifier
-  ]);
+  patchConfig = {
+    style = buildStyle;
+    leastStyles = if buildStyle == null then leastStyles else false;
+    extraEscape = extraEscapeChars;
+    pillKeywords = pillKeywords;
+    disableAltPill = disableAltPill;
+    pillStyle = pillStyle;
+    features = features;
+    hinted = enableHinting;
+    ligature = enableLigature;
+    nerdFont = enableNerdFont;
+    cjk = enableCN;
+  };
 in
+stdenvNoCC.mkDerivation (finalAttrs: {
+  pname = "maple-mono-custom";
+  version = "8.0-beta.3";
 
-stdenvNoCC.mkDerivation (
-  finalAttrs:
-  let
-    no = bool: lib.optionalString (!bool) "no-";
+  src = fetchFromGitHub {
+    owner = "subframe7536";
+    repo = "maple-font";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-Nra2oje4qFFAb6eS/S2pu/dIx+uZmNErlMCYCo3NA78=";
+  };
 
-    outDir =
-      if enableNerdFont && enableCN then
-        "NF-CN"
-      else if enableNerdFont then
-        "NF"
-      else if enableCN then
-        "CN"
-      else if enableHinting then
-        "TTF-AutoHint"
-      else
-        "TTF";
+  nativeBuildInputs = [ pythonEnv ];
 
-    fontName =
-      "Maple Mono" + lib.optionalString enableNerdFont " NF" + lib.optionalString enableCN " CN";
-  in
-  {
-    pname = "maple-mono-custom";
-    version = "7.9";
+  postUnpack = ''
+    cp ${./patch_maple.hy} $sourceRoot/patch_maple.hy
+  ''
+  + lib.optionalString enableCN ''
+    cp ${cjkBaseStatic} $sourceRoot/cn-base-static.zip
+  '';
 
-    src = fetchFromGitHub {
-      owner = "subframe7536";
-      repo = "maple-font";
-      rev = "v${finalAttrs.version}";
-      hash = "sha256-wsaE54TeI2EI9VO9Q7Czv9soScGomYIfrllhQQHey2E=";
-    };
+  buildPhase = ''
+    runHook preBuild
+    hy patch_maple.hy ${lib.escapeShellArg (builtins.toJSON patchConfig)}
+    runHook postBuild
+  '';
 
-    nativeBuildInputs = [
-      pythonEnv
-      unzip
-    ];
+  installPhase = ''
+    runHook preInstall
 
-    postUnpack = ''
-      ${lib.optionalString enableCN ''
-        mkdir -p $sourceRoot/source/cn/static
-        ${lib.getExe unzip} ${cnBaseStatic} -d $sourceRoot/source/cn/static
-      ''}
-      cp ${./patch_maple.hy} $sourceRoot/patch_maple.hy
-      pushd $sourceRoot
-      ${pythonEnv}/bin/hy patch_maple.hy \
-        ${lib.escapeShellArg (lib.concatStringsSep "," extraEscapeChars)} \
-        ${lib.escapeShellArg (lib.concatStringsSep "," pillKeywords)} \
-        ${if disableAltPill then "1" else "0"}
-      popd
-    '';
+    test -d "fonts/${outDir}" || {
+      echo "Expected output dir fonts/${outDir} not found"
+      exit 1
+    }
 
-    buildPhase =
-      let
-        featFlag =
-          lib.optionalString (features != [ ])
-            "--feat ${
-              lib.pipe features [
-                (lib.map lib.escapeShellArg)
-                (lib.concatStringsSep ",")
-              ]
-            }";
-        styleFlag = lib.optionalString (buildStyle != null) "--style ${lib.escapeShellArg buildStyle}";
-      in
-      # bash
-      ''
-        runHook preBuild
-        python build.py ${featFlag} ${styleFlag} --apply-fea-file --${no enableHinting}hinted --${no enableLigature}liga --${no enableNerdFont}nf --${no enableCN}cn
-        runHook postBuild
-      '';
+    find "fonts/${outDir}" -maxdepth 1 -type f -name '*.ttf' \
+      -exec install -Dm444 -t "$out/share/fonts/truetype" {} \;
 
-    installPhase =
-      # bash
-      ''
-        runHook preInstall
+    runHook postInstall
+  '';
 
-        test -d "fonts/${outDir}" || { echo "Expected output dir fonts/${outDir} not found"; exit 1; }
+  passthru = {
+    inherit fontName outDir;
+  };
 
-        find "fonts/${outDir}" -maxdepth 1 -type f -name '*.ttf' \
-          -exec install -Dm444 -t "$out/share/fonts/truetype" {} \;
-        find "fonts/${outDir}" -maxdepth 1 -type f -name '*.otf' \
-          -exec install -Dm444 -t "$out/share/fonts/opentype" {} \;
-
-        runHook postInstall
-      '';
-
-    passthru = {
-      inherit fontName outDir;
-    };
-
-    meta = {
-      description = "Maple Mono - custom build with frozen OpenType features";
-      homepage = "https://github.com/subframe7536/maple-font";
-      license = lib.licenses.ofl;
-      platforms = lib.platforms.all;
-    };
-  }
-)
+  meta = {
+    description = "Maple Mono - custom build with frozen OpenType features";
+    homepage = "https://github.com/subframe7536/maple-font";
+    license = lib.licenses.ofl;
+    platforms = lib.platforms.all;
+  };
+})

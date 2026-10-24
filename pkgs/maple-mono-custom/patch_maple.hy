@@ -1,185 +1,165 @@
-(import sys os re)
+(import sys json importlib dataclasses io os shutil)
 
-(defn log [msg]
-  (.write sys.stdout f"PATCHER: {msg}\n")
-  (.flush sys.stdout))
+;; The script lives in the source root, but Hy does not put the CWD on sys.path.
+(.insert sys.path 0 (os.getcwd))
 
-(defn get-tag-for-keyword [kw]
-  (setv length (len kw))
+;; The v8 pipeline spawns workers with sys.executable. Under Hy that points at
+;; the Hy launcher, which does not accept Python's -s flag.
+(setv sys.executable (or (shutil.which "python") (os.path.join sys.prefix "bin" "python")))
+
+(setv cfg (json.loads (get sys.argv 1)))
+(setv style (get cfg "style"))
+(setv least-styles (get cfg "leastStyles"))
+(setv extra-escape (get cfg "extraEscape"))
+(setv pill-keywords (get cfg "pillKeywords"))
+(setv disable-alt-pill (get cfg "disableAltPill"))
+(setv pill-style (get cfg "pillStyle"))
+(setv features (get cfg "features"))
+(setv hinted (get cfg "hinted"))
+(setv ligature (get cfg "ligature"))
+(setv nerd-font (get cfg "nerdFont"))
+(setv cjk (get cfg "cjk"))
+
+(setv pipeline (importlib.import_module "scripts.pipeline"))
+(setv orch (importlib.import_module "scripts.pipeline.orchestrator"))
+(setv apply-mod (importlib.import_module "scripts.feature.apply"))
+(setv ft-mod (importlib.import_module "scripts.font_ops.fonttools"))
+(setv tag-mod (importlib.import_module "scripts.feature.calt.tag"))
+(setv ast-mod (importlib.import_module "scripts.feature.ast"))
+(setv fea-parser-mod (importlib.import_module "fontTools.feaLib.parser"))
+(setv fea-ast (importlib.import_module "fontTools.feaLib.ast"))
+(setv futures-mod (importlib.import_module "concurrent.futures"))
+
+(setv Parser (getattr fea-parser-mod "Parser"))
+(setv GlyphClassDefinition (getattr fea-ast "GlyphClassDefinition"))
+(setv LookupBlock (getattr fea-ast "LookupBlock"))
+(setv LookupReferenceStatement (getattr fea-ast "LookupReferenceStatement"))
+(setv built-in-tags (getattr tag-mod "built_in_tag_text"))
+(setv PreparedFeatureSource (getattr apply-mod "PreparedFeatureSource"))
+
+(setv pill-caps
   (cond
-    (= length 3) "tag_todo"
-    (= length 4) "tag_todo"
-    (= length 5) "tag_fixme"
-    (= length 7) "tag_warning"
-    True (do
-           (log f"WARNING: Keyword '{kw}' has unsupported length {length}. Skipping.")
-           None)))
+    (= pill-style "circle") ["circle_start.bg" "circle_end.bg"]
+    (= pill-style "sharp") ["sharp_start.bg" "sharp_end.bg"]
+    True ["block_start.bg" "block_end.bg"]))
 
-(defn patch-fea [file-path extra-escape pill-keywords disable-alt-pill]
-  (log f"Patching FEA: {file-path}")
-  (setv content "")
-  (with [f (open file-path "r" :encoding "utf-8")]
-    (setv content (f.read)))
+;; v8 exposes --least-styles but not a single-style option. Force the plan and
+;; the pipeline's copy of target_styles after the config resolver has run.
+(when style
+  (setv Pipeline (getattr orch "MapleBuildPipeline"))
+  (setv orig-init (getattr Pipeline "__init__"))
+  (defn init [self #* args #** kwargs]
+    (orig-init self #* args #** kwargs)
+    (setv self.target-styles [style])
+    (setv self.plan (dataclasses.replace self.plan :target-styles [style])))
+  (setattr Pipeline "__init__" init))
 
-  ;; 1. Patch escape lookup
-  (if extra-escape
-    (do
-      (setv escape-pattern (re.compile r"(@Escape\s*=\s*\[)([^\]]*)(\];)" re.DOTALL))
-      (defn add-escape [match]
-        (setv head (match.group 1))
-        (setv body (.rstrip (match.group 2)))
-        (setv tail (match.group 3))
-        (setv added (.join " " extra-escape))
-        (+ head body " " added " " tail))
-      (setv content (escape-pattern.sub add-escape content)))
-    None)
+;; Keep the build in one process. The v8 forkserver cannot import a .hy main,
+;; and thread workers inherit the monkeypatches without pickling.
+(setv ThreadPoolExecutor (getattr futures-mod "ThreadPoolExecutor"))
+(defn thread-executor [max-workers #** kwargs]
+  (ThreadPoolExecutor max-workers))
+(setattr orch "create_process_executor" thread-executor)
 
-  ;; 2. Patch pill ligatures
-  (if disable-alt-pill
-    (do
-      (setv content (re.sub r"lookup tag_todo_alt \{.*?\} tag_todo_alt;" "" content :flags re.DOTALL))
-      (setv content (re.sub r"lookup tag_fixme_alt \{.*?\} tag_fixme_alt;" "" content :flags re.DOTALL))
-      (setv content (re.sub r"lookup tag_todo_alt;" "" content))
-      (setv content (re.sub r"lookup tag_fixme_alt;" "" content)))
-    None)
+;; CJK saves recompile the whole glyf table. The source masters already carry
+;; valid bounding boxes, so skip the recalculation.
+(setv TTFont (getattr ft-mod "TTFont"))
+(setv orig-save (getattr TTFont "save"))
+(defn fast-save [self file [reorder-tables True]]
+  (setv self.recalcBBoxes False)
+  (orig-save self file :reorderTables None))
+(setattr TTFont "save" fast-save)
 
-  ;; 3. Add new pill keywords
-  (setv new-lookups [])
-  (setv calt-lookups [])
-  (setv ss03-lookups [])
+(defn patch-escape-statements [statements extra]
+  (for [stmt statements]
+    (when (and (isinstance stmt GlyphClassDefinition) (= stmt.name "Escape"))
+      (for [g extra]
+        (when (not (in g (getattr stmt.glyphs "glyphs")))
+          (.append stmt.glyphs g))))
+    (when (hasattr stmt "statements")
+      (patch-escape-statements stmt.statements extra))))
 
-  (if pill-keywords
-    (for [kw pill-keywords]
-      (setv liga (get-tag-for-keyword kw))
-      (if liga
-        (do
-          (setv kw-lower (.lower kw))
-          (setv lookup-name f"tag_custom_{kw_lower}")
-          (if (not (in f"lookup {lookup-name} {{" content))
-            (do
-              (setv l f"  lookup {lookup-name} {{\n")
-              (setv seq-len (+ (len kw) 2))
-              (setv target-width (cond (= liga "tag_todo") 6 (= liga "tag_fixme") 7 (= liga "tag_warning") 9 True 6))
-              (setv padding "")
-              (if (> target-width seq-len)
-                (setv padding (* "SPC " (- target-width seq-len)))
-                None)
+(defn patch-escape [feature-file extra]
+  (patch-escape-statements feature-file.statements extra))
 
-              (setv spaces-main (* "SPC " (- target-width 1)))
-              (setv l (+ l f"    sub {spaces-main}bracketright' {padding} by {liga}.liga;\n"))
-              (for [i (range (len kw))]
-                (setv char (get kw (- (+ i 1))))
-                (setv spaces-loop (* "SPC " (- (len kw) i)))
-                (if (= i 0)
-                  (setv l (+ l f"    sub {spaces-loop} {char}' bracketright {padding} by SPC;\n"))
-                  (do
-                    (setv slice-start (- i))
-                    (setv kw-suffix (get kw (slice slice-start None)))
-                    (setv chars-after (.join " " kw-suffix))
-                    (setv l (+ l f"    sub {spaces-loop} {char}' {chars-after} bracketright {padding} by SPC;\n")))))
+(setv alt-names #{"tag_todo_alt" "tag_fixme_alt"})
 
-              (setv chars-all (.join " " kw))
-              (setv l (+ l f"    sub bracketleft' {chars-all} bracketright {padding} by SPC;\n"))
-              (setv l (+ l f"  }} {lookup-name};\n"))
-              (new-lookups.append l)
-              (calt-lookups.append lookup-name)
+(defn drop-alt [statements]
+  (setv kept [])
+  (for [stmt statements]
+    (setv drop False)
+    (when (and (isinstance stmt LookupBlock) (in stmt.name alt-names))
+      (setv drop True))
+    (when (and (isinstance stmt LookupReferenceStatement) (in stmt.lookup.name alt-names))
+      (setv drop True))
+    (when (not drop)
+      (when (hasattr stmt "statements")
+        (setv stmt.statements (drop-alt stmt.statements)))
+      (.append kept stmt)))
+  kept)
 
-              ;; SS03 lookup (case insensitive)
-              (setv ss03-lookup-name f"{lookup-name}_ss03")
-              (setv l f"  lookup {ss03-lookup-name} {{\n")
-              (setv l (+ l f"    sub {spaces-main}bracketright' {padding} by {liga}.liga;\n"))
-              (setv kw-classes (lfor c kw f"@{c}"))
-              (for [i (range (len kw))]
-                (setv char-class (get kw-classes (- (+ i 1))))
-                (setv spaces-loop (* "SPC " (- (len kw) i)))
-                (if (= i 0)
-                  (setv l (+ l f"    sub {spaces-loop} {char-class}' bracketright by SPC;\n"))
-                  (do
-                    (setv slice-start (- i))
-                    (setv class-suffix (get kw-classes (slice slice-start None)))
-                    (setv classes-after (.join " " class-suffix))
-                    (setv l (+ l f"    sub {spaces-loop} {char-class}' {classes-after} bracketright by SPC;\n")))))
-              (setv classes-all (.join " " kw-classes))
-              (setv l (+ l f"    sub bracketleft' {classes-all} bracketright by SPC;\n"))
-              (setv l (+ l f"  }} {ss03-lookup-name};\n"))
-              (new-lookups.append l)
-              (ss03-lookups.append ss03-lookup-name))
-            None))
-        None))
-    None)
+(defn custom-tag-text [keywords glyph-names]
+  (setv lookups [])
+  (setv refs [])
+  (setv seen #{})
+  (for [kw keywords]
+    (setv k (.lower kw))
+    (setv chars (list kw))
+    (when (and (not (in k built-in-tags))
+               (not (in k seen))
+               chars
+               (all (lfor c chars (.isalpha c))))
+      (setv needed (list pill-caps))
+      (for [c chars] (.append needed f"{(.upper c)}.bg"))
+      (when (all (lfor g needed (in g glyph-names)))
+        (.add seen k)
+        (setv src [])
+        (.append src (ast-mod.gly "["))
+        (for [c chars] (.append src f"@{(.upper c)}"))
+        (.append src (ast-mod.gly "]"))
+        (setv tgt [(get pill-caps 0)])
+        (for [c chars] (.append tgt f"{(.upper c)}.bg"))
+        (.append tgt (get pill-caps 1))
+        (setv subs [])
+        (for [i (range (len src) 0 -1)]
+          (setv before (get tgt (slice 0 (- i 1))))
+          (setv after (if (< i (len src)) (get src (slice i None)) None))
+          (.append subs (ast-mod.subst before (get src (- i 1)) after (get tgt (- i 1)))))
+        (setv lookup (ast-mod.Lookup :name f"custom_tag_{k}" :desc f"[{kw}]" :content subs))
+        (.append lookups (ast-mod.create [lookup]))
+        (.append refs f"    lookup custom_tag_{k};"))))
+  (if lookups
+    (+ "\n" (.join "\n" lookups) "\nfeature calt {\n" (.join "\n" refs) "\n} calt;\n")
+    ""))
 
-  (if new-lookups
-    (do
-      (if (not (in "feature calt {" content))
-        (setv content (+ content "\nfeature calt {\n} calt;\n"))
-        None)
-      (if (not (in "feature ss03 {" content))
-        (setv content (+ content "\nfeature ss03 {\n} ss03;\n"))
-        None)
-      (setv joined-lookups (.join "\n" new-lookups))
-      (setv content (.replace content "feature calt {" (+ joined-lookups "\nfeature calt {")))
-      (for [l calt-lookups]
-        (setv content (.replace content "feature calt {" f"feature calt {{\n    lookup {l};")))
-      (for [l ss03-lookups]
-        (setv content (.replace content "feature ss03 {" f"feature ss03 {{\n    lookup {l};"))))
-    None)
+(defn patch-prepared [prepared kwargs]
+  (setv glyph-names (get kwargs "glyph_names"))
+  (setv text prepared.source)
+  (when (or extra-escape disable-alt-pill)
+    (setv feature-file (.parse (Parser (io.StringIO text) :glyphNames glyph-names)))
+    (when extra-escape
+      (patch-escape feature-file extra-escape))
+    (when disable-alt-pill
+      (setv feature-file.statements (drop-alt feature-file.statements)))
+    (setv text (.asFea feature-file)))
+  (PreparedFeatureSource (+ text (custom-tag-text pill-keywords glyph-names)) prepared.substitutions))
 
-  (with [f (open file-path "w" :encoding "utf-8")]
-    (f.write content)))
+(setv orig-prepare (getattr apply-mod "prepare_feature_source"))
+(defn prepare [config #* args #** kwargs]
+  (setv prepared (orig-prepare config #* args #** kwargs))
+  (patch-prepared prepared kwargs))
+(setattr apply-mod "prepare_feature_source" prepare)
 
-(defn patch-build-py [file-path]
-  (log f"Patching {file-path}...")
-  (with [f (open file-path "r" :encoding "utf-8")]
-    (setv content (f.read)))
+(setv build-args ["--format" "ttf" "--apply-fea-file"])
+(when (and (not style) least-styles)
+  (.append build-args "--least-styles"))
+(when features
+  (.extend build-args ["--feat" (.join "," features)]))
+(.extend build-args (if hinted ["--hinted"] ["--no-hinted"]))
+(.extend build-args (if ligature ["--liga"] ["--no-liga"]))
+(.extend build-args (if nerd-font ["--nf"] ["--no-nf"]))
+(when cjk
+  (.extend build-args ["--cjk" "cn"]))
 
-  ;; 1. Add --style argument
-  (if (not (in "--style" content))
-    (do
-      (log "Adding --style argument to build.py")
-      (setv content (.replace content
-                     "parser.add_argument(\"--least-styles\", action=\"store_true\", help=\"least styles\")"
-                     "parser.add_argument(\"--least-styles\", action=\"store_true\", help=\"least styles\")\n    parser.add_argument(\"--style\", help=\"build specific style\")")))
-    None)
-
-
-  ;; 2. Patch target_styles assignment using a line-based search
-  (setv lines (.splitlines content))
-  (setv new-lines [])
-  (setv patched False)
-  (setv target-regex (re.compile r"target_styles\s*=\s*\("))
-
-  (for [line lines]
-    (if (and (not patched) (target-regex.search line))
-      (do
-        (log f"FOUND target_styles on line: {line}")
-        (setv indent (get (.split line "target_styles") 0))
-        (new-lines.append f"{indent}if getattr(parsed_args, 'style', None):")
-        (new-lines.append f"{indent}    target_styles = [parsed_args.style]")
-        (new-lines.append f"{indent}else:")
-        (new-lines.append f"    {line}")
-        (setv patched True))
-      (new-lines.append line)))
-  (if patched
-    (log "Successfully patched target_styles")
-    (log "CRITICAL: target_styles assignment NOT found in build.py!"))
-  (with [f (open file-path "w" :encoding "utf-8" :newline "\n")]
-    (f.write (.join "\n" new-lines))))
-
-
-(if (= __name__ "__main__")
-  (do
-    (log "Patch script started")
-    (if (< (len sys.argv) 4)
-      (do
-        (log "Insufficient arguments")
-        (sys.exit 1))
-      (do
-        (setv extra-escape (if (get sys.argv 1) (.split (get sys.argv 1) ",") []))
-        (setv pill-keywords (if (get sys.argv 2) (.split (get sys.argv 2) ",") []))
-        (setv disable-alt-pill (= (get sys.argv 3) "1"))
-        (setv fea-files ["source/features/regular.fea" "source/features/italic.fea" "source/features/regular_cn.fea" "source/features/italic_cn.fea"])
-        (for [f fea-files]
-          (if (os.path.exists f) (patch-fea f extra-escape pill-keywords disable-alt-pill) None))
-        (if (os.path.exists "build.py") (patch-build-py "build.py") None)
-        (log "Patch script finished"))))
-  None)
+(print "maple-mono-custom build args:" build-args)
+(pipeline.main build-args)
